@@ -11,13 +11,13 @@
   colorlinks=true,
   urlcolor=blue!60!black,
   linkcolor=blue!55!black,
-  pdftitle={Issue 128 Exact-D8 HPC Sprint: Interim Technical Supplement},
+  pdftitle={Issue 128 Six-Hour HPC Sprint: Proof-Carrying Technical Supplement},
   pdfauthor={Junkai Wang (WangTheoPhys)}
 }
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{0.30em}
 
-\title{Issue 128 Exact-D8 HPC Sprint\\\large Interim Technical Supplement}
+\title{Issue 128 Six-Hour HPC Sprint\\\large Proof-Carrying Technical Supplement}
 \author{Junkai Wang (WangTheoPhys)}
 \date{31 July 2026}
 
@@ -25,33 +25,40 @@
 \maketitle
 
 \begin{abstract}
-This supplement records a six-hour, proof-directed HPC sprint following the
-machine-certified Issue 128 result.  The accepted claim remains frozen at
-$11791/2911=4.050498110614909\ldots$; no fivefold result is asserted here.
-The sprint computes the order-eight coefficient of the exact right generator
-as 31 independently checkable stage shards, runs the accepted deep verifier
-independently, and ranks 24 matching-color orders in an explicitly untrusted
-discovery path.  Every production artifact is atomic, hash-addressed, and
-bound to a source commit.  This is an interim execution report: the final
-claim gate remains closed until all shards are reduced and a complete global
-error ledger passes both fast and deep verification.
+This supplement records a six-hour, proof-directed HPC sprint for Issue 128.
+Before using any new HPC result, a post-freeze D5 sidecar was integrated into
+the global error ledger and independently verified.  It accepts 95 steps,
+rejects 94, and certifies the exact resource ratio
+$11791/2851=4.135741844966678\ldots$.  The production phase computes exact
+right-generator coefficients through complementary monolithic and 31-way
+stage-sharded paths.  Every accepted artifact is canonical, SHA-256-bound,
+source-identified, and checked by a verifier that can reject malformed
+coverage, algebra, provenance, boundary, or resource arithmetic.  No
+fivefold result is asserted.
 \end{abstract}
 
-\section{Frozen result and research gate}
+\section{Certified result and research gate}
 
 For the periodic $12\times12$ isotropic Heisenberg benchmark at $T=1$ and
 global operator-norm tolerance $10^{-6}$, the certified fourth-order Suzuki
-result accepts $r=97$ and rejects $r=96$.  With $G(r)=30r+1$ merged group
-exponentials, the exact resource ratio is
+post-freeze result accepts $r=95$ and rejects $r=94$.  With
+$G(r)=30r+1$ merged group exponentials, the exact resource ratio is
 \[
-  \frac{G(393)}{G(97)}=\frac{11791}{2911}
-  =4.050498110614909\ldots .
+  \frac{G(393)}{G(95)}=\frac{11791}{2851}
+  =4.135741844966678\ldots .
 \]
-Fivefold arithmetic would require $r\le78$, but this arithmetic is not an
-error proof.  The present experiment targets one missing ingredient: a
-concrete exact order-eight right-generator coefficient map.  A new multiplier
-may be reported only if a complete D4--D8-plus global ledger at the proposed
-step count is at most $10^{-6}$ and independent verification succeeds.
+The exact global bounds are $9.90449140283245\times10^{-7}$ at 95 and
+$1.04680611656037\times10^{-6}$ at 94.  The D4 and D5 sidecars contain 75,324
+and 605,832 canonical Pauli terms, respectively, and both are independently
+checked for complete coverage and pairwise anticommutation within every
+group.  The original ten-file package remains frozen at 97 steps and is not
+silently rewritten.
+
+Fivefold arithmetic would require $r\le78$, but the present D4 contribution
+alone is already approximately $1.259084\times10^{-6}$ there.  Thus an exact
+D8 coefficient, even if zero, cannot close fivefold performance under the
+current nonnegative ledger.  A new multiplier may be reported only after a
+complete global ledger and independent fast/deep verification succeed.
 
 \section{Exact sharding algorithm}
 
@@ -77,8 +84,11 @@ screening ingredient; it is not by itself the global $r=78$ certificate.
 
 \section{Execution contract}
 
-The production source is commit
-\texttt{e65c95f4ae76dc1a78e81715cac21cfd7a81dbf8}.  Jobs run on the
+The original D8 array source is commit
+\texttt{e65c95f4ae76dc1a78e81715cac21cfd7a81dbf8}; the cancellation-aware
+monolithic and order-six stage source is
+\texttt{eadefd9e0bc56841ee620e83582382d902c0d625}.  Relevant source-file
+digests were checked byte-for-byte between the local and remote trees.  Jobs run on the
 \texttt{xhacnormalb} CPU partition under account \texttt{giggleliu} and QOS
 \texttt{user\_acamtw70yu}.  GPU partitions are intentionally excluded because
 the workload is sparse Python integer/rational algebra.
@@ -90,13 +100,15 @@ the workload is sparse Python integer/rational algebra.
 Role & Slurm job & Per-task allocation & Limit \\
 \midrule
 Exact D8 array (31 stages) & 23044178 & 17 CPU, 64 GiB & 4:30 \\
-Independent verification & 23044196 & 9 CPU, 32 GiB & 4:30 \\
-Exact reducer & 23044212 & 26 CPU, 96 GiB & 1:15 \\
-Order screen (24 permutations) & 23044214 & 5 CPU, 16 GiB & 1:00 \\
+Exact D8 monolithic fallback & 23044280 & 63 CPU, 240 GiB & 4:15 \\
+Exact D6 monolithic path & 23044494 & 9 CPU, 32 GiB & 3:30 \\
+Exact D6 array (31 stages) & 23044609 & 9 CPU, 32 GiB & 2:30 \\
+D6 array reducer & 23044651 & 26 CPU, 96 GiB & 1:00 \\
 \bottomrule
 \end{tabular}
-\caption{Submitted Slurm work.  The reducer has an \texttt{afterok}
-dependency on the D8 array.}
+\caption{Principal production work.  Reducers start only after all parent
+array cells succeed.  The D6 reducer has an 08:32 CST deadline; other late
+production paths use 08:15.}
 \end{table}
 
 The array first passed \texttt{sbatch --test-only}.  A four-cell remote smoke
@@ -106,17 +118,34 @@ test-only gate and reflected in all allocations.  Once production started,
 the voluntary array throttle was raised from 16 to 31; Slurm and QOS retained
 authority over placement and admission.
 
-\section{Verification evidence at launch}
+\section{Verification evidence}
 
-The local proof-preservation gate reported 93 passing tests and 11 deselected
-slow tests in 41.12 seconds.  A separate deep verifier run returned
-\texttt{valid=true} and \texttt{deep\_proof\_regenerated=true}, reproduced
-$393\to97$, and returned the exact ratio \texttt{11791/2911}.  At the first
-full-concurrency snapshot, the D8 run contained 28 running manifests, three
-complete manifests, and zero failures.  The light-stage completion times were
-approximately 5.61 seconds (stage 28), 0.171 seconds (stage 29), and 0.024
-seconds (stage 30).  These timings validate the transport and serialization
-path; they do not predict the much heavier early stages.
+The final local regression gate reported 106 passing tests and 11 deselected
+slow tests in 77.72 seconds.  The D5-integrated fast verifier returned
+\texttt{valid=true}; the deep verifier regenerated every D4/D5 coefficient
+from the 31-stage formula, returned
+\texttt{deep\_proof\_regenerated=true}, and completed in 167.62 seconds with
+1.53~GB peak RSS.  A detached clean worktree repeated the fast verifier,
+focused certificate tests, and every delivery SHA-256 check.
+
+The independent remote verification job is recorded without hiding a mixed
+outcome: its deep verifier passed, while the encompassing pytest command
+returned nonzero.  Five failures were caused by the synchronized remote tree
+lacking usable Git metadata; one pre-existing slow symplectic discovery test
+returned a different numeric value.  This remote pytest result is not called
+``all green'' and is not used to replace the successful local certificate
+gate.
+
+The exact-D8 array provides a useful scale check.  Stage 25 completed in
+7349.722 seconds with 17,211,714 degree-eight terms and 52.15~GB peak RSS;
+its output digest is
+\texttt{c64c0729a1ef\ldots a95a4eb3cf7b}; the full digest is retained in the
+machine-readable sprint log.
+The order-six fallback uses the same stage-shard contract but truncates at D6.
+Its reducer requires all 31 manifests, verifies each payload digest, and
+requires forward and reverse exact sums to agree.  A compact parent manifest
+binds every source shard and the reducer implementation before the exact D6
+sidecar can enter the main certificate.
 
 The matching-order array is a separate discovery lane.  Its JSON records
 \texttt{trusted=false} and states that its purpose is discovery ranking.  A
@@ -135,11 +164,12 @@ The outcome will be classified as follows.
   \item If the complete ledger is at most $10^{-6}$, prepare a new independently
         bound certificate before describing a fivefold result.
   \item Otherwise publish the strict negative result or remaining numerical
-        gap, while keeping the certified 4.050498-fold result unchanged.
+        gap, while keeping the certified 4.135742-fold result unchanged.
 \end{enumerate}
 
-\textbf{Interim status.}  This document records a running experiment, not a
-new performance claim.  The accepted result remains 4.050498-fold until the
-final gate above is closed.
+\textbf{Claim status.}  The currently accepted result is the independently
+verified 4.1357418449-fold D5-integrated certificate.  Running D6/D8 work is
+research evidence only until its artifacts, exact ledger, adjacent-step
+boundary, hashes, and deep regeneration all pass.
 
 \end{document}
