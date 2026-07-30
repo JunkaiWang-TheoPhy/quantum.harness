@@ -57,6 +57,7 @@
 | exact D6 stage array | `23044609` | 每单元 9 CPU、32 GiB、2:30:00 | 无；31 路；08:15 deadline |
 | exact D6 array reducer | `23044651` | 26 CPU、96 GiB、1:00:00 | `afterok:23044609`；08:32 deadline |
 | D6/D8 cross-order check | `23044659` | 17 CPU、64 GiB、0:30:00 | stages 25--30；已完成 |
+| direct exact D6 identity | `23044709` | 17 CPU、64 GiB、1:45:00 | 08:25 deadline |
 
 数组最初以 16 路并发启动；确认账号/QOS允许后，用 Slurm 正常调度接口把 `ArrayTaskThrottle` 提升到 31。所有剩余单元随后进入 RUNNING；调度和授权仍由集群控制器执行。
 
@@ -100,6 +101,11 @@ D6 majorant，它只能在独立 artifact 校验与 fast/deep 接入后形成下
   阵列在 stages 25--30 的 degree-6 规范 Pauli 系数图完全相同；比较覆盖的
   单 stage D6 项数依次为 710,298、446,094、150,858、2,028、48、0。
   比较对象是精确三次域系数映射，不只是最终 l1 小数。
+- 为规避早编号 stage contribution 的长共轭链，又增加了直接恒等式路径
+  `23044709`。它从同一 31-stage 公式的 16,380 个七阶自由词构造 exact E7，
+  然后使用 `D6 = 7 E7 + (2/3) ad_A^2(E5)` 形成 exact D6。该路线与 stage
+  分解算法不同；输出仍采用同一 canonical coordinate/cubic-field sidecar 契约，
+  只有与阵列归并结果逐项一致后才可作为独立复核。
 
 ## 制品契约
 
