@@ -8,9 +8,11 @@ import hashlib
 import json
 from pathlib import Path
 
+from trottercert.cubic_field import Cubic
 from trottercert.hpc_artifacts import (
+    CoordinateCubicTerms,
+    coordinate_decode_terms,
     coordinate_terms_to_json,
-    merge_coordinate_series,
     read_shard_gzip,
     sha256_file,
     write_manifest_atomic,
@@ -29,6 +31,18 @@ def _decimal(value: Fraction, digits: int = 18) -> str:
         return str(Decimal(value.numerator) / Decimal(value.denominator))
 
 
+def _merge_degree(
+    target: CoordinateCubicTerms,
+    raw_terms: object,
+) -> None:
+    for key, coefficient in coordinate_decode_terms(raw_terms).items():
+        updated = target.get(key, Cubic.zero()) + coefficient
+        if updated == Cubic.zero():
+            target.pop(key, None)
+        else:
+            target[key] = updated
+
+
 def reduce_shards(
     input_root: Path,
     *,
@@ -37,9 +51,10 @@ def reduce_shards(
     output: Path,
     summary_path: Path,
 ) -> dict[str, object]:
-    payloads: dict[int, dict[str, object]] = {}
+    payload_paths: dict[int, Path] = {}
     commits: set[str] = set()
     stage_provenance: list[dict[str, object]] = []
+    forward: CoordinateCubicTerms = {}
     for stage in range(expected_stages):
         cell = input_root / f"stage-{stage:02d}"
         payload_path = cell / "shard.json.gz"
@@ -63,8 +78,9 @@ def reduce_shards(
         series = payload.get("series")
         if not isinstance(series, list) or len(series) != order + 1:
             raise ValueError(f"stage {stage} series length mismatch")
+        _merge_degree(forward, series[order])
         commits.add(str(manifest.get("git_commit")))
-        payloads[stage] = payload
+        payload_paths[stage] = payload_path
         stage_provenance.append(
             {
                 "stage_index": stage,
@@ -76,16 +92,15 @@ def reduce_shards(
     if len(commits) != 1:
         raise ValueError("shard manifests do not share one git commit")
 
-    forward = merge_coordinate_series(
-        [payloads[index]["series"] for index in range(expected_stages)]
-    )
-    reverse = merge_coordinate_series(
-        [payloads[index]["series"] for index in reversed(range(expected_stages))]
-    )
+    reverse: CoordinateCubicTerms = {}
+    for stage in reversed(range(expected_stages)):
+        payload = read_shard_gzip(payload_paths[stage])
+        series = payload["series"]
+        _merge_degree(reverse, series[order])  # type: ignore[index]
     if forward != reverse:
         raise ArithmeticError("forward and reverse exact shard reductions differ")
     root = cube_root_four_interval(30)
-    degree = forward[order]
+    degree = forward
     cell_l1 = sum(
         (coefficient.enclose(root).abs_upper() for coefficient in degree.values()),
         Fraction(),
@@ -126,9 +141,8 @@ def reduce_shards(
         "source_commit": next(iter(commits)),
         "source_stage_count": expected_stages,
         "order": order,
-        "degree_term_counts": {
-            str(index): len(terms) for index, terms in enumerate(forward)
-        },
+        "degree_term_counts": {str(order): len(degree)},
+        "reduced_degrees": [order],
         "cell_pauli_l1_upper": _pair(cell_l1),
         "cell_pauli_l1_upper_decimal": _decimal(cell_l1),
         "site_pauli_l1_upper": _pair(site_l1),
