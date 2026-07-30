@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fractions import Fraction
 from math import factorial
-from typing import Mapping, Sequence
+from typing import Callable, Mapping, Sequence
 
 from .cubic_field import Cubic, CubicStage
 from .local_commutators import (
@@ -300,3 +300,48 @@ def exact_right_generator_stage_contribution(
     return registry, [
         canonicalize_cubic_density(registry, degree) for degree in series
     ]
+
+
+def exact_right_generator_local_series(
+    stages: Sequence[CubicStage],
+    order: int,
+    *,
+    progress: Callable[[int, Sequence[Mapping[SymplecticPauli, Cubic]]], None]
+    | None = None,
+) -> tuple[CoordinateRegistry, list[CubicTerms]]:
+    """Build ``i S'(t) S(t)^dagger`` exactly in one cancellation-aware pass."""
+
+    if order < 0:
+        raise ValueError("series order must be nonnegative")
+    evaluator = SymplecticDyadicLocalDensityEvaluator(shared_coordinates=True)
+    registry = evaluator.registries[0]
+    bases: list[CubicTerms] = []
+    for color in range(4):
+        key = (color,)
+        denominator = 1 << evaluator.denominator_exponent(key)
+        bases.append(
+            canonicalize_cubic_density(
+                registry,
+                {
+                    pauli: Cubic(Fraction(numerator, denominator), 0, 0)
+                    for pauli, numerator in evaluator.evaluate(key).items()
+                },
+            )
+        )
+    generator: list[CubicTerms] = [{} for _ in range(order + 1)]
+    for stage_index, stage in enumerate(stages):
+        generator = conjugate_cubic_series_by_stage(
+            registry,
+            generator,
+            stage.fragment_index,
+            stage.coefficient,
+        )
+        _add_cubic_operator(
+            generator[0], bases[stage.fragment_index], stage.coefficient
+        )
+        generator = [
+            canonicalize_cubic_density(registry, degree) for degree in generator
+        ]
+        if progress is not None:
+            progress(stage_index, generator)
+    return registry, generator

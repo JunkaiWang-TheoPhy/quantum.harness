@@ -4,6 +4,7 @@ import pytest
 
 from trottercert.cubic_field import fourth_order_suzuki_cubic_stages
 from trottercert.cubic_local import exact_right_generator_stage_contribution
+from trottercert.cubic_local import exact_right_generator_local_series
 from trottercert.hpc_artifacts import coordinate_encode_series, merge_coordinate_series
 
 
@@ -29,3 +30,14 @@ def test_stage_contribution_rejects_invalid_index_and_order() -> None:
         exact_right_generator_stage_contribution(stages, len(stages), 4)
     with pytest.raises(ValueError, match="nonnegative"):
         exact_right_generator_stage_contribution(stages, 0, -1)
+
+
+def test_monolithic_exact_generator_has_fourth_order_cancellation() -> None:
+    registry, series = exact_right_generator_local_series(
+        fourth_order_suzuki_cubic_stages(), 3
+    )
+    assert registry is not None
+    assert series[0]
+    assert not series[1]
+    assert not series[2]
+    assert not series[3]
