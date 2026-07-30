@@ -35,7 +35,7 @@ NORMAL TEST SUITE
 Command:
   PYTHONPATH=src /Users/thomasjwang/miniforge3/bin/python3 -m pytest -q
 Observed:
-  100 passed, 11 deselected in 75.78s
+  106 passed, 11 deselected in 77.72s
 
 FOCUSED D5 CERTIFICATE SUITE
 Command:
@@ -49,3 +49,13 @@ BOUNDARY AND RESOURCE SUMMARY
   candidate bond propagators = 205272
   candidate CNOT upper = 615816
   control-to-candidate exact ratio = 11791/2851
+
+PRESENTATION DELIVERY
+Artifacts:
+  docs/presentation/output/issue128-10-minute-talk.pptx
+  docs/presentation/output/issue128-10-minute-talk.pdf
+Observed:
+  8 slides / 8 PDF pages
+  PPTX overflow test passed
+  every rendered PPTX slide and PDF page visually inspected
+  speaker notes include timed talk track and per-slide [Sources]
