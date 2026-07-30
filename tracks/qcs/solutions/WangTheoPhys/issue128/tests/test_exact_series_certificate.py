@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from fractions import Fraction
+import hashlib
+from pathlib import Path
 
 import pytest
 
@@ -9,8 +11,9 @@ from trottercert.exact_series_certificate import (
     verify_exact_degree_payload,
     verify_exact_monolithic_series,
 )
-from trottercert.hpc_artifacts import coordinate_terms_to_json
+from trottercert.hpc_artifacts import coordinate_terms_to_json, write_shard_gzip
 from trottercert.intervals import cube_root_four_interval
+from trottercert.verify import _verify_d6_sidecar
 
 
 def _payload() -> dict[str, object]:
@@ -106,3 +109,45 @@ def test_exact_degree_payload_recomputes_bound_and_rejects_corruption() -> None:
             expected_degree=1,
             expected_source_commit="abc123",
         )
+
+
+def test_d6_main_sidecar_binding_rejects_digest_corruption(
+    tmp_path: Path,
+) -> None:
+    monolithic = _payload()
+    payload = {
+        "schema_version": 1,
+        "kind": "issue128_exact_right_generator_degree",
+        "formula_id": monolithic["formula_id"],
+        "source_commit": monolithic["source_commit"],
+        "stage_count": monolithic["stage_count"],
+        "degree": 6,
+        "coefficient_interval_decimal_digits": 12,
+        "term_count": 1,
+        "terms": monolithic["series"][1],
+        "cell_pauli_l1_upper": monolithic["cell_pauli_l1_upper"],
+        "site_pauli_l1_upper": monolithic["site_pauli_l1_upper"],
+        "parent_sha256": "b" * 64,
+    }
+    sidecar = tmp_path / "d6.json.gz"
+    main = tmp_path / "main.json"
+    write_shard_gzip(sidecar, payload)
+    main.write_text("{}")
+    raw = sidecar.read_bytes()
+    candidate = {
+        "d6_certificate": {
+            "path": sidecar.name,
+            "sha256": hashlib.sha256(raw).hexdigest(),
+            "parent_sha256": "b" * 64,
+            "source_commit": "abc123",
+            "coefficient_interval_decimal_digits": 12,
+            "term_count": 1,
+            "cell_norm_upper": monolithic["cell_pauli_l1_upper"],
+            "site_norm_upper": monolithic["site_pauli_l1_upper"],
+        }
+    }
+    verified = _verify_d6_sidecar(main, candidate)
+    assert verified.artifact.term_count == 1
+    candidate["d6_certificate"]["sha256"] = "0" * 64
+    with pytest.raises(ValueError, match="D6 sidecar digest"):
+        _verify_d6_sidecar(main, candidate)

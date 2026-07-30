@@ -8,6 +8,11 @@ from pathlib import Path
 
 from .anticommuting import certify_anticommuting_partition
 from .baseline import pauli_l1_second_order_constant
+from .exact_series_certificate import (
+    ExactDegreeVerification,
+    read_portable_canonical_gzip,
+    verify_exact_degree_payload,
+)
 from .hamiltonian import four_matching_fragments
 from .intervals import RationalInterval, cube_root_four_interval
 from .lattice import SquareLattice
@@ -41,6 +46,12 @@ class D5SidecarVerification:
     term_count: int
     group_count: int
     max_group_size: int
+
+
+@dataclass(frozen=True)
+class D6SidecarVerification:
+    site_bound: Fraction
+    artifact: ExactDegreeVerification
 
 
 def _fraction(pair: list[int]) -> Fraction:
@@ -158,6 +169,42 @@ def _verify_d5_sidecar(
         term_count=len(regenerated.paulis),
         group_count=len(regenerated.groups),
         max_group_size=max_group_size,
+    )
+
+
+def _verify_d6_sidecar(
+    certificate_path: Path,
+    candidate: dict[str, object],
+) -> D6SidecarVerification:
+    metadata = candidate["d6_certificate"]
+    root = certificate_path.resolve().parent
+    sidecar_path = (root / str(metadata["path"])).resolve()
+    if sidecar_path.parent != root:
+        raise ValueError("D6 sidecar path escapes certificate directory")
+    raw = sidecar_path.read_bytes()
+    if hashlib.sha256(raw).hexdigest() != str(metadata["sha256"]):
+        raise ValueError("D6 sidecar digest mismatch")
+    payload = read_portable_canonical_gzip(sidecar_path)
+    verified = verify_exact_degree_payload(
+        payload,
+        expected_degree=6,
+        expected_source_commit=str(metadata["source_commit"]),
+    )
+    if verified.term_count != int(metadata["term_count"]):
+        raise ValueError("D6 term count mismatch")
+    if int(payload["coefficient_interval_decimal_digits"]) != int(
+        metadata["coefficient_interval_decimal_digits"]
+    ):
+        raise ValueError("D6 coefficient interval precision mismatch")
+    if verified.parent_sha256 != str(metadata["parent_sha256"]):
+        raise ValueError("D6 parent digest mismatch")
+    if verified.cell_l1_upper != _fraction(metadata["cell_norm_upper"]):
+        raise ValueError("D6 cell bound mismatch")
+    if verified.site_l1_upper != _fraction(metadata["site_norm_upper"]):
+        raise ValueError("D6 main-certificate bound mismatch")
+    return D6SidecarVerification(
+        site_bound=verified.site_l1_upper,
+        artifact=verified,
     )
 
 
@@ -416,13 +463,20 @@ def _verify_v3(
         "local_log_E5_grouped_D4_D5_plus_E7_majorant"
         "_plus_exact_generator_tail"
     )
+    d6_method = (
+        "local_log_E5_grouped_D4_D5_exact_D6_plus_E7_majorant"
+        "_plus_exact_generator_tail"
+    )
     if candidate["formula"] != "five_copy_suzuki_fourth_order" or candidate[
         "proof_method"
-    ] not in {legacy_method, d5_method}:
+    ] not in {legacy_method, d5_method, d6_method}:
         raise ValueError("candidate structure mismatch")
     has_d5 = "d5_certificate" in candidate
-    if has_d5 != (candidate["proof_method"] == d5_method):
+    has_d6 = "d6_certificate" in candidate
+    if has_d5 != (candidate["proof_method"] in {d5_method, d6_method}):
         raise ValueError("candidate D5 proof method and sidecar disagree")
+    if has_d6 != (candidate["proof_method"] == d6_method):
+        raise ValueError("candidate D6 proof method and sidecar disagree")
     d4_verification = _verify_d4_sidecar(
         certificate_path,
         candidate,
@@ -439,6 +493,9 @@ def _verify_v3(
         raise ValueError("D4 maximum group size mismatch")
     d5_verification = (
         _verify_d5_sidecar(certificate_path, candidate) if has_d5 else None
+    )
+    d6_verification = (
+        _verify_d6_sidecar(certificate_path, candidate) if has_d6 else None
     )
     candidate_steps = int(candidate["steps"])
     candidate_error = _fraction(candidate["global_error_upper"])
@@ -472,6 +529,14 @@ def _verify_v3(
         )
         if _fraction(contributions["degree5"]) != expected_degree_five:
             raise ValueError("candidate grouped D5 contribution mismatch")
+    if d6_verification is not None:
+        expected_degree_six = (
+            Fraction(n_sites)
+            * d6_verification.site_bound
+            / (7 * candidate_steps**6)
+        )
+        if _fraction(contributions["degree6"]) != expected_degree_six:
+            raise ValueError("candidate exact D6 contribution mismatch")
 
     claimed = data["claimed_resources"]
     baseline_bonds = published_groups * n_sites // 2
@@ -531,6 +596,11 @@ def _verify_v3(
                 if d5_verification is not None
                 else None
             ),
+            d6_site_override=(
+                d6_verification.site_bound
+                if d6_verification is not None
+                else None
+            ),
         )
         rebuilt_previous = evaluate_refined_fourth_order_bound(
             constants,
@@ -540,6 +610,11 @@ def _verify_v3(
             d5_site_override=(
                 d5_verification.site_bound
                 if d5_verification is not None
+                else None
+            ),
+            d6_site_override=(
+                d6_verification.site_bound
+                if d6_verification is not None
                 else None
             ),
         )
@@ -563,6 +638,24 @@ def _verify_v3(
             }
             if regenerated_d5 != d5_verification.coefficients:
                 raise ValueError("deep D5 coefficient regeneration mismatch")
+        if d6_verification is not None:
+            from .cubic_field import fourth_order_suzuki_cubic_stages
+            from .cubic_local import exact_right_generator_local_series
+            from .hpc_artifacts import (
+                coordinate_decode_terms,
+                coordinate_encode_terms,
+            )
+
+            exact_stages = fourth_order_suzuki_cubic_stages(4)
+            registry, exact_series = exact_right_generator_local_series(
+                exact_stages,
+                6,
+            )
+            regenerated_d6 = coordinate_decode_terms(
+                coordinate_encode_terms(registry, exact_series[6])
+            )
+            if regenerated_d6 != d6_verification.artifact.terms:
+                raise ValueError("deep D6 coefficient regeneration mismatch")
         deep_verified = True
 
     ratio = Fraction(published_groups, candidate_groups)
@@ -601,6 +694,14 @@ def _verify_v3(
                 "d5_term_count": d5_verification.term_count,
                 "d5_group_count": d5_verification.group_count,
                 "d5_max_group_size": d5_verification.max_group_size,
+            }
+        )
+    if d6_verification is not None:
+        result.update(
+            {
+                "d6_site_norm_upper": str(d6_verification.site_bound),
+                "d6_term_count": d6_verification.artifact.term_count,
+                "d6_parent_sha256": d6_verification.artifact.parent_sha256,
             }
         )
     return result
