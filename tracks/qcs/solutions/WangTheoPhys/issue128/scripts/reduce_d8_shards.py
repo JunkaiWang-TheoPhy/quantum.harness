@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 from decimal import Decimal, localcontext
 from fractions import Fraction
+import hashlib
 import json
 from pathlib import Path
 
@@ -38,6 +39,7 @@ def reduce_shards(
 ) -> dict[str, object]:
     payloads: dict[int, dict[str, object]] = {}
     commits: set[str] = set()
+    stage_provenance: list[dict[str, object]] = []
     for stage in range(expected_stages):
         cell = input_root / f"stage-{stage:02d}"
         payload_path = cell / "shard.json.gz"
@@ -63,6 +65,14 @@ def reduce_shards(
             raise ValueError(f"stage {stage} series length mismatch")
         commits.add(str(manifest.get("git_commit")))
         payloads[stage] = payload
+        stage_provenance.append(
+            {
+                "stage_index": stage,
+                "manifest_sha256": sha256_file(manifest_path),
+                "payload_sha256": sha256_file(payload_path),
+                "degree_term_counts": manifest.get("degree_term_counts"),
+            }
+        )
     if len(commits) != 1:
         raise ValueError("shard manifests do not share one git commit")
 
@@ -81,16 +91,32 @@ def reduce_shards(
         Fraction(),
     )
     site_l1 = cell_l1 / 4
+    parent_path = summary_path.with_name("reduction-parent.json")
+    parent_payload = {
+        "schema_version": 1,
+        "kind": "issue128_exact_stage_reduction_parent",
+        "source_commit": next(iter(commits)),
+        "source_stage_count": expected_stages,
+        "order": order,
+        "reducer_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "stages": stage_provenance,
+    }
+    write_manifest_atomic(parent_path, parent_payload)
+    parent_sha256 = sha256_file(parent_path)
     merged_payload = {
         "schema_version": 1,
         "kind": "issue128_exact_right_generator_degree",
         "formula_id": "five_copy_suzuki_fourth_order_exact_cubic",
         "source_commit": next(iter(commits)),
+        "stage_count": expected_stages,
         "source_stage_count": expected_stages,
         "degree": order,
+        "coefficient_interval_decimal_digits": 30,
+        "term_count": len(degree),
         "terms": coordinate_terms_to_json(degree),
         "cell_pauli_l1_upper": _pair(cell_l1),
         "site_pauli_l1_upper": _pair(site_l1),
+        "parent_sha256": parent_sha256,
     }
     write_shard_gzip(output, merged_payload)
     summary = {
@@ -109,6 +135,8 @@ def reduce_shards(
         "site_pauli_l1_upper_decimal": _decimal(site_l1),
         "output": output.name,
         "output_sha256": sha256_file(output),
+        "parent": parent_path.name,
+        "parent_sha256": parent_sha256,
         "reduction_order_check": "forward_equals_reverse",
     }
     write_manifest_atomic(summary_path, summary)
