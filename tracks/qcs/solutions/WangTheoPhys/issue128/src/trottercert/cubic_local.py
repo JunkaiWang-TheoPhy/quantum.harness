@@ -167,6 +167,42 @@ def exact_log_e5_density(
     return registry, result
 
 
+def exact_log_e5_e7_densities(
+    stages: Sequence[CubicStage],
+    *,
+    progress: Callable[[int, int, int], None] | None = None,
+) -> tuple[CoordinateRegistry, CubicTerms, CubicTerms]:
+    """Return exact degree-five and degree-seven logarithm densities.
+
+    Both degrees share one coordinate registry and one suffix cache.  Completed
+    full-length words are evicted immediately, which retains reusable shorter
+    commutators without keeping every large degree-seven word image alive.
+    """
+
+    logarithm = cubic_formula_log_series(stages, 7)
+    evaluator = SymplecticDyadicLocalDensityEvaluator(shared_coordinates=True)
+    registry = evaluator.registries[0]
+
+    def evaluate_degree(degree: int) -> CubicTerms:
+        result: CubicTerms = {}
+        words = logarithm[degree]
+        denominator = degree * (1 << evaluator.denominator_exponent((0,) * degree))
+        for index, (word, word_coefficient) in enumerate(words.items(), start=1):
+            for raw_pauli, numerator in evaluator.evaluate(word).items():
+                pauli = canonicalize_symplectic_unit_cell(registry, raw_pauli)
+                _add_term(
+                    result,
+                    pauli,
+                    word_coefficient * Fraction(numerator, denominator),
+                )
+            evaluator.cache.pop(word, None)
+            if progress is not None:
+                progress(degree, index, len(words))
+        return result
+
+    return registry, evaluate_degree(5), evaluate_degree(7)
+
+
 def cubic_fragment_adjoint(
     registry: CoordinateRegistry,
     color: int,
@@ -209,6 +245,40 @@ def exact_d5_density(
         image = cubic_fragment_adjoint(registry, color, e5)
         for pauli, coefficient in image.items():
             _add_term(result, pauli, 2 * coefficient)
+    return canonicalize_cubic_density(registry, result)
+
+
+def exact_d6_density(
+    registry: CoordinateRegistry,
+    e5: Mapping[SymplecticPauli, Cubic],
+    e7: Mapping[SymplecticPauli, Cubic],
+) -> CubicTerms:
+    """Return the exact D6 right-generator density.
+
+    For the symmetric fourth-order formula,
+    ``D6 = 7 E7 + (2/3) ad_A^2(E5)``.  Canonicalizing after each complete
+    matching sum keeps the unit-cell density representation invariant.
+    """
+
+    first_adjoint: CubicTerms = {}
+    for color in range(4):
+        _add_cubic_operator(
+            first_adjoint,
+            cubic_fragment_adjoint(registry, color, e5),
+        )
+    first_adjoint = canonicalize_cubic_density(registry, first_adjoint)
+
+    second_adjoint: CubicTerms = {}
+    for color in range(4):
+        _add_cubic_operator(
+            second_adjoint,
+            cubic_fragment_adjoint(registry, color, first_adjoint),
+        )
+    second_adjoint = canonicalize_cubic_density(registry, second_adjoint)
+
+    result: CubicTerms = {}
+    _add_cubic_operator(result, e7, 7)
+    _add_cubic_operator(result, second_adjoint, Fraction(2, 3))
     return canonicalize_cubic_density(registry, result)
 
 
