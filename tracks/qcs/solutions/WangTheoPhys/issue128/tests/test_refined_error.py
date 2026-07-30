@@ -64,6 +64,37 @@ def test_grouped_d4_override_must_tighten_the_existing_constant() -> None:
         )
 
 
+def test_grouped_d5_override_must_tighten_the_existing_constant() -> None:
+    from trottercert.refined_error import (
+        build_refined_fourth_order_constants,
+        evaluate_refined_fourth_order_bound,
+    )
+
+    constants = build_refined_fourth_order_constants(
+        decimal_digits=8,
+        quantization_digits=8,
+    )
+    tightened = constants.d5_site / 2
+    original = evaluate_refined_fourth_order_bound(constants, 144, 116)
+    grouped = evaluate_refined_fourth_order_bound(
+        constants, 144, 116, d5_site_override=tightened
+    )
+    assert grouped.degree_five_contribution == (
+        original.degree_five_contribution / 2
+    )
+    with pytest.raises(ValueError, match="nonnegative"):
+        evaluate_refined_fourth_order_bound(
+            constants, 144, 116, d5_site_override=Fraction(-1)
+        )
+    with pytest.raises(ValueError, match="cannot exceed"):
+        evaluate_refined_fourth_order_bound(
+            constants,
+            144,
+            116,
+            d5_site_override=constants.d5_site + 1,
+        )
+
+
 def test_colored_unit_cell_canonicalization_merges_translates() -> None:
     registry = CoordinateRegistry()
     left = symplectic_pauli_from_coordinates(

@@ -19,6 +19,7 @@ from .resources import (
     three_l_path_resources,
 )
 from .su2clusters import three_l_path_fragments
+from .support_groups import decode_d5_gzip, verify_d5_payload
 
 
 EXPECTED_NORMALIZATION = "(XX+YY+ZZ)/4"
@@ -26,6 +27,15 @@ EXPECTED_NORMALIZATION = "(XX+YY+ZZ)/4"
 
 @dataclass(frozen=True)
 class D4SidecarVerification:
+    site_bound: Fraction
+    coefficients: dict[SymplecticPauli, RationalInterval]
+    term_count: int
+    group_count: int
+    max_group_size: int
+
+
+@dataclass(frozen=True)
+class D5SidecarVerification:
     site_bound: Fraction
     coefficients: dict[SymplecticPauli, RationalInterval]
     term_count: int
@@ -111,6 +121,42 @@ def _verify_d4_sidecar(
         coefficients=coefficients,
         term_count=len(paulis),
         group_count=len(groups),
+        max_group_size=max_group_size,
+    )
+
+
+def _verify_d5_sidecar(
+    certificate_path: Path,
+    candidate: dict[str, object],
+) -> D5SidecarVerification:
+    metadata = candidate["d5_certificate"]
+    root = certificate_path.resolve().parent
+    sidecar_path = (root / str(metadata["path"])).resolve()
+    if sidecar_path.parent != root:
+        raise ValueError("D5 sidecar path escapes certificate directory")
+    raw = sidecar_path.read_bytes()
+    if hashlib.sha256(raw).hexdigest() != str(metadata["sha256"]):
+        raise ValueError("D5 sidecar digest mismatch")
+    payload = decode_d5_gzip(raw)
+    regenerated = verify_d5_payload(payload)
+    max_group_size = max(
+        (len(group.term_indices) for group in regenerated.groups),
+        default=0,
+    )
+    if len(regenerated.paulis) != int(metadata["term_count"]):
+        raise ValueError("D5 term count mismatch")
+    if len(regenerated.groups) != int(metadata["group_count"]):
+        raise ValueError("D5 group count mismatch")
+    if max_group_size != int(metadata["max_group_size"]):
+        raise ValueError("D5 maximum group size mismatch")
+    site_bound = regenerated.bound / 4
+    if site_bound != _fraction(metadata["site_norm_upper"]):
+        raise ValueError("D5 main-certificate bound mismatch")
+    return D5SidecarVerification(
+        site_bound=site_bound,
+        coefficients=dict(zip(regenerated.paulis, regenerated.coefficients)),
+        term_count=len(regenerated.paulis),
+        group_count=len(regenerated.groups),
         max_group_size=max_group_size,
     )
 
@@ -362,15 +408,21 @@ def _verify_v3(
         raise ValueError("published baseline group count mismatch")
 
     candidate = data["candidate"]
-    if (
-        candidate["formula"] != "five_copy_suzuki_fourth_order"
-        or candidate["proof_method"]
-        != (
-            "local_log_E5_grouped_D4_plus_E7_majorant"
-            "_plus_exact_generator_tail"
-        )
-    ):
+    legacy_method = (
+        "local_log_E5_grouped_D4_plus_E7_majorant"
+        "_plus_exact_generator_tail"
+    )
+    d5_method = (
+        "local_log_E5_grouped_D4_D5_plus_E7_majorant"
+        "_plus_exact_generator_tail"
+    )
+    if candidate["formula"] != "five_copy_suzuki_fourth_order" or candidate[
+        "proof_method"
+    ] not in {legacy_method, d5_method}:
         raise ValueError("candidate structure mismatch")
+    has_d5 = "d5_certificate" in candidate
+    if has_d5 != (candidate["proof_method"] == d5_method):
+        raise ValueError("candidate D5 proof method and sidecar disagree")
     d4_verification = _verify_d4_sidecar(
         certificate_path,
         candidate,
@@ -385,6 +437,9 @@ def _verify_v3(
         > int(d4_metadata["max_group_size"])
     ):
         raise ValueError("D4 maximum group size mismatch")
+    d5_verification = (
+        _verify_d5_sidecar(certificate_path, candidate) if has_d5 else None
+    )
     candidate_steps = int(candidate["steps"])
     candidate_error = _fraction(candidate["global_error_upper"])
     previous_error = _fraction(candidate["previous_step_error_upper"])
@@ -409,6 +464,14 @@ def _verify_v3(
     )
     if _fraction(contributions["degree4"]) != expected_degree_four:
         raise ValueError("candidate grouped D4 contribution mismatch")
+    if d5_verification is not None:
+        expected_degree_five = (
+            Fraction(n_sites)
+            * d5_verification.site_bound
+            / (6 * candidate_steps**5)
+        )
+        if _fraction(contributions["degree5"]) != expected_degree_five:
+            raise ValueError("candidate grouped D5 contribution mismatch")
 
     claimed = data["claimed_resources"]
     baseline_bonds = published_groups * n_sites // 2
@@ -463,17 +526,43 @@ def _verify_v3(
             n_sites,
             candidate_steps,
             d4_site_override=d4_verification.site_bound,
+            d5_site_override=(
+                d5_verification.site_bound
+                if d5_verification is not None
+                else None
+            ),
         )
         rebuilt_previous = evaluate_refined_fourth_order_bound(
             constants,
             n_sites,
             candidate_steps - 1,
             d4_site_override=d4_verification.site_bound,
+            d5_site_override=(
+                d5_verification.site_bound
+                if d5_verification is not None
+                else None
+            ),
         )
         if rebuilt.global_error_bound != candidate_error:
             raise ValueError("deep candidate bound regeneration mismatch")
         if rebuilt_previous.global_error_bound != previous_error:
             raise ValueError("deep candidate minimality regeneration mismatch")
+        if d5_verification is not None:
+            from .cubic_field import fourth_order_suzuki_cubic_stages
+            from .cubic_local import exact_d5_density, exact_log_e5_density
+
+            exact_stages = fourth_order_suzuki_cubic_stages(4)
+            registry, exact_e5 = exact_log_e5_density(exact_stages)
+            exact_d5 = exact_d5_density(registry, exact_e5)
+            d5_root = cube_root_four_interval(
+                int(candidate["d5_certificate"]["coefficient_interval_decimal_digits"])
+            )
+            regenerated_d5 = {
+                pauli: coefficient.enclose(d5_root)
+                for pauli, coefficient in exact_d5.items()
+            }
+            if regenerated_d5 != d5_verification.coefficients:
+                raise ValueError("deep D5 coefficient regeneration mismatch")
         deep_verified = True
 
     ratio = Fraction(published_groups, candidate_groups)
@@ -484,7 +573,7 @@ def _verify_v3(
         raise ValueError("global twofold claim mismatch")
     if bool(data["claims"]["global_fourfold_target_met"]) != (ratio >= 4):
         raise ValueError("global fourfold claim mismatch")
-    return {
+    result = {
         "valid": True,
         "verification_level": "deep" if deep_verified else "fast",
         "deep_proof_regenerated": deep_verified,
@@ -505,6 +594,16 @@ def _verify_v3(
         "global_twofold_target_met": ratio >= 2,
         "global_fourfold_target_met": ratio >= 4,
     }
+    if d5_verification is not None:
+        result.update(
+            {
+                "d5_site_norm_upper": str(d5_verification.site_bound),
+                "d5_term_count": d5_verification.term_count,
+                "d5_group_count": d5_verification.group_count,
+                "d5_max_group_size": d5_verification.max_group_size,
+            }
+        )
+    return result
 
 
 def verify_certificate(
