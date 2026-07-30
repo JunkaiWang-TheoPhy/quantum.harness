@@ -146,17 +146,18 @@ def canonicalize_cubic_density(
     return result
 
 
-def exact_log_e5_density(
-    stages: Sequence[CubicStage],
-) -> tuple[CoordinateRegistry, CubicTerms]:
-    """Return the exact fifth-degree logarithm density."""
-
-    logarithm = cubic_formula_log_series(stages, 5)
-    evaluator = SymplecticDyadicLocalDensityEvaluator(shared_coordinates=True)
+def _exact_log_density_from_words(
+    logarithm: CubicWordSeries,
+    evaluator: SymplecticDyadicLocalDensityEvaluator,
+    degree: int,
+    *,
+    progress: Callable[[int, int, int], None] | None = None,
+) -> CubicTerms:
     registry = evaluator.registries[0]
     result: CubicTerms = {}
-    denominator = 5 * (1 << evaluator.denominator_exponent((0,) * 5))
-    for word, word_coefficient in logarithm[5].items():
+    words = logarithm[degree]
+    denominator = degree * (1 << evaluator.denominator_exponent((0,) * degree))
+    for index, (word, word_coefficient) in enumerate(words.items(), start=1):
         for raw_pauli, numerator in evaluator.evaluate(word).items():
             pauli = canonicalize_symplectic_unit_cell(registry, raw_pauli)
             _add_term(
@@ -164,7 +165,24 @@ def exact_log_e5_density(
                 pauli,
                 word_coefficient * Fraction(numerator, denominator),
             )
-    return registry, result
+        evaluator.cache.pop(word, None)
+        if progress is not None:
+            progress(degree, index, len(words))
+    return result
+
+
+def exact_log_e5_density(
+    stages: Sequence[CubicStage],
+) -> tuple[CoordinateRegistry, CubicTerms]:
+    """Return the exact fifth-degree logarithm density."""
+
+    logarithm = cubic_formula_log_series(stages, 5)
+    evaluator = SymplecticDyadicLocalDensityEvaluator(shared_coordinates=True)
+    return evaluator.registries[0], _exact_log_density_from_words(
+        logarithm,
+        evaluator,
+        5,
+    )
 
 
 def exact_log_e5_e7_densities(
@@ -183,24 +201,21 @@ def exact_log_e5_e7_densities(
     evaluator = SymplecticDyadicLocalDensityEvaluator(shared_coordinates=True)
     registry = evaluator.registries[0]
 
-    def evaluate_degree(degree: int) -> CubicTerms:
-        result: CubicTerms = {}
-        words = logarithm[degree]
-        denominator = degree * (1 << evaluator.denominator_exponent((0,) * degree))
-        for index, (word, word_coefficient) in enumerate(words.items(), start=1):
-            for raw_pauli, numerator in evaluator.evaluate(word).items():
-                pauli = canonicalize_symplectic_unit_cell(registry, raw_pauli)
-                _add_term(
-                    result,
-                    pauli,
-                    word_coefficient * Fraction(numerator, denominator),
-                )
-            evaluator.cache.pop(word, None)
-            if progress is not None:
-                progress(degree, index, len(words))
-        return result
-
-    return registry, evaluate_degree(5), evaluate_degree(7)
+    return (
+        registry,
+        _exact_log_density_from_words(
+            logarithm,
+            evaluator,
+            5,
+            progress=progress,
+        ),
+        _exact_log_density_from_words(
+            logarithm,
+            evaluator,
+            7,
+            progress=progress,
+        ),
+    )
 
 
 def cubic_fragment_adjoint(
