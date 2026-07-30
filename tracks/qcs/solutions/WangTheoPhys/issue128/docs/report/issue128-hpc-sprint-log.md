@@ -55,7 +55,7 @@
 | exact D6 early-result lane | `23044494` | 9 CPU、32 GiB、3:30:00 | 无；08:15 deadline |
 | exact D6 extractor | `23044520` | 9 CPU、32 GiB、0:30:00 | `afterok:23044494`；08:15 deadline |
 | exact D6 stage array | `23044609` | 每单元 9 CPU、32 GiB、2:30:00 | 无；31 路；08:15 deadline |
-| exact D6 array reducer | `23044642` | 26 CPU、96 GiB、1:00:00 | `afterok:23044609`；08:15 deadline |
+| exact D6 array reducer | `23044651` | 26 CPU、96 GiB、1:00:00 | `afterok:23044609`；08:32 deadline |
 
 数组最初以 16 路并发启动；确认账号/QOS允许后，用 Slurm 正常调度接口把 `ArrayTaskThrottle` 提升到 31。所有剩余单元随后进入 RUNNING；调度和授权仍由集群控制器执行。
 
@@ -88,7 +88,9 @@ D6 majorant，它只能在独立 artifact 校验与 fast/deep 接入后形成下
   增长估计，3:30 上限存在风险。因此在不取消单体与 D8 生产的前提下，补交
   31 路 order-6 stage contribution 阵列 `23044609`。它复用已通过 smoke 的
   hash-bound shard 契约，只把截断阶数从 8 改为 6；所有 31 个单元立即进入
-  RUNNING。`23044642` 仅在全阵列成功后做正序/逆序一致的精确归并。
+  RUNNING。`23044651` 仅在全阵列成功后做正序/逆序一致的精确归并。原占位
+  `23044642` 因 08:15 deadline 无法在线延后而在 PENDING 状态取消；它从未运行、
+  未产生输出。替代作业沿用同一 `afterok:23044609` 依赖，并把硬截止设为 08:32。
 - 远端 `23044196` 的 deep verifier 本身通过，但整作业以 pytest exit 1
   结束：五个 delivery-package 测试因远端同步目录没有可用 Git 元数据而失败，
   另一个既有慢测试的 symplectic 数值与当前发现值不一致。该失败被保留为
