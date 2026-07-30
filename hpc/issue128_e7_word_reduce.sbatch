@@ -12,6 +12,7 @@
 #SBATCH --error=results/slurm-%x-%j.err
 set -euo pipefail
 : "${ISSUE128_RUN_ID:?}"
+export ISSUE128_SHARD_COUNT="${ISSUE128_SHARD_COUNT:-16}"
 export PYTHONHASHSEED=0 OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
 ROOT="${SLURM_SUBMIT_DIR:?}"
 ISSUE="$ROOT/tracks/qcs/solutions/WangTheoPhys/issue128"
@@ -19,4 +20,4 @@ export PYTHONPATH="$ISSUE/src${PYTHONPATH:+:$PYTHONPATH}"
 OUT="$ROOT/results/$ISSUE128_RUN_ID/reduced"
 mkdir -p "$OUT"
 cd "$ISSUE"
-"$ROOT/.venv/bin/python" -u scripts/reduce_e7_word_shards.py --input-root "$ROOT/results/$ISSUE128_RUN_ID/words" --shard-count 16 --output "$OUT/degree-6.json.gz" --parent "$OUT/word-parent.json" --summary "$OUT/summary.json"
+"$ROOT/.venv/bin/python" -u scripts/reduce_e7_word_shards.py --input-root "$ROOT/results/$ISSUE128_RUN_ID/words" --shard-count "$ISSUE128_SHARD_COUNT" --output "$OUT/degree-6.json.gz" --parent "$OUT/word-parent.json" --summary "$OUT/summary.json"
