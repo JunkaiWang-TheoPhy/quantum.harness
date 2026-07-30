@@ -56,6 +56,7 @@
 | exact D6 extractor | `23044520` | 9 CPU、32 GiB、0:30:00 | `afterok:23044494`；08:15 deadline |
 | exact D6 stage array | `23044609` | 每单元 9 CPU、32 GiB、2:30:00 | 无；31 路；08:15 deadline |
 | exact D6 array reducer | `23044651` | 26 CPU、96 GiB、1:00:00 | `afterok:23044609`；08:32 deadline |
+| D6/D8 cross-order check | `23044659` | 17 CPU、64 GiB、0:30:00 | stages 25--30；已完成 |
 
 数组最初以 16 路并发启动；确认账号/QOS允许后，用 Slurm 正常调度接口把 `ArrayTaskThrottle` 提升到 31。所有剩余单元随后进入 RUNNING；调度和授权仍由集群控制器执行。
 
@@ -95,6 +96,10 @@ D6 majorant，它只能在独立 artifact 校验与 fast/deep 接入后形成下
   结束：五个 delivery-package 测试因远端同步目录没有可用 Git 元数据而失败，
   另一个既有慢测试的 symplectic 数值与当前发现值不一致。该失败被保留为
   环境/测试证据，不会冒充全绿；本地主证书的 fast/deep 与干净克隆复核仍独立通过。
+- `23044659` 在 15 分 49 秒内逐项比较了两条独立生产路径。D6 阵列与 D8
+  阵列在 stages 25--30 的 degree-6 规范 Pauli 系数图完全相同；比较覆盖的
+  单 stage D6 项数依次为 710,298、446,094、150,858、2,028、48、0。
+  比较对象是精确三次域系数映射，不只是最终 l1 小数。
 
 ## 制品契约
 
