@@ -40,6 +40,8 @@
 
 24 个 matching-order discovery 单元 `23044214` 运行 34 分钟后仍为 0 complete。为避免它们在一小时上限整体 timeout，并把调度窗口留给精确 D8 fallback，该非可信数组被取消。它们的 Slurm 日志和 running manifest 被保留；未把部分状态当作排序结果。
 
+随后在本地利用 matching 的平移/旋转重标号对称性做了降维复核。24 个排列的 order-4 指标严格形成三个 8 元轨道，代表 permutation indices 为 0、2、3。冻结顺序 index 0 的 D4/D5 coefficient-l1 分别为约 20.160966/95.679103；另外两轨道为约 20.664900/100.103 与 20.664900/100.125。冻结顺序在两个已测阶数均占优，因此停止 order-6 permutation 路线，不把更多算力投向较差候选。
+
 ## 制品契约
 
 每个 `stage-XX` 目录包含：
