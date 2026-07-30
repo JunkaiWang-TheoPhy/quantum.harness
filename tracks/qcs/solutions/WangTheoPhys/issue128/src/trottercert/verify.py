@@ -198,6 +198,12 @@ def _verify_d6_sidecar(
         raise ValueError("D6 coefficient interval precision mismatch")
     if verified.parent_sha256 != str(metadata["parent_sha256"]):
         raise ValueError("D6 parent digest mismatch")
+    if "parent_path" in metadata:
+        parent_path = (root / str(metadata["parent_path"])).resolve()
+        if parent_path.parent != root:
+            raise ValueError("D6 parent path escapes certificate directory")
+        if hashlib.sha256(parent_path.read_bytes()).hexdigest() != verified.parent_sha256:
+            raise ValueError("D6 parent artifact digest mismatch")
     if verified.cell_l1_upper != _fraction(metadata["cell_norm_upper"]):
         raise ValueError("D6 cell bound mismatch")
     if verified.site_l1_upper != _fraction(metadata["site_norm_upper"]):

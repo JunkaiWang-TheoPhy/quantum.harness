@@ -19,6 +19,7 @@ from trottercert.refined_error import (
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "certificates" / "issue128-d5-integrated-certificate.json"
 D6 = ROOT / "certificates" / "issue128-d6-exact.json.gz"
+PARENT = ROOT / "certificates" / "issue128-d6-parent.json"
 OUTPUT = ROOT / "certificates" / "issue128-d6-integrated-certificate.json"
 
 
@@ -92,6 +93,11 @@ def build() -> dict[str, object]:
         "cell_norm_upper": _pair(d6.cell_l1_upper),
         "site_norm_upper": _pair(d6.site_l1_upper),
     }
+    if PARENT.is_file():
+        parent_sha256 = hashlib.sha256(PARENT.read_bytes()).hexdigest()
+        if parent_sha256 != d6.parent_sha256:
+            raise ValueError("D6 parent artifact digest mismatch")
+        record["d6_certificate"]["parent_path"] = PARENT.name
     record["steps"] = candidate_steps
     record["group_exponentials"] = candidate_groups
     record["contributions"] = {

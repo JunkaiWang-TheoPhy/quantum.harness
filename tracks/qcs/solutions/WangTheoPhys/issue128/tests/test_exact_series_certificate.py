@@ -115,6 +115,9 @@ def test_d6_main_sidecar_binding_rejects_digest_corruption(
     tmp_path: Path,
 ) -> None:
     monolithic = _payload()
+    parent = tmp_path / "parent.json"
+    parent.write_text('{"kind":"test-parent"}\n')
+    parent_sha256 = hashlib.sha256(parent.read_bytes()).hexdigest()
     payload = {
         "schema_version": 1,
         "kind": "issue128_exact_right_generator_degree",
@@ -127,7 +130,7 @@ def test_d6_main_sidecar_binding_rejects_digest_corruption(
         "terms": monolithic["series"][1],
         "cell_pauli_l1_upper": monolithic["cell_pauli_l1_upper"],
         "site_pauli_l1_upper": monolithic["site_pauli_l1_upper"],
-        "parent_sha256": "b" * 64,
+        "parent_sha256": parent_sha256,
     }
     sidecar = tmp_path / "d6.json.gz"
     main = tmp_path / "main.json"
@@ -138,7 +141,8 @@ def test_d6_main_sidecar_binding_rejects_digest_corruption(
         "d6_certificate": {
             "path": sidecar.name,
             "sha256": hashlib.sha256(raw).hexdigest(),
-            "parent_sha256": "b" * 64,
+            "parent_sha256": parent_sha256,
+            "parent_path": parent.name,
             "source_commit": "abc123",
             "coefficient_interval_decimal_digits": 12,
             "term_count": 1,
@@ -148,6 +152,9 @@ def test_d6_main_sidecar_binding_rejects_digest_corruption(
     }
     verified = _verify_d6_sidecar(main, candidate)
     assert verified.artifact.term_count == 1
+    parent.write_text('{"kind":"tampered"}\n')
+    with pytest.raises(ValueError, match="D6 parent artifact digest"):
+        _verify_d6_sidecar(main, candidate)
     candidate["d6_certificate"]["sha256"] = "0" * 64
     with pytest.raises(ValueError, match="D6 sidecar digest"):
         _verify_d6_sidecar(main, candidate)
