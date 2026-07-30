@@ -32,8 +32,13 @@
 | 31-stage exact D8 array | `23044178` | 每单元 17 CPU、64 GiB、4:30:00 | 无 |
 | deep verifier + 全测试 | `23044196` | 9 CPU、32 GiB、4:30:00 | 无 |
 | exact reducer | `23044212` | 26 CPU、96 GiB、1:15:00 | `afterok:23044178` |
+| cancellation-aware exact D8 fallback | `23044280` | 63 CPU、240 GiB、4:15:00 | 无 |
 
 数组最初以 16 路并发启动；确认账号/QOS允许后，用 Slurm 正常调度接口把 `ArrayTaskThrottle` 提升到 31。所有剩余单元随后进入 RUNNING；调度和授权仍由集群控制器执行。
+
+另一路单遍精确递推在每个 stage 后先合并所有贡献的相同 Pauli 项，再继续共轭，用于降低 31 个独立分片在早期 stage 的重复工作。其本地 order-4 结果为 74,448 个精确项；冻结区间侧车的 75,324 项包含依赖信息丢失后保留的 ghost terms，因此不是矛盾。更强的 order-5 检查得到 605,832 项，与冻结精确 D5 侧车完全一致；本地耗时 1385.7 秒，峰值 RSS 约 1.47 GiB。
+
+24 个 matching-order discovery 单元 `23044214` 运行 34 分钟后仍为 0 complete。为避免它们在一小时上限整体 timeout，并把调度窗口留给精确 D8 fallback，该非可信数组被取消。它们的 Slurm 日志和 running manifest 被保留；未把部分状态当作排序结果。
 
 ## 制品契约
 
