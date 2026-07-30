@@ -373,6 +373,7 @@ def evaluate_refined_fourth_order_bound(
     *,
     d4_site_override: Fraction | None = None,
     d5_site_override: Fraction | None = None,
+    d6_site_override: Fraction | None = None,
 ) -> RefinedFourthOrderBound:
     if d4_site_override is not None:
         if d4_site_override < 0:
@@ -387,6 +388,13 @@ def evaluate_refined_fourth_order_bound(
         if d5_site_override > constants.d5_site:
             raise ValueError(
                 "D5 site-density override cannot exceed the existing bound"
+            )
+    if d6_site_override is not None:
+        if d6_site_override < 0:
+            raise ValueError("D6 site-density override must be nonnegative")
+        if d6_site_override > constants.d6_site:
+            raise ValueError(
+                "D6 site-density override cannot exceed the existing bound"
             )
 
     def contribution(degree: int, density: Fraction) -> Fraction:
@@ -410,7 +418,14 @@ def evaluate_refined_fourth_order_bound(
             else d5_site_override
         ),
     )
-    c6 = contribution(6, constants.d6_site)
+    c6 = contribution(
+        6,
+        (
+            constants.d6_site
+            if d6_site_override is None
+            else d6_site_override
+        ),
+    )
     c7 = contribution(7, constants.d7_site)
     tail = Fraction(n_sites) * defect_tail_site_bound(constants.stages, steps)
     return RefinedFourthOrderBound(
