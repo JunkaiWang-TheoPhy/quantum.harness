@@ -5,6 +5,7 @@ import argparse
 from datetime import datetime, timezone
 from fractions import Fraction
 import json
+import os
 from pathlib import Path
 import resource
 import sys
@@ -39,11 +40,13 @@ def main() -> None:
     parser.add_argument("--manifest", type=Path, required=True)
     arguments = parser.parse_args()
     started = time.perf_counter()
+    extractor_commit = os.environ.get("ISSUE128_EXTRACTOR_COMMIT", "unrecorded")
     running = {
         "schema_version": 1,
         "kind": "issue128_exact_degree_extract_manifest",
         "status": "running",
         "degree": arguments.degree,
+        "extractor_commit": extractor_commit,
         "started_at": datetime.now(timezone.utc).isoformat(),
     }
     write_manifest_atomic(arguments.manifest, running)
