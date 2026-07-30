@@ -5,7 +5,10 @@ from fractions import Fraction
 import pytest
 
 from trottercert.cubic_field import Cubic
-from trottercert.exact_series_certificate import verify_exact_monolithic_series
+from trottercert.exact_series_certificate import (
+    verify_exact_degree_payload,
+    verify_exact_monolithic_series,
+)
 from trottercert.hpc_artifacts import coordinate_terms_to_json
 from trottercert.intervals import cube_root_four_interval
 
@@ -63,4 +66,43 @@ def test_exact_monolithic_series_rejects_source_or_bound_corruption() -> None:
             expected_order=1,
             expected_source_commit="abc123",
             coefficient_interval_decimal_digits=12,
+        )
+
+
+def test_exact_degree_payload_recomputes_bound_and_rejects_corruption() -> None:
+    monolithic = _payload()
+    payload = {
+        "schema_version": 1,
+        "kind": "issue128_exact_right_generator_degree",
+        "formula_id": monolithic["formula_id"],
+        "source_commit": monolithic["source_commit"],
+        "stage_count": monolithic["stage_count"],
+        "degree": 1,
+        "coefficient_interval_decimal_digits": 12,
+        "term_count": 1,
+        "terms": monolithic["series"][1],
+        "cell_pauli_l1_upper": monolithic["cell_pauli_l1_upper"],
+        "site_pauli_l1_upper": monolithic["site_pauli_l1_upper"],
+        "parent_sha256": "a" * 64,
+    }
+    verified = verify_exact_degree_payload(
+        payload,
+        expected_degree=1,
+        expected_source_commit="abc123",
+    )
+    assert verified.term_count == 1
+    payload["term_count"] = 2
+    with pytest.raises(ValueError, match="term count"):
+        verify_exact_degree_payload(
+            payload,
+            expected_degree=1,
+            expected_source_commit="abc123",
+        )
+    payload["term_count"] = 1
+    payload["cell_pauli_l1_upper"] = [0, 1]
+    with pytest.raises(ValueError, match="cell Pauli-l1"):
+        verify_exact_degree_payload(
+            payload,
+            expected_degree=1,
+            expected_source_commit="abc123",
         )

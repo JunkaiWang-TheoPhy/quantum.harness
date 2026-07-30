@@ -25,6 +25,17 @@ class ExactSeriesVerification:
     highest_degree: CoordinateCubicTerms
 
 
+@dataclass(frozen=True)
+class ExactDegreeVerification:
+    degree: int
+    source_commit: str
+    term_count: int
+    cell_l1_upper: Fraction
+    site_l1_upper: Fraction
+    terms: CoordinateCubicTerms
+    parent_sha256: str
+
+
 def _canonical_json_bytes(payload: object) -> bytes:
     return (
         json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n"
@@ -123,4 +134,62 @@ def verify_exact_monolithic_series(
         cell_l1_upper=cell_l1,
         site_l1_upper=cell_l1 / 4,
         highest_degree=highest_degree,
+    )
+
+
+def verify_exact_degree_payload(
+    payload: Mapping[str, object],
+    *,
+    expected_degree: int,
+    expected_source_commit: str,
+) -> ExactDegreeVerification:
+    if payload.get("schema_version") != 1:
+        raise ValueError("unsupported exact-degree schema")
+    if payload.get("kind") != "issue128_exact_right_generator_degree":
+        raise ValueError("unexpected exact-degree artifact kind")
+    if payload.get("formula_id") != "five_copy_suzuki_fourth_order_exact_cubic":
+        raise ValueError("exact-degree formula mismatch")
+    if payload.get("stage_count") != 31:
+        raise ValueError("exact-degree stage count mismatch")
+    if payload.get("degree") != expected_degree:
+        raise ValueError("exact-degree index mismatch")
+    if payload.get("source_commit") != expected_source_commit:
+        raise ValueError("exact-degree source commit mismatch")
+    digits = payload.get("coefficient_interval_decimal_digits")
+    if isinstance(digits, bool) or not isinstance(digits, int) or digits < 1:
+        raise ValueError("exact-degree interval precision is invalid")
+    raw_terms = payload.get("terms")
+    terms = coordinate_decode_terms(raw_terms)
+    if coordinate_terms_to_json(terms) != raw_terms:
+        raise ValueError("exact-degree terms are not canonically sorted")
+    if payload.get("term_count") != len(terms):
+        raise ValueError("exact-degree term count mismatch")
+    root = cube_root_four_interval(digits)
+    cell_l1 = sum(
+        (coefficient.enclose(root).abs_upper() for coefficient in terms.values()),
+        Fraction(),
+    )
+    if cell_l1 != _fraction_pair(
+        payload.get("cell_pauli_l1_upper"), field="cell Pauli-l1 upper"
+    ):
+        raise ValueError("exact-degree cell Pauli-l1 mismatch")
+    if cell_l1 / 4 != _fraction_pair(
+        payload.get("site_pauli_l1_upper"), field="site Pauli-l1 upper"
+    ):
+        raise ValueError("exact-degree site Pauli-l1 mismatch")
+    parent_sha256 = payload.get("parent_sha256")
+    if (
+        not isinstance(parent_sha256, str)
+        or len(parent_sha256) != 64
+        or any(character not in "0123456789abcdef" for character in parent_sha256)
+    ):
+        raise ValueError("exact-degree parent digest is invalid")
+    return ExactDegreeVerification(
+        degree=expected_degree,
+        source_commit=expected_source_commit,
+        term_count=len(terms),
+        cell_l1_upper=cell_l1,
+        site_l1_upper=cell_l1 / 4,
+        terms=terms,
+        parent_sha256=parent_sha256,
     )
