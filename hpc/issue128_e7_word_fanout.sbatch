@@ -17,10 +17,15 @@ set -euo pipefail
 : "${ISSUE128_SOURCE_COMMIT:?}"
 export PYTHONHASHSEED=0 OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
 export ISSUE128_WORKERS_PER_TASK="${ISSUE128_WORKERS_PER_TASK:-17}"
+export ISSUE128_ARRAY_CELL_COUNT="${ISSUE128_ARRAY_CELL_COUNT:-16}"
 export ISSUE128_SHARD_COUNT="${ISSUE128_SHARD_COUNT:-272}"
 
-if (( ISSUE128_WORKERS_PER_TASK * 16 != ISSUE128_SHARD_COUNT )); then
-  printf 'expected shard count = 16 array cells * workers per cell\n' >&2
+if (( ISSUE128_WORKERS_PER_TASK * ISSUE128_ARRAY_CELL_COUNT != ISSUE128_SHARD_COUNT )); then
+  printf 'expected shard count = array cell count * workers per cell\n' >&2
+  exit 2
+fi
+if (( SLURM_ARRAY_TASK_ID >= ISSUE128_ARRAY_CELL_COUNT )); then
+  printf 'array task index exceeds declared array cell count\n' >&2
   exit 2
 fi
 
