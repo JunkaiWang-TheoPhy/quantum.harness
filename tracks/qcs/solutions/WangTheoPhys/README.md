@@ -1,5 +1,15 @@
 # 🔭 WangTheoPhys: machine-certified local-logarithm Trotter bounds
 
+> **Post-freeze update (2026-07-31).** A new D5-integrated certificate now
+> accepts 95 steps and rejects 94, reducing merged group exponentials from
+> 11,791 to 2,851. The exact verified ratio is
+> `11791/2851 = 4.135741844966678...`. See the
+> [technical note](issue128/docs/report/issue128-d5-integrated-note.md),
+> [machine certificate](issue128/certificates/issue128-d5-integrated-certificate.json),
+> and [updated 10-minute talk](issue128/docs/presentation/issue128-10-minute-talk.md).
+> The original ten-file delivery package below remains frozen and independently
+> reproducible at 97 steps; its hashes have not been rewritten.
+
 ## Team
 
 | | |

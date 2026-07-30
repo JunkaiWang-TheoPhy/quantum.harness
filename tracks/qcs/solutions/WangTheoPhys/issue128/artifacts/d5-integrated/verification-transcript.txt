@@ -1,0 +1,51 @@
+Issue 128 D5-integrated verification transcript
+Recorded: 2026-07-31 Asia/Shanghai
+
+FAST VERIFIER
+Command:
+  PYTHONPATH=src python3 scripts/verify.py certificates/issue128-d5-integrated-certificate.json
+Observed summary:
+  valid=true
+  verification_level=fast
+  deep_proof_regenerated=false
+  published_steps=393
+  candidate_steps=95
+  published_group_exponentials=11791
+  candidate_group_exponentials=2851
+  d4_term_count=75324
+  d4_group_count=7576
+  d5_term_count=605832
+  d5_group_count=123106
+  exact_improvement_ratio=11791/2851
+
+DEEP VERIFIER
+Command:
+  /usr/bin/time -l env PYTHONPATH=src python3 scripts/verify.py --deep certificates/issue128-d5-integrated-certificate.json
+Observed summary:
+  valid=true
+  verification_level=deep
+  deep_proof_regenerated=true
+  candidate_steps=95
+  candidate_group_exponentials=2851
+  exact_improvement_ratio=11791/2851
+  real_seconds=167.62
+  maximum_resident_set_bytes=1533149184
+
+NORMAL TEST SUITE
+Command:
+  PYTHONPATH=src /Users/thomasjwang/miniforge3/bin/python3 -m pytest -q
+Observed:
+  100 passed, 11 deselected in 75.78s
+
+FOCUSED D5 CERTIFICATE SUITE
+Command:
+  PYTHONPATH=src python3 -m pytest -q tests/test_d5_integrated_certificate.py
+Observed:
+  3 passed in 8.17s
+
+BOUNDARY AND RESOURCE SUMMARY
+  r=95 error upper = 9.90449140283245055504941836653e-7
+  r=94 error upper = 1.04680611656037056969326568485e-6
+  candidate bond propagators = 205272
+  candidate CNOT upper = 615816
+  control-to-candidate exact ratio = 11791/2851

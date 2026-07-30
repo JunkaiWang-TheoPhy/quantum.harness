@@ -1,0 +1,156 @@
+\documentclass[10pt]{article}
+\usepackage[margin=0.72in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  urlcolor=blue!55!black,
+  linkcolor=blue!55!black,
+  pdftitle={Issue 128 D5-Integrated Machine Certificate},
+  pdfauthor={Junkai Wang (WangTheoPhys)}
+}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.34em}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\title{\textbf{Issue 128: D5-Integrated Machine Certificate}\\
+\large A certified $4.1357418449\times$ resource reduction}
+\author{Junkai Wang (WangTheoPhys)}
+\date{31 July 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+For the unchanged periodic $12\times12$ spin-$\tfrac12$ isotropic Heisenberg
+benchmark at $T=1$ and global operator-norm tolerance $10^{-6}$, a new
+post-freeze certificate accepts 95 fourth-order Suzuki steps and rejects 94.
+The published rigorous control uses 393 steps.  Under the same compilation
+model, merged group exponentials decrease from 11,791 to 2,851, giving the
+exact ratio $11791/2851=4.135741844966678\ldots$.  The improvement integrates
+an exact, SHA-256-bound degree-five Pauli sidecar into the finite-step error
+ledger.  Fast verification, deep coefficient regeneration, adjacent-step
+minimality, and corruption-rejection tests all pass.  No fivefold result is
+claimed.
+\end{abstract}
+
+\section{Pinned comparison and certified resources}
+
+The Hamiltonian, $L=12$, $N=144$, periodic boundary conditions, time, error
+metric, four-matching decomposition, 31-stage five-copy fourth-order Suzuki
+formula, and compiled-cost rules are identical on both sides.  Adjacent stage
+merging gives $G(r)=30r+1$ group exponentials.  Each matching contains 72
+bonds and the common upper-bound model charges three CNOTs per bond
+propagator.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Resource & Published control & D5-integrated & Reduction factor \\
+\midrule
+Trotter steps & 393 & 95 & $393/95$ \\
+Merged group exponentials & 11,791 & 2,851 & $11791/2851$ \\
+Bond propagators & 848,952 & 205,272 & $11791/2851$ \\
+CNOT upper bound & 2,546,856 & 615,816 & $11791/2851$ \\
+\bottomrule
+\end{tabular}
+\caption{Integer resource accounting under one unchanged cost model.}
+\end{table}
+
+Thus the primary resource claim is
+\[
+ \frac{G(393)}{G(95)}=\frac{11791}{2851}
+ =4.13574184496667835847\ldots .
+\]
+Relative to the control this removes 643,680 bond propagators and an upper
+bound of 1,931,040 CNOTs.
+
+\section{Proof refinement}
+
+The frozen schema-v3 result used a verified anticommuting D4 partition but a
+generic D5 majorant.  The new certificate keeps the D4 proof unchanged and
+replaces only that D5 majorant with an exact grouped sidecar.  It contains
+605,832 canonical Pauli coefficients partitioned into 123,106 same-support,
+pairwise-anticommuting groups of size at most ten.  Its exact site-norm upper
+bound is
+\[
+ \frac{44948270001027856175670154896253}
+ {4000000000000000000000000000000}.
+\]
+
+For each group $K_g=\sum_j c_jP_j$, pairwise anticommutation permits the
+outward rational bound
+\[
+ \lVert K_g\rVert\le
+ \sqrt{\sum_j \operatorname{upper}(|c_j|)^2}.
+\]
+The grouping search is untrusted.  The verifier independently checks payload
+canonicality and SHA-256, exact coverage and absence of duplicates, support
+equality, every symplectic anticommutation relation, every outward square-root
+bound, and all metadata copied into the main certificate.
+
+\section{Finite-step ledger and adjacent boundary}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lr@{}}
+\toprule
+Right-generator contribution at $r=95$ & Global upper bound \\
+\midrule
+D4 & $5.7218800760132647\times10^{-7}$ \\
+D5, exact grouped & $3.4853484615103630\times10^{-8}$ \\
+D6 & $1.7893140877453180\times10^{-7}$ \\
+D7 & $2.1921361303553973\times10^{-8}$ \\
+D8 and above, geometric tail & $1.8255487798872918\times10^{-7}$ \\
+\midrule
+Total & $\mathbf{9.9044914028324506\times10^{-7}}$ \\
+\bottomrule
+\end{tabular}
+\caption{Outward-readable decimals projected from exact rational values.}
+\end{table}
+
+All acceptance decisions use exact rational arithmetic, not the displayed
+decimals.  At the adjacent step $r=94$, the same function evaluates to
+$1.0468061165603706\times10^{-6}$, above the tolerance.  Hence 95 is the
+smallest integer accepted by this certificate.
+
+\section{Verification and reproducibility}
+
+Fast verification is suitable for a live demonstration:
+\begin{verbatim}
+PYTHONPATH=src python3 scripts/verify.py \
+  certificates/issue128-d5-integrated-certificate.json
+\end{verbatim}
+It returns \code{valid=true}, \code{candidate\_steps=95},
+\code{candidate\_group\_exponentials=2851},
+\code{d5\_term\_count=605832}, and the exact ratio
+\code{11791/2851}.  Deep verification is invoked with \code{--deep}.  It
+regenerates all D4 and D5 coefficients from the Suzuki formula and requires
+exact interval equality with the two sidecars.  The observed deep run took
+167.62 seconds, used at most 1,533,149,184 bytes of resident memory, and
+returned \code{deep\_proof\_regenerated=true}.  The normal suite reports 100
+passed tests and 11 explicitly deselected slow tests; focused minimality and
+corruption-rejection checks report three passes.
+
+The original ten-file delivery manifest remains frozen at 97 steps and
+$11791/2911$.  It has not been silently rewritten.  The new artifact
+\code{issue128-d5-integrated-certificate.json} is separately reproducible from
+the old certificate and the existing D5 sidecar using
+\code{scripts/build\_d5\_integrated\_certificate.py}.
+
+\section{Fivefold boundary}
+
+Fivefold resource arithmetic requires $r\le78$.  However, the current D4
+contribution alone is approximately $1.259084\times10^{-6}$ at $r=78$, already
+larger than the entire tolerance.  Nonnegative D5--tail contributions can only
+increase the ledger.  Exact-D8 HPC work therefore remains diagnostic: it may
+guide a future proof, but it cannot establish fivefold without a new D4
+tightening.  This report makes no fivefold claim.
+
+\end{document}
