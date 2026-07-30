@@ -1,0 +1,78 @@
+{"kind":"deck","id":"pr/x7i25t","name":"Deck"}
+{"kind":"layout","layoutId":"85b77bc9-655c-4021-a1bf-faa7b6763fe2","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"6b2d22f2-93da-4ed6-a090-b6cb03b2f0ea","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/7u9kse","slide":1,"title":"4.1357418449×","textShapes":3}
+{"kind":"textbox","id":"sh/65kzud0j","slide":1,"name":"Title-3-1","text":"4.1357418449×\nresource reduction","textPreview":"4.1357418449× | resource reduction","textChars":32,"textLines":2,"bbox":[41.33,182.55,992,261.57]}
+{"kind":"textbox","id":"sh/t8bi58zu","slide":1,"name":"Subtitle-4-2","text":"393 → 95 steps\n11,791 → 2,851 merged groups","textPreview":"393 → 95 steps | 11,791 → 2,851 merged groups","textChars":43,"textLines":2,"bbox":[41.33,497.87,598.67,113.41]}
+{"kind":"textbox","id":"sh/872hw3i9","slide":1,"name":"Subtitle-4-3","text":"ISSUE 128 · MACHINE-CERTIFIED","textPreview":"ISSUE 128 · MACHINE-CERTIFIED","textChars":29,"textLines":1,"bbox":[41.33,41.18,598.67,68.15]}
+{"kind":"notes","id":"nt/7u9kse","slide":1,"text":"0:00–0:40。开门见山：同一 Hamiltonian、同一四阶 Suzuki、同一成本口径。机器证书接受 95 步并拒绝 94 步，主资源精确比为 11791/2851。\n\n[Sources]\n- certificates/issue128-d5-integrated-certificate.json"}
+{"kind":"slide","id":"sl/3qe97n","slide":2,"title":"2","textShapes":3}
+{"kind":"textbox","id":"sh/fepcn2dw","slide":2,"name":"Google-Shape-532-p58-2","text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[1184.18,659.24,54.48,25.33]}
+{"kind":"textbox","id":"sh/0fytg7eh","slide":2,"name":"Google-Shape-533-p58-3","text":"Same problem. Same circuit. Tighter proof.","textPreview":"Same problem. Same circuit. Tighter proof.","textChars":42,"textLines":1,"bbox":[41.33,36.12,1197.33,109.97]}
+{"kind":"textbox","id":"sh/1g7upcv2","slide":2,"name":"Content-Placeholder-15-4","text":"Pinned comparison\nEvery physical and compilation choice is held fixed; only the proof is tightened.","textPreview":"Pinned comparison | Every physical and compilation choice is held fixed; only the proof is tightened.","textChars":99,"textLines":2,"bbox":[42.09,111.02,1197.33,106.27]}
+{"kind":"table","id":"tb/zmx0nqtc","slide":2,"name":"Google-Shape-644-p93-5","rows":9,"cols":5,"preview":"Constraint | Published | Certified | Same? | Evidence","bbox":[41.33,236.33,1197.33,412.87]}
+{"kind":"notes","id":"nt/3qe97n","slide":2,"text":"0:40–1:35。强调公平性：没有通过换模型、换容差、换公式或换门数定义得到倍率。资源公式 G(r)=30r+1 在两边一致。\n\n[Sources]\n- certificates/issue128-d5-integrated-certificate.json\n- https://github.com/QuantumBFS/quantum.harness/issues/128"}
+{"kind":"slide","id":"sl/lgd31l","slide":3,"title":"3","textShapes":8}
+{"kind":"textbox","id":"sh/p0nix0fu","slide":3,"name":"Slide-Number-Placeholder-3-2","text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[1184.18,659.24,54.48,25.33]}
+{"kind":"textbox","id":"sh/2xcj25wj","slide":3,"name":"Title-10-3","text":"The gain comes from delaying norm inequalities","textPreview":"The gain comes from delaying norm inequalities","textChars":46,"textLines":1,"bbox":[41.33,36.12,1197.33,109.97]}
+{"kind":"shape","id":"sh/3yl0vaxo","slide":3,"name":"Google-Shape-2259-p159-4","bbox":[35.46,354.2,1285.61,0.03]}
+{"kind":"shape","id":"sh/gvu10ved","slide":3,"name":"Google-Shape-2260-p159-5","bbox":[35.46,348.58,11.24,11.24]}
+{"kind":"shape","id":"sh/hw3it0fy","slide":3,"name":"Google-Shape-2261-p159-6","bbox":[446.38,348.58,11.24,11.24]}
+{"kind":"shape","id":"sh/u9cjylw7","slide":3,"name":"Google-Shape-2262-p159-7","bbox":[858.38,348.58,11.24,11.24]}
+{"kind":"textbox","id":"sh/ful0rqxs","slide":3,"name":"Content-Placeholder-15-8","text":"OLD PROOF","textPreview":"OLD PROOF","textChars":9,"textLines":1,"bbox":[41.33,298.51,169.33,27.55]}
+{"kind":"textbox","id":"sh/0ry1czeh","slide":3,"name":"Content-Placeholder-15-9","text":"LOCAL LOG","textPreview":"LOCAL LOG","textChars":9,"textLines":1,"bbox":[450.83,298.51,169.33,27.55]}
+{"kind":"textbox","id":"sh/1s725kf2","slide":3,"name":"Content-Placeholder-15-10","text":"CERTIFY","textPreview":"CERTIFY","textChars":7,"textLines":1,"bbox":[863.33,298.51,169.33,27.55]}
+{"kind":"textbox","id":"sh/p0nmlo3u","slide":3,"name":"Text-Placeholder-16-11","text":"Merge first\nKeep exact algebra, canonicalize translations, combine equal Paulis.","textPreview":"Merge first | Keep exact algebra, canonicalize translations, combine equal Paulis.","textChars":80,"textLines":2,"bbox":[453.24,401.33,331.35,166.54]}
+{"kind":"textbox","id":"sh/4zelsjm9","slide":3,"name":"Text-Placeholder-16-12","text":"Expand early\nTake absolute values term by term; cancellations disappear.","textPreview":"Expand early | Take absolute values term by term; cancellations disappear.","textChars":72,"textLines":2,"bbox":[41.98,401.33,331.35,166.54]}
+{"kind":"textbox","id":"sh/3y54jel4","slide":3,"name":"Text-Placeholder-16-13","text":"Close rigorously\nAnticommuting groups plus an outward rational tail.","textPreview":"Close rigorously | Anticommuting groups plus an outward rational tail.","textChars":68,"textLines":2,"bbox":[858.57,401.33,331.35,166.54]}
+{"kind":"notes","id":"nt/lgd31l","slide":3,"text":"1:35–2:35。解释核心思想：不是把同一个程序跑快，而是把三角不等式推迟到具体 Pauli 合并之后。搜索只提议分组，verifier 决定是否接受。\n\n[Sources]\n- docs/report/issue128-d5-integrated-note.md\n- certificates/issue128-d4-groups.json\n- certificates/issue128-d5-groups.json.gz"}
+{"kind":"slide","id":"sl/f07qcx","slide":4,"title":"4","textShapes":9}
+{"kind":"shape","id":"sh/9wrutw3i","slide":4,"name":"Rounded-Rectangle-5-1","bbox":[41.33,317.33,374.67,312]}
+{"kind":"shape","id":"sh/mtgvih47","slide":4,"name":"Rounded-Rectangle-6-2","bbox":[452.67,317.33,374.67,312]}
+{"kind":"shape","id":"sh/nu9crmls","slide":4,"name":"Rounded-Rectangle-7-3","bbox":[864.28,317.33,374.67,312]}
+{"kind":"textbox","id":"sh/wzidobm9","slide":4,"name":"Slide-Number-Placeholder-1-4","text":"4","textPreview":"4","textChars":1,"textLines":1,"bbox":[1184.18,659.24,54.48,25.33]}
+{"kind":"textbox","id":"sh/x0rexw3u","slide":4,"name":"Title-2-5","text":"Two Pauli sidecars carry the tightening","textPreview":"Two Pauli sidecars carry the tightening","textChars":39,"textLines":1,"bbox":[41.33,36.12,1197.33,109.97]}
+{"kind":"textbox","id":"sh/ax0vm143","slide":4,"name":"Content-Placeholder-9-6","text":"D4 terms\n7,576 groups","textPreview":"D4 terms | 7,576 groups","textChars":21,"textLines":2,"bbox":[73.74,514.5,309.67,86]}
+{"kind":"textbox","id":"sh/by9cv6lo","slide":4,"name":"Content-Placeholder-10-7","text":"maximum\ngroup size","textPreview":"maximum | group size","textChars":18,"textLines":2,"bbox":[896.78,514.5,309.67,86]}
+{"kind":"textbox","id":"sh/k32dsb25","slide":4,"name":"Content-Placeholder-11-8","text":"D5 terms\n123,106 groups","textPreview":"D5 terms | 123,106 groups","textChars":23,"textLines":2,"bbox":[485.17,514.5,309.67,86]}
+{"kind":"textbox","id":"sh/lobe1g3q","slide":4,"name":"Content-Placeholder-9-9","text":"75,324","textPreview":"75,324","textChars":6,"textLines":1,"bbox":[73.74,360,308.67,142.71]}
+{"kind":"textbox","id":"sh/xora10vi","slide":4,"name":"Content-Placeholder-9-10","text":"605,832","textPreview":"605,832","textChars":7,"textLines":1,"bbox":[484.3,360,308.67,142.71]}
+{"kind":"textbox","id":"sh/cnitsvux","slide":4,"name":"Content-Placeholder-9-11","text":"≤ 10","textPreview":"≤ 10","textChars":4,"textLines":1,"bbox":[898.94,360,308.67,142.71]}
+{"kind":"textbox","id":"sh/bm9szqdc","slide":4,"name":"Content-Placeholder-15-12","text":"Proof-carrying objects\nEach payload is SHA-256-bound; coverage, support and pairwise anticommutation are independently checked.","textPreview":"Proof-carrying objects | Each payload is SHA-256-bound; coverage, support and pairwise anticommutation are independently checked.","textChars":127,"textLines":2,"bbox":[41.33,119.51,1197.33,167.92]}
+{"kind":"notes","id":"nt/f07qcx","slide":4,"text":"2:35–4:15。D4 与 D5 是两层独立 sidecar。逐项说明 verifier 检查哈希、规范编码、覆盖、无重复、同支撑、每一对反对易关系以及向外平方根界。\n\n[Sources]\n- certificates/issue128-d4-groups.json\n- certificates/issue128-d5-groups.json.gz\n- artifacts/d5-integrated/verification-transcript.txt"}
+{"kind":"slide","id":"sl/dg38ax","slide":5,"title":"5","textShapes":3}
+{"kind":"textbox","id":"sh/7ul83qh0","slide":5,"name":"Google-Shape-532-p58-2","text":"5","textPreview":"5","textChars":1,"textLines":1,"bbox":[1184.18,659.24,54.48,25.33]}
+{"kind":"textbox","id":"sh/8vu9cbil","slide":5,"name":"Google-Shape-533-p58-3","text":"95 passes; 94 fails under the same exact ledger","textPreview":"95 passes; 94 fails under the same exact ledger","textChars":47,"textLines":1,"bbox":[41.33,36.12,1197.33,109.97]}
+{"kind":"textbox","id":"sh/tw3q5gz6","slide":5,"name":"Content-Placeholder-15-4","text":"Exact-rational decision\nDisplayed decimals are outward-readable projections; acceptance uses integer cross-multiplication.","textPreview":"Exact-rational decision | Displayed decimals are outward-readable projections; acceptance uses integer cross-multiplication.","textChars":122,"textLines":2,"bbox":[42.09,111.02,1197.33,106.27]}
+{"kind":"table","id":"tb/zqpkfmto","slide":5,"name":"Google-Shape-644-p93-5","rows":9,"cols":5,"preview":"Ledger item | r=95 upper | Scale | Trust object | Status","bbox":[41.33,236.33,1197.33,412.87]}
+{"kind":"notes","id":"nt/dg38ax","slide":5,"text":"4:15–5:35。逐行快速扫过误差账本。最重要的是 95 与 94 使用同一个精确有理误差函数；尾项没有被删掉。\n\n[Sources]\n- certificates/issue128-d5-integrated-certificate.json\n- docs/report/issue128-d5-integrated-note.md"}
+{"kind":"slide","id":"sl/siupvw","slide":6,"title":"6","textShapes":7}
+{"kind":"textbox","id":"sh/83udgfq5","slide":6,"name":"Slide-Number-Placeholder-3-2","text":"6","textPreview":"6","textChars":1,"textLines":1,"bbox":[1184.18,659.24,54.48,25.33]}
+{"kind":"textbox","id":"sh/n21w7apk","slide":6,"name":"Title-10-3","text":"The certified circuit uses only 24.18% of the control resources","textPreview":"The certified circuit uses only 24.18% of the control resources","textChars":63,"textLines":1,"bbox":[41.33,36.12,1197.33,109.97]}
+{"kind":"textbox","id":"sh/m1sve58z","slide":6,"name":"Content-Placeholder-9-4","text":"4.1357×","textPreview":"4.1357×","textChars":7,"textLines":1,"bbox":[668.36,427.54,223.97,94.88]}
+{"kind":"textbox","id":"sh/l0je507u","slide":6,"name":"Content-Placeholder-15-5","text":"exact resource\nreduction","textPreview":"exact resource | reduction","textChars":24,"textLines":2,"bbox":[675.36,532.1,216.98,64.67]}
+{"kind":"textbox","id":"sh/0zadcvq9","slide":6,"name":"Content-Placeholder-9-6","text":"−1.93M","textPreview":"−1.93M","textChars":6,"textLines":1,"bbox":[978.31,427.54,223.97,94.88]}
+{"kind":"textbox","id":"sh/zy1w3qpo","slide":6,"name":"Content-Placeholder-15-7","text":"CNOT upper\nbound saved","textPreview":"CNOT upper | bound saved","textChars":22,"textLines":2,"bbox":[985.3,532.1,216.98,64.67]}
+{"kind":"shape","id":"sh/yxsval83","slide":6,"name":"Rounded-Rectangle-1-8","bbox":[41.33,109.33,580.19,570.61]}
+{"kind":"textbox","id":"sh/5wnehk7y","slide":6,"name":"Content-Placeholder-1-9","text":"One exact ratio\nMerged groups, bond propagators and the CNOT upper bound all scale by 11791/2851 under the unchanged compiler.","textPreview":"One exact ratio | Merged groups, bond propagators and the CNOT upper bound all scale by 11791/2851 under the unchanged compiler.","textChars":126,"textLines":2,"bbox":[675.36,179.45,559.75,169.46]}
+{"kind":"chart","id":"ch/c3yp87i5","slide":6,"name":"","chartType":"bar","bbox":[66.61,138.84,528.06,502.32]}
+{"kind":"notes","id":"nt/siupvw","slide":6,"text":"5:35–6:45。主倍率必须报资源整数比，不用四舍五入后的步数比替代。相对控制，bond propagator 少 643,680，CNOT 上界少 1,931,040。图中以控制为 100 归一化。\n\n[Sources]\n- certificates/issue128-d5-integrated-certificate.json\n- docs/report/issue128-d5-integrated-note.md"}
+{"kind":"slide","id":"sl/bfz7o3","slide":7,"title":"7","textShapes":8}
+{"kind":"textbox","id":"sh/90fe5gj6","slide":7,"name":"Slide-Number-Placeholder-3-2","text":"7","textPreview":"7","textChars":1,"textLines":1,"bbox":[1184.18,659.24,54.48,25.33]}
+{"kind":"textbox","id":"sh/mxovu10v","slide":7,"name":"Title-10-3","text":"Verification is layered for both live demos and deep audit","textPreview":"Verification is layered for both live demos and deep audit","textChars":58,"textLines":1,"bbox":[41.33,36.12,1197.33,109.97]}
+{"kind":"shape","id":"sh/nyxw3610","slide":7,"name":"Google-Shape-2259-p159-4","bbox":[35.46,354.2,1285.61,0.03]}
+{"kind":"shape","id":"sh/w36x0vix","slide":7,"name":"Google-Shape-2260-p159-5","bbox":[35.46,348.58,11.24,11.24]}
+{"kind":"shape","id":"sh/x4ze9gji","slide":7,"name":"Google-Shape-2261-p159-6","bbox":[446.38,348.58,11.24,11.24]}
+{"kind":"shape","id":"sh/a1ovyl0r","slide":7,"name":"Google-Shape-2262-p159-7","bbox":[858.38,348.58,11.24,11.24]}
+{"kind":"textbox","id":"sh/v2xw7q1c","slide":7,"name":"Content-Placeholder-15-8","text":"FAST · ~8 s","textPreview":"FAST · ~8 s","textChars":11,"textLines":1,"bbox":[41.33,298.51,169.33,27.55]}
+{"kind":"textbox","id":"sh/krqx4vit","slide":7,"name":"Content-Placeholder-15-9","text":"DEEP · 167.6 s","textPreview":"DEEP · 167.6 s","textChars":14,"textLines":1,"bbox":[450.83,298.51,169.33,27.55]}
+{"kind":"textbox","id":"sh/5szed0je","slide":7,"name":"Content-Placeholder-15-10","text":"CLEAN CLONE","textPreview":"CLEAN CLONE","textChars":11,"textLines":1,"bbox":[863.33,298.51,169.33,27.55]}
+{"kind":"textbox","id":"sh/l0va10zy","slide":7,"name":"Text-Placeholder-16-11","text":"Regenerate algebra\nRebuild every D4/D5 coefficient from the 31-stage formula.","textPreview":"Regenerate algebra | Rebuild every D4/D5 coefficient from the 31-stage formula.","textChars":77,"textLines":2,"bbox":[453.24,401.33,331.35,166.54]}
+{"kind":"textbox","id":"sh/kzm98vid","slide":7,"name":"Text-Placeholder-16-12","text":"Reject corruption\nHashes, coverage, group algebra, ledger and integer resources.","textPreview":"Reject corruption | Hashes, coverage, group algebra, ledger and integer resources.","textChars":80,"textLines":2,"bbox":[41.98,401.33,331.35,166.54]}
+{"kind":"textbox","id":"sh/jydszqh8","slide":7,"name":"Text-Placeholder-16-13","text":"Reproduce delivery\nFast verify, focused tests and 11 SHA-256 checks all pass.","textPreview":"Reproduce delivery | Fast verify, focused tests and 11 SHA-256 checks all pass.","textChars":77,"textLines":2,"bbox":[858.57,401.33,331.35,166.54]}
+{"kind":"notes","id":"nt/bfz7o3","slide":7,"text":"6:45–8:15。现场只跑 fast verifier；deep 结果预先展示。明确 fast 的 deep_proof_regenerated=false 是预期行为，不是失败。干净克隆复核也已通过。\n\n[Sources]\n- artifacts/d5-integrated/verification-transcript.txt\n- artifacts/d5-integrated/SHA256SUMS"}
+{"kind":"slide","id":"sl/connu0","slide":8,"title":"4.1357418449×","textShapes":3}
+{"kind":"textbox","id":"sh/7a1ojm10","slide":8,"name":"Title-3-1","text":"4.1357418449×\n— proved, not inferred","textPreview":"4.1357418449× | — proved, not inferred","textChars":36,"textLines":2,"bbox":[41.33,182.55,992,261.57]}
+{"kind":"textbox","id":"sh/8bapcr2l","slide":8,"name":"Subtitle-4-2","text":"Same benchmark\n95 pass · 94 fail\n5× not claimed","textPreview":"Same benchmark | 95 pass · 94 fail | 5× not claimed","textChars":47,"textLines":3,"bbox":[41.33,522.13,374.67,113.41]}
+{"kind":"textbox","id":"sh/tc36lwj6","slide":8,"name":"Subtitle-4-3","text":"TAKEAWAY","textPreview":"TAKEAWAY","textChars":8,"textLines":1,"bbox":[41.33,41.18,169.33,68.15]}
+{"kind":"notes","id":"nt/connu0","slide":8,"text":"8:15–10:00。收束：成果是一条会拒绝错误的证据链，而不是一个看起来更小的数。五倍要求 r≤78，但当前 D4 单项已超过总容差，所以明确不宣称五倍。\n\n[Sources]\n- certificates/issue128-d5-integrated-certificate.json\n- docs/report/issue128-d5-integrated-note.md\n- https://github.com/QuantumBFS/quantum.harness/pull/248"}

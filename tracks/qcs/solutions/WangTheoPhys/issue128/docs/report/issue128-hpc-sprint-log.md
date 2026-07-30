@@ -53,6 +53,7 @@
 | exact reducer | `23044212` | 26 CPU、96 GiB、1:15:00 | `afterok:23044178` |
 | cancellation-aware exact D8 fallback | `23044280` | 63 CPU、240 GiB、4:15:00 | 无 |
 | exact D6 early-result lane | `23044494` | 9 CPU、32 GiB、3:30:00 | 无；08:15 deadline |
+| exact D6 extractor | `23044520` | 9 CPU、32 GiB、0:30:00 | `afterok:23044494`；08:15 deadline |
 
 数组最初以 16 路并发启动；确认账号/QOS允许后，用 Slurm 正常调度接口把 `ArrayTaskThrottle` 提升到 31。所有剩余单元随后进入 RUNNING；调度和授权仍由集群控制器执行。
 
@@ -68,6 +69,23 @@ exact-cubic recurrence，但只保留到 D6，因此预期早于 D8 返回，并
 D6 majorant，它只能在独立 artifact 校验与 fast/deep 接入后形成下一次倍率更新。
 
 随后在本地利用 matching 的平移/旋转重标号对称性做了降维复核。24 个排列的 order-4 指标严格形成三个 8 元轨道，代表 permutation indices 为 0、2、3。冻结顺序 index 0 的 D4/D5 coefficient-l1 分别为约 20.160966/95.679103；另外两轨道为约 20.664900/100.103 与 20.664900/100.125。冻结顺序在两个已测阶数均占优，因此停止 order-6 permutation 路线，不把更多算力投向较差候选。
+
+### 运行中审计更新（2026-07-31 05:20 CST）
+
+- D8 数组 stage 25 已成功完成：D8 精确项数 17,211,714，D0--D8 项数为
+  `[6, 72, 582, 3744, 22212, 128616, 710298, 3650880, 17211714]`；墙钟
+  7,349.722 秒，峰值 RSS 52,152,229,888 bytes，输出 SHA-256 为
+  `c64c0729a1eff25b771d2ccb94170648aa4235a3ac7f40366201a95a4eb3cf7b`。
+- `23044494` 的 exact D6 路径已完成 stage 6 前的递推并持续运行；最近一次
+  manifest 进度显示 D6 项数从 152,934、448,302、1,183,386 增长到
+  3,244,176，36 分 35 秒时最大 RSS 约 5.79 GiB。
+- `23044520` 将在 D6 主作业成功后提取独立、canonical-gzip 的 D6-only
+  sidecar；只有该 sidecar 的压缩哈希、父制品摘要、精确 l1 和本地 verifier
+  全部通过，才允许更新主倍率。
+- 远端 `23044196` 的 deep verifier 本身通过，但整作业以 pytest exit 1
+  结束：五个 delivery-package 测试因远端同步目录没有可用 Git 元数据而失败，
+  另一个既有慢测试的 symplectic 数值与当前发现值不一致。该失败被保留为
+  环境/测试证据，不会冒充全绿；本地主证书的 fast/deep 与干净克隆复核仍独立通过。
 
 ## 制品契约
 
