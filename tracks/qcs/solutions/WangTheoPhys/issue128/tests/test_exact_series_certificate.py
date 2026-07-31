@@ -266,3 +266,23 @@ def test_d6_grouped_sidecar_regenerates_bound_and_rejects_tampering(
     ).hexdigest()
     with pytest.raises(ValueError, match="group bound mismatch"):
         _verify_d6_sidecar(main, candidate)
+
+    build_sidecar(sidecar, groups, candidate_cap=8)
+    candidate["d6_certificate"]["groups_sha256"] = hashlib.sha256(
+        groups.read_bytes()
+    ).hexdigest()
+    comparison_tampered = json.loads(comparison.read_text())
+    comparison_tampered["exact_coefficient_map_equal"] = False
+    comparison.write_text(
+        json.dumps(
+            comparison_tampered,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        + "\n"
+    )
+    candidate["d6_certificate"]["comparison_sha256"] = hashlib.sha256(
+        comparison.read_bytes()
+    ).hexdigest()
+    with pytest.raises(ValueError, match="comparison audit status"):
+        _verify_d6_sidecar(main, candidate)
