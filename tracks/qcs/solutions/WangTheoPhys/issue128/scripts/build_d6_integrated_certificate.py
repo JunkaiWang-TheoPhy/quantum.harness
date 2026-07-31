@@ -10,6 +10,7 @@ from trottercert.exact_series_certificate import (
     read_portable_canonical_gzip,
     verify_exact_degree_payload,
 )
+from scripts.build_d6_grouped_sidecar import verify_sidecar_payload
 from trottercert.refined_error import (
     build_refined_fourth_order_constants,
     evaluate_refined_fourth_order_bound,
@@ -20,6 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "certificates" / "issue128-d5-integrated-certificate.json"
 D6 = ROOT / "certificates" / "issue128-d6-exact.json.gz"
 PARENT = ROOT / "certificates" / "issue128-d6-parent.json"
+GROUPS = ROOT / "certificates" / "issue128-d6-groups.json"
 OUTPUT = ROOT / "certificates" / "issue128-d6-integrated-certificate.json"
 
 
@@ -36,6 +38,15 @@ def build() -> dict[str, object]:
         expected_degree=6,
         expected_source_commit=str(d6_payload["source_commit"]),
     )
+    raw_groups = GROUPS.read_bytes()
+    groups_payload = json.loads(raw_groups)
+    verify_sidecar_payload(groups_payload, D6)
+    d6_grouped_cell = Fraction(*groups_payload["grouped_cell_bound"])
+    d6_grouped_site = Fraction(*groups_payload["grouped_site_bound"])
+    if d6_grouped_cell / 4 != d6_grouped_site:
+        raise ValueError("grouped D6 cell/site normalization mismatch")
+    if d6_grouped_site > d6.site_l1_upper:
+        raise ValueError("grouped D6 sidecar does not tighten exact D6 l1")
     record = data["candidate"]
     d4_site = Fraction(*record["d4_certificate"]["cell_norm_upper"]) / 4
     d5_site = Fraction(*record["d5_certificate"]["site_norm_upper"])
@@ -56,7 +67,7 @@ def build() -> dict[str, object]:
             steps,
             d4_site_override=d4_site,
             d5_site_override=d5_site,
-            d6_site_override=d6.site_l1_upper,
+            d6_site_override=d6_grouped_site,
         )
 
     def meets_tolerance(steps: int) -> bool:
@@ -78,7 +89,7 @@ def build() -> dict[str, object]:
     published_groups = int(data["published_baseline"]["group_exponentials"])
 
     record["proof_method"] = (
-        "local_log_E5_grouped_D4_D5_exact_D6_plus_E7_majorant"
+        "local_log_E5_grouped_D4_D5_exact_grouped_D6_plus_E7_majorant"
         "_plus_exact_generator_tail"
     )
     record["d6_certificate"] = {
@@ -90,8 +101,13 @@ def build() -> dict[str, object]:
             d6_payload["coefficient_interval_decimal_digits"]
         ),
         "term_count": d6.term_count,
-        "cell_norm_upper": _pair(d6.cell_l1_upper),
-        "site_norm_upper": _pair(d6.site_l1_upper),
+        "groups_path": GROUPS.name,
+        "groups_sha256": hashlib.sha256(raw_groups).hexdigest(),
+        "group_count": int(groups_payload["group_count"]),
+        "max_group_size": int(groups_payload["max_group_size"]),
+        "l1_site_norm_upper": _pair(d6.site_l1_upper),
+        "cell_norm_upper": _pair(d6_grouped_cell),
+        "site_norm_upper": _pair(d6_grouped_site),
     }
     if PARENT.is_file():
         parent_sha256 = hashlib.sha256(PARENT.read_bytes()).hexdigest()
@@ -138,7 +154,8 @@ def build() -> dict[str, object]:
         "exact_improvement_ratio": str(ratio),
         "improvement": float(ratio),
         "d6_term_count": d6.term_count,
-        "d6_site_norm_upper": str(d6.site_l1_upper),
+        "d6_l1_site_norm_upper": str(d6.site_l1_upper),
+        "d6_grouped_site_norm_upper": str(d6_grouped_site),
     }
 
 

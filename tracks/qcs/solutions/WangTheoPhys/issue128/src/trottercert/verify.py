@@ -8,6 +8,7 @@ from pathlib import Path
 
 from .anticommuting import certify_anticommuting_partition
 from .baseline import pauli_l1_second_order_constant
+from .d6_physical_channels import build_grouped_d6_bound
 from .exact_series_certificate import (
     ExactDegreeVerification,
     read_portable_canonical_gzip,
@@ -52,6 +53,8 @@ class D5SidecarVerification:
 class D6SidecarVerification:
     site_bound: Fraction
     artifact: ExactDegreeVerification
+    group_count: int = 0
+    max_group_size: int = 1
 
 
 def _fraction(pair: list[int]) -> Fraction:
@@ -204,13 +207,108 @@ def _verify_d6_sidecar(
             raise ValueError("D6 parent path escapes certificate directory")
         if hashlib.sha256(parent_path.read_bytes()).hexdigest() != verified.parent_sha256:
             raise ValueError("D6 parent artifact digest mismatch")
-    if verified.cell_l1_upper != _fraction(metadata["cell_norm_upper"]):
-        raise ValueError("D6 cell bound mismatch")
-    if verified.site_l1_upper != _fraction(metadata["site_norm_upper"]):
-        raise ValueError("D6 main-certificate bound mismatch")
+    if "groups_path" not in metadata:
+        if verified.cell_l1_upper != _fraction(metadata["cell_norm_upper"]):
+            raise ValueError("D6 cell bound mismatch")
+        if verified.site_l1_upper != _fraction(metadata["site_norm_upper"]):
+            raise ValueError("D6 main-certificate bound mismatch")
+        return D6SidecarVerification(
+            site_bound=verified.site_l1_upper,
+            artifact=verified,
+        )
+
+    groups_path = (root / str(metadata["groups_path"])).resolve()
+    if groups_path.parent != root:
+        raise ValueError("D6 groups path escapes certificate directory")
+    groups_raw = groups_path.read_bytes()
+    if hashlib.sha256(groups_raw).hexdigest() != str(metadata["groups_sha256"]):
+        raise ValueError("D6 groups sidecar digest mismatch")
+    try:
+        groups_payload = json.loads(groups_raw)
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ValueError("D6 groups sidecar is not JSON") from error
+    canonical_groups = (
+        json.dumps(groups_payload, sort_keys=True, separators=(",", ":")) + "\n"
+    ).encode()
+    if groups_raw != canonical_groups:
+        raise ValueError("D6 groups sidecar is not canonical JSON")
+    if groups_payload.get("schema_version") != 1:
+        raise ValueError("unsupported grouped D6 sidecar schema")
+    if groups_payload.get("kind") != "issue128_d6_physical_channel_groups":
+        raise ValueError("unexpected grouped D6 sidecar kind")
+    if groups_payload.get("source_payload_sha256") != hashlib.sha256(raw).hexdigest():
+        raise ValueError("grouped D6 source payload digest mismatch")
+    if groups_payload.get("source_commit") != verified.source_commit:
+        raise ValueError("grouped D6 source commit mismatch")
+    if groups_payload.get("degree") != 6:
+        raise ValueError("grouped D6 degree mismatch")
+    digits = int(payload["coefficient_interval_decimal_digits"])
+    if groups_payload.get("coefficient_interval_decimal_digits") != digits:
+        raise ValueError("grouped D6 coefficient precision mismatch")
+    candidate_cap = groups_payload.get("candidate_cap")
+    if (
+        isinstance(candidate_cap, bool)
+        or not isinstance(candidate_cap, int)
+        or candidate_cap < 1
+    ):
+        raise ValueError("grouped D6 candidate cap is invalid")
+
+    regenerated = build_grouped_d6_bound(
+        verified.terms,
+        digits,
+        candidate_cap=candidate_cap,
+    )
+    submitted_groups = groups_payload.get("groups")
+    if not isinstance(submitted_groups, list):
+        raise ValueError("grouped D6 groups must be a list")
+    decoded_groups: list[tuple[int, ...]] = []
+    submitted_bounds: list[Fraction] = []
+    for group in submitted_groups:
+        if not isinstance(group, dict):
+            raise ValueError("grouped D6 group is malformed")
+        indices = group.get("term_indices")
+        if not isinstance(indices, list) or any(
+            isinstance(index, bool) or not isinstance(index, int)
+            for index in indices
+        ):
+            raise ValueError("grouped D6 term indices are malformed")
+        decoded_groups.append(tuple(indices))
+        submitted_bounds.append(_fraction(group["bound"]))
+    if tuple(decoded_groups) != regenerated.groups:
+        raise ValueError("grouped D6 partition differs from exact regeneration")
+
+    regenerated_bounds = regenerated.group_bounds
+    if tuple(submitted_bounds) != regenerated_bounds:
+        raise ValueError("grouped D6 group bound mismatch")
+    if groups_payload.get("term_count") != regenerated.term_count:
+        raise ValueError("grouped D6 term count mismatch")
+    if groups_payload.get("group_count") != len(regenerated.groups):
+        raise ValueError("grouped D6 group count mismatch")
+    if groups_payload.get("max_group_size") != regenerated.max_group_size:
+        raise ValueError("grouped D6 maximum group size mismatch")
+    if _fraction(groups_payload["cell_pauli_l1_upper"]) != verified.cell_l1_upper:
+        raise ValueError("grouped D6 l1 cell baseline mismatch")
+    if _fraction(groups_payload["site_pauli_l1_upper"]) != verified.site_l1_upper:
+        raise ValueError("grouped D6 l1 site baseline mismatch")
+    if _fraction(groups_payload["grouped_cell_bound"]) != regenerated.grouped_cell_bound:
+        raise ValueError("grouped D6 cell bound mismatch")
+    if _fraction(groups_payload["grouped_site_bound"]) != regenerated.grouped_site_bound:
+        raise ValueError("grouped D6 site bound mismatch")
+    if _fraction(metadata["l1_site_norm_upper"]) != verified.site_l1_upper:
+        raise ValueError("D6 main-certificate l1 baseline mismatch")
+    if _fraction(metadata["cell_norm_upper"]) != regenerated.grouped_cell_bound:
+        raise ValueError("D6 grouped main-certificate cell bound mismatch")
+    if _fraction(metadata["site_norm_upper"]) != regenerated.grouped_site_bound:
+        raise ValueError("D6 grouped main-certificate site bound mismatch")
+    if int(metadata["group_count"]) != len(regenerated.groups):
+        raise ValueError("D6 main-certificate group count mismatch")
+    if int(metadata["max_group_size"]) != regenerated.max_group_size:
+        raise ValueError("D6 main-certificate maximum group size mismatch")
     return D6SidecarVerification(
-        site_bound=verified.site_l1_upper,
+        site_bound=regenerated.grouped_site_bound,
         artifact=verified,
+        group_count=len(regenerated.groups),
+        max_group_size=regenerated.max_group_size,
     )
 
 
@@ -473,15 +571,24 @@ def _verify_v3(
         "local_log_E5_grouped_D4_D5_exact_D6_plus_E7_majorant"
         "_plus_exact_generator_tail"
     )
+    d6_grouped_method = (
+        "local_log_E5_grouped_D4_D5_exact_grouped_D6_plus_E7_majorant"
+        "_plus_exact_generator_tail"
+    )
     if candidate["formula"] != "five_copy_suzuki_fourth_order" or candidate[
         "proof_method"
-    ] not in {legacy_method, d5_method, d6_method}:
+    ] not in {legacy_method, d5_method, d6_method, d6_grouped_method}:
         raise ValueError("candidate structure mismatch")
     has_d5 = "d5_certificate" in candidate
     has_d6 = "d6_certificate" in candidate
-    if has_d5 != (candidate["proof_method"] in {d5_method, d6_method}):
+    if has_d5 != (
+        candidate["proof_method"]
+        in {d5_method, d6_method, d6_grouped_method}
+    ):
         raise ValueError("candidate D5 proof method and sidecar disagree")
-    if has_d6 != (candidate["proof_method"] == d6_method):
+    if has_d6 != (
+        candidate["proof_method"] in {d6_method, d6_grouped_method}
+    ):
         raise ValueError("candidate D6 proof method and sidecar disagree")
     d4_verification = _verify_d4_sidecar(
         certificate_path,

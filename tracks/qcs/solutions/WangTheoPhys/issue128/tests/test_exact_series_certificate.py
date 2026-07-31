@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from fractions import Fraction
 import hashlib
+import json
 from pathlib import Path
 
 import pytest
 
+from scripts.build_d6_grouped_sidecar import build_sidecar
 from trottercert.cubic_field import Cubic
 from trottercert.exact_series_certificate import (
     verify_exact_degree_payload,
@@ -157,4 +159,78 @@ def test_d6_main_sidecar_binding_rejects_digest_corruption(
         _verify_d6_sidecar(main, candidate)
     candidate["d6_certificate"]["sha256"] = "0" * 64
     with pytest.raises(ValueError, match="D6 sidecar digest"):
+        _verify_d6_sidecar(main, candidate)
+
+
+def test_d6_grouped_sidecar_regenerates_bound_and_rejects_tampering(
+    tmp_path: Path,
+) -> None:
+    terms = {
+        ((0, 0, "X"),): Cubic.one(),
+        ((0, 0, "Z"),): Cubic.one(),
+        ((2, 0, "X"),): Cubic.one(),
+    }
+    root = cube_root_four_interval(12)
+    cell_l1 = sum(
+        (coefficient.enclose(root).abs_upper() for coefficient in terms.values()),
+        Fraction(),
+    )
+    parent = tmp_path / "parent.json"
+    parent.write_text('{"kind":"test-parent"}\n')
+    parent_sha256 = hashlib.sha256(parent.read_bytes()).hexdigest()
+    payload = {
+        "schema_version": 1,
+        "kind": "issue128_exact_right_generator_degree",
+        "formula_id": "five_copy_suzuki_fourth_order_exact_cubic",
+        "source_commit": "abc123",
+        "stage_count": 31,
+        "degree": 6,
+        "coefficient_interval_decimal_digits": 12,
+        "term_count": len(terms),
+        "terms": coordinate_terms_to_json(terms),
+        "cell_pauli_l1_upper": [cell_l1.numerator, cell_l1.denominator],
+        "site_pauli_l1_upper": [
+            (cell_l1 / 4).numerator,
+            (cell_l1 / 4).denominator,
+        ],
+        "parent_sha256": parent_sha256,
+    }
+    sidecar = tmp_path / "d6.json.gz"
+    groups = tmp_path / "d6-groups.json"
+    main = tmp_path / "main.json"
+    write_shard_gzip(sidecar, payload)
+    grouped = build_sidecar(sidecar, groups, candidate_cap=8)
+    main.write_text("{}")
+    candidate = {
+        "d6_certificate": {
+            "path": sidecar.name,
+            "sha256": hashlib.sha256(sidecar.read_bytes()).hexdigest(),
+            "parent_sha256": parent_sha256,
+            "parent_path": parent.name,
+            "source_commit": "abc123",
+            "coefficient_interval_decimal_digits": 12,
+            "term_count": len(terms),
+            "groups_path": groups.name,
+            "groups_sha256": hashlib.sha256(groups.read_bytes()).hexdigest(),
+            "group_count": grouped["group_count"],
+            "max_group_size": grouped["max_group_size"],
+            "l1_site_norm_upper": grouped["site_pauli_l1_upper"],
+            "cell_norm_upper": grouped["grouped_cell_bound"],
+            "site_norm_upper": grouped["grouped_site_bound"],
+        }
+    }
+    verified = _verify_d6_sidecar(main, candidate)
+    assert verified.site_bound == Fraction(*grouped["grouped_site_bound"])
+    assert verified.site_bound < cell_l1 / 4
+    assert verified.group_count == grouped["group_count"]
+
+    tampered = json.loads(groups.read_text())
+    tampered["groups"][0]["bound"] = [0, 1]
+    groups.write_text(
+        json.dumps(tampered, sort_keys=True, separators=(",", ":")) + "\n"
+    )
+    candidate["d6_certificate"]["groups_sha256"] = hashlib.sha256(
+        groups.read_bytes()
+    ).hexdigest()
+    with pytest.raises(ValueError, match="group bound mismatch"):
         _verify_d6_sidecar(main, candidate)
