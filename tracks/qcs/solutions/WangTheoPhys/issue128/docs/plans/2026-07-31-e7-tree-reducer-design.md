@@ -23,6 +23,11 @@ source commit, formula, stage count, degree, input digests, and exact canonical
 term map. The final parent records both checkpoint and original shard
 provenance.
 
+On the current `xhacnormalb` partition, partial cells request 8 CPUs with 16 GB
+and final cells request 26 CPUs with 96 GB to satisfy the site's enforced
+memory-per-CPU ratio. The Python merge remains single-process; the extra CPU
+allocation is a scheduler constraint rather than a parallel-speedup claim.
+
 ## Alternatives considered
 
 - Increasing CPU and memory for the monolithic reducer does not help enough:
@@ -47,4 +52,3 @@ gap rejection, digest rejection, and equality with a direct exact merge. On
 HPC, the partial array must complete before the final reducer is released.
 Promotion still requires a second fanout layout to produce an identical exact
 D6 coefficient map.
-

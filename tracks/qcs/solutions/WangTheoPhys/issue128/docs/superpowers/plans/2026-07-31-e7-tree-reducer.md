@@ -99,8 +99,9 @@ Map each array index `i` to
 - [ ] **Step 2: Add final wrapper**
 
 Invoke `finalize_e7_partials.py` only after the array dependency succeeds.
-Request enough memory for exact D6 construction but only one CPU because the
-final Python merge is single-process.
+Request 26 CPUs with 96 GB for exact D6 construction because `xhacnormalb`
+enforces its memory-per-CPU ratio. Record that the final Python merge remains
+single-process.
 
 - [ ] **Step 3: Validate shell syntax**
 
@@ -133,4 +134,3 @@ Expected: exit code 0.
 - The two scripts have distinct responsibilities and stable artifact
   interfaces.
 - No placeholder implementation or unrelated scientific route is included.
-
