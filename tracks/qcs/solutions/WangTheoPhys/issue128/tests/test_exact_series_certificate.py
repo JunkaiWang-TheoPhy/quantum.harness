@@ -14,6 +14,7 @@ from trottercert.exact_series_certificate import (
     verify_exact_monolithic_series,
 )
 from trottercert.hpc_artifacts import coordinate_terms_to_json, write_shard_gzip
+from trottercert.hpc_artifacts import write_manifest_atomic
 from trottercert.intervals import cube_root_four_interval
 from trottercert.verify import _verify_d6_sidecar
 
@@ -197,9 +198,36 @@ def test_d6_grouped_sidecar_regenerates_bound_and_rejects_tampering(
     }
     sidecar = tmp_path / "d6.json.gz"
     groups = tmp_path / "d6-groups.json"
+    comparison = tmp_path / "d6-comparison.json"
     main = tmp_path / "main.json"
     write_shard_gzip(sidecar, payload)
     grouped = build_sidecar(sidecar, groups, candidate_cap=8)
+    sidecar_sha256 = hashlib.sha256(sidecar.read_bytes()).hexdigest()
+    write_manifest_atomic(
+        comparison,
+        {
+            "schema_version": 1,
+            "kind": "issue128_exact_degree_payload_comparison",
+            "status": "complete",
+            "degree": 6,
+            "term_count": len(terms),
+            "exact_coefficient_map_equal": True,
+            "cell_pauli_l1_upper": payload["cell_pauli_l1_upper"],
+            "site_pauli_l1_upper": payload["site_pauli_l1_upper"],
+            "left": {
+                "path": "left.json.gz",
+                "sha256": sidecar_sha256,
+                "source_commit": "abc123",
+                "parent_sha256": parent_sha256,
+            },
+            "right": {
+                "path": "right.json.gz",
+                "sha256": "f" * 64,
+                "source_commit": "abc123",
+                "parent_sha256": "e" * 64,
+            },
+        },
+    )
     main.write_text("{}")
     candidate = {
         "d6_certificate": {
@@ -212,6 +240,10 @@ def test_d6_grouped_sidecar_regenerates_bound_and_rejects_tampering(
             "term_count": len(terms),
             "groups_path": groups.name,
             "groups_sha256": hashlib.sha256(groups.read_bytes()).hexdigest(),
+            "comparison_path": comparison.name,
+            "comparison_sha256": hashlib.sha256(
+                comparison.read_bytes()
+            ).hexdigest(),
             "group_count": grouped["group_count"],
             "max_group_size": grouped["max_group_size"],
             "l1_site_norm_upper": grouped["site_pauli_l1_upper"],

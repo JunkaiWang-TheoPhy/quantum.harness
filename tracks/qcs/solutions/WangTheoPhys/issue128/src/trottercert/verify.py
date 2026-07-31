@@ -217,6 +217,57 @@ def _verify_d6_sidecar(
             artifact=verified,
         )
 
+    comparison_path = (root / str(metadata["comparison_path"])).resolve()
+    if comparison_path.parent != root:
+        raise ValueError("D6 comparison path escapes certificate directory")
+    comparison_raw = comparison_path.read_bytes()
+    if hashlib.sha256(comparison_raw).hexdigest() != str(
+        metadata["comparison_sha256"]
+    ):
+        raise ValueError("D6 comparison audit digest mismatch")
+    try:
+        comparison = json.loads(comparison_raw)
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ValueError("D6 comparison audit is not JSON") from error
+    canonical_comparison = (
+        json.dumps(comparison, sort_keys=True, separators=(",", ":")) + "\n"
+    ).encode()
+    if comparison_raw != canonical_comparison:
+        raise ValueError("D6 comparison audit is not canonical JSON")
+    if (
+        comparison.get("schema_version") != 1
+        or comparison.get("kind")
+        != "issue128_exact_degree_payload_comparison"
+        or comparison.get("status") != "complete"
+        or comparison.get("degree") != 6
+        or comparison.get("exact_coefficient_map_equal") is not True
+    ):
+        raise ValueError("D6 comparison audit status mismatch")
+    if comparison.get("term_count") != verified.term_count:
+        raise ValueError("D6 comparison audit term count mismatch")
+    if comparison.get("cell_pauli_l1_upper") != payload.get(
+        "cell_pauli_l1_upper"
+    ) or comparison.get("site_pauli_l1_upper") != payload.get(
+        "site_pauli_l1_upper"
+    ):
+        raise ValueError("D6 comparison audit norm mismatch")
+    comparison_lanes = (comparison.get("left"), comparison.get("right"))
+    if any(not isinstance(lane, dict) for lane in comparison_lanes):
+        raise ValueError("D6 comparison audit lane metadata is malformed")
+    if any(
+        lane.get("source_commit") != verified.source_commit
+        for lane in comparison_lanes
+    ):
+        raise ValueError("D6 comparison audit source commit mismatch")
+    if hashlib.sha256(raw).hexdigest() not in {
+        str(lane.get("sha256")) for lane in comparison_lanes
+    }:
+        raise ValueError("D6 sidecar is absent from comparison audit")
+    if verified.parent_sha256 not in {
+        str(lane.get("parent_sha256")) for lane in comparison_lanes
+    }:
+        raise ValueError("D6 parent is absent from comparison audit")
+
     groups_path = (root / str(metadata["groups_path"])).resolve()
     if groups_path.parent != root:
         raise ValueError("D6 groups path escapes certificate directory")

@@ -22,6 +22,7 @@ SOURCE = ROOT / "certificates" / "issue128-d5-integrated-certificate.json"
 D6 = ROOT / "certificates" / "issue128-d6-exact.json.gz"
 PARENT = ROOT / "certificates" / "issue128-d6-parent.json"
 GROUPS = ROOT / "certificates" / "issue128-d6-groups.json"
+COMPARISON = ROOT / "certificates" / "issue128-d6-comparison.json"
 OUTPUT = ROOT / "certificates" / "issue128-d6-integrated-certificate.json"
 
 
@@ -47,6 +48,19 @@ def build() -> dict[str, object]:
         raise ValueError("grouped D6 cell/site normalization mismatch")
     if d6_grouped_site > d6.site_l1_upper:
         raise ValueError("grouped D6 sidecar does not tighten exact D6 l1")
+    raw_comparison = COMPARISON.read_bytes()
+    comparison = json.loads(raw_comparison)
+    if (
+        comparison.get("status") != "complete"
+        or comparison.get("degree") != 6
+        or comparison.get("exact_coefficient_map_equal") is not True
+        or comparison.get("term_count") != d6.term_count
+    ):
+        raise ValueError("independent D6 comparison audit is incomplete")
+    if hashlib.sha256(raw_d6).hexdigest() not in {
+        str(comparison[lane]["sha256"]) for lane in ("left", "right")
+    }:
+        raise ValueError("selected D6 payload is absent from comparison audit")
     record = data["candidate"]
     d4_site = Fraction(*record["d4_certificate"]["cell_norm_upper"]) / 4
     d5_site = Fraction(*record["d5_certificate"]["site_norm_upper"])
@@ -103,6 +117,8 @@ def build() -> dict[str, object]:
         "term_count": d6.term_count,
         "groups_path": GROUPS.name,
         "groups_sha256": hashlib.sha256(raw_groups).hexdigest(),
+        "comparison_path": COMPARISON.name,
+        "comparison_sha256": hashlib.sha256(raw_comparison).hexdigest(),
         "group_count": int(groups_payload["group_count"]),
         "max_group_size": int(groups_payload["max_group_size"]),
         "l1_site_norm_upper": _pair(d6.site_l1_upper),
