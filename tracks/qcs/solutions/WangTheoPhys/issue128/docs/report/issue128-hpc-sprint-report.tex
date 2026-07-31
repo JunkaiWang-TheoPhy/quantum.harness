@@ -87,7 +87,11 @@ screening ingredient; it is not by itself the global $r=78$ certificate.
 The original D8 array source is commit
 \texttt{e65c95f4ae76dc1a78e81715cac21cfd7a81dbf8}; the cancellation-aware
 monolithic and order-six stage source is
-\texttt{eadefd9e0bc56841ee620e83582382d902c0d625}.  Relevant source-file
+\texttt{eadefd9e0bc56841ee620e83582382d902c0d625}; the initial exact E7
+word-sharded lane is commit
+\texttt{23dbe9532929d81c8cbb366e12a3d86c03bd4e9e}, with the 272- and 544-way
+fanout wrappers at commits \texttt{ab387bf3\ldots} and
+\texttt{88a4f2ed\ldots}.  Relevant source-file
 digests were checked byte-for-byte between the local and remote trees.  Jobs run on the
 \texttt{xhacnormalb} CPU partition under account \texttt{giggleliu} and QOS
 \texttt{user\_acamtw70yu}.  GPU partitions are intentionally excluded because
@@ -105,11 +109,19 @@ Exact D6 monolithic path & 23044494 & 9 CPU, 32 GiB & 3:30 \\
 Exact D6 array (31 stages) & 23044609 & 9 CPU, 32 GiB & 2:30 \\
 D6 array reducer & 23044651 & 26 CPU, 96 GiB & 1:00 \\
 Direct exact D6 identity & 23044709 & 17 CPU, 64 GiB & 1:45 \\
+Exact E7 word array (16 shards) & 23044736 & 17 CPU, 64 GiB & 1:00 \\
+E7-to-D6 exact reducer & 23044752 & 26 CPU, 96 GiB & 0:35 \\
+E7 CPU fanout (272 shards) & 23044754 & 17 processes/cell & 0:45 \\
+Fanout E7-to-D6 reducer & 23044907 & 26 CPU, 96 GiB & 0:40 \\
+E7 fine fanout (544 shards) & 23044779 & 17 processes/cell & 0:40 \\
+Fine-fanout E7-to-D6 reducer & 23044906 & 26 CPU, 96 GiB & 0:45 \\
+E7 ultra-fine fanout (1,088 shards) & 23044815 & 17 processes/cell & 0:30 \\
+Ultra-fine E7-to-D6 reducer & 23044816 & 26 CPU, 96 GiB & 0:24 \\
 \bottomrule
 \end{tabular}
 \caption{Principal production work.  Reducers start only after all parent
-array cells succeed.  The D6 reducer has an 08:32 CST deadline; other late
-production paths use 08:15.}
+array cells succeed.  The D6 reducer has an 08:32 CST deadline and the E7
+reducer an 08:34 deadline.}
 \end{table}
 
 The array first passed \texttt{sbatch --test-only}.  A four-cell remote smoke
@@ -121,8 +133,8 @@ authority over placement and admission.
 
 \section{Verification evidence}
 
-The final local regression gate reported 109 passing tests and 11 deselected
-slow tests in 74.04 seconds.  The D5-integrated fast verifier returned
+The final local regression gate reported 112 passing tests and 11 deselected
+slow tests in 175.21 seconds.  The D5-integrated fast verifier returned
 \texttt{valid=true}; the deep verifier regenerated every D4/D5 coefficient
 from the 31-stage formula, returned
 \texttt{deep\_proof\_regenerated=true}, and completed in 167.62 seconds with
@@ -161,8 +173,70 @@ favorable ranking can nominate a formula for exact reconstruction but cannot
 enter the certificate directly.
 
 The 25 heavy D8 array cells remained in \texttt{RUNNING} state beyond
-4:15:00 of observed wall time.  Thus the requested 4.25-hour production floor
-is supported by scheduler state, not inferred from a requested time limit.
+4:15:00 and ultimately reached \texttt{TIMEOUT} after 4:30:11--4:30:13 of
+observed wall time.  The other six cells completed.  Thus the requested
+4.25-hour production floor is supported by \texttt{sacct}, not inferred from
+a requested time limit.  Because the full array was not successful, Slurm
+cancelled its \texttt{afterok} reducer; no partial sum was reported globally.
+
+At 07:13 CST a complementary 16-way E7 word array, job 23044736, began from
+byte-identical local and remote sources.  It partitions all 16,380 degree-seven
+free words into disjoint index intervals.  Dependent job 23044752 validates
+complete interval coverage, source and payload hashes, and forward/reverse
+exact reduction before forming
+$D_6=7E_7+\frac{2}{3}\operatorname{ad}_A^2(E_5)$.  Its result remains
+provisional until the complete artifact and verifier gates pass.
+
+The first minute of the 16-way lane exposed load imbalance: three contiguous
+blocks finished in roughly 43--45 seconds with zero E7 contribution, while
+the other blocks entered expensive words.  Per-process RSS was only about
+165--203~MiB despite a 64~GiB allocation.  A CPU-saturating fallback therefore
+launched as job 23044754: each of 16 array cells uses \texttt{srun} to run 17
+single-core evaluators, partitioning the same word set into 272 disjoint
+intervals.  All 16 cells began within 11 seconds and all 272 running manifests
+were observed.  Job 23044755 reduces only that lane and retains the same
+coverage, hash, bidirectional-sum, and exact-identity gates.
+
+After about five minutes the 272-way lane had 155 complete shards, 117 still
+running, and no failures, with the unfinished set concentrated in expensive
+word ranges.  A second independent lane, job 23044779, therefore halves the
+range size again to 544 shards across 32 array cells and 544 active Python
+evaluators.  All cells entered \texttt{RUNNING} within 11 seconds and emitted
+their manifests.  Reducer 23044780 reads only this lane.  If both reductions
+finish, their exact D6 maps must agree term by term before either can support a
+certificate.
+
+At roughly four minutes the 544-way lane had completed 383 shards with no
+failure; completed high-cost shards had reached about 3~GiB peak RSS.  A final
+1,088-way lane, job 23044815, reduced each range to about 15 words and started
+all 64 cells (1,088 evaluators).  Reducer 23044816 is directory-isolated from
+the other lanes.  The first complete result wins time-to-answer, while any
+additional complete result supplies an exact cross-partition comparison.
+
+A consolidated 07:28:33 CST snapshot recorded 1,748 allocated CPUs in running
+jobs for the account.  The 272-, 544-, and 1,088-way E7 lanes had completed
+242, 482, and 567 shards, respectively, with zero failed shards.  Their maximum
+completed-shard RSS values were about 6.41, 4.15, and 1.33~GiB.  Thus the finer
+partition increased active evaluator concurrency while reducing individual
+memory and tail exposure; the reported figure is scheduler state, not a sum of
+requested limits.
+
+Before either fanout reducer became eligible, deployment preflight found that
+its Slurm wrapper still passed a literal shard count of 16.  The wrapper was
+changed to consume the exported \texttt{ISSUE128\_SHARD\_COUNT} while retaining
+16 as the default, passed \texttt{bash -n}, was synchronized byte-for-byte, and
+was inspected remotely.  Jobs 23044755 and 23044780 remained dependency-pending
+throughout the correction and were submitted with counts 272 and 544,
+respectively; no reduction had begun with the stale parameter.
+
+Slurm snapshots a batch script at submission.  Consequently, the already
+submitted 544-way reducer 23044780 still started with the old literal count and
+failed closed in two seconds when shard 0 declared 544 rather than 16; its
+output directory remained empty.  Replacement 23044906 was submitted from the
+corrected wrapper and immediately ran with a 45-minute limit.  The still-pending
+old 272 reducer 23044755 was cancelled before execution and replaced by
+23044907 with the original parent dependency.  The 1,088-way reducer 23044816
+had been submitted after the correction and passed the metadata gate.
 
 \section{Final adjudication protocol}
 
@@ -179,8 +253,35 @@ The outcome will be classified as follows.
         gap, while keeping the certified 4.135742-fold result unchanged.
 \end{enumerate}
 
+\section{Observed final outcome}
+
+The original D8 array ended with six completed and 25 timed-out cells; each
+heavy cell recorded 4:30:11--4:30:13 of actual elapsed time.  Its reducer did
+not run.  The monolithic D8 fallback timed out at 4:15:29.  The monolithic D6
+path timed out at 3:30:05, and its 31-way stage array ended with 13 completed
+and 18 timed-out cells.  Neither path emitted a complete global coefficient
+map.
+
+The CPU-saturating E7 parents did close completely: the 272-, 544-, and
+1,088-shard lanes completed all 16, 32, and 64 Slurm cells, respectively, with
+complete word coverage and no failed shard manifest.  Their subsequent D6
+reducers reached walltime at 40:07, 45:06, and 24:21.  Because output is written
+atomically, no partial \texttt{degree-6.json.gz} was left behind.  The dependent
+cross-lane comparisons and certificate integration therefore did not run.
+The original 16-way E7 lane ended with four completed and 12 timed-out cells.
+The serial direct-identity lane timed out at 1:39:06 after reaching word 1,792
+of 16,380.  At 08:24:40 CST the user queue was empty; no sprint job remained
+beyond the bounded execution window.
+
+The final local regression gate was 112 passed and 11 deselected in 175.21
+seconds.  Operationally, the sprint proved the requested 4.25-hour production
+floor, exercised up to 1,748 running CPU allocations, and produced complete
+hash-bound E7 word partitions, but did not close a new D6 or D8 reduction
+within six hours.  This is recorded as a strict negative operational result,
+not converted into a numerical claim.
+
 \textbf{Claim status.}  The currently accepted result is the independently
-verified 4.1357418449-fold D5-integrated certificate.  Running D6/D8 work is
+verified 4.1357418449-fold D5-integrated certificate.  The D6/D8 work is
 research evidence only until its artifacts, exact ledger, adjacent-step
 boundary, hashes, and deep regeneration all pass.
 

@@ -95,7 +95,7 @@ PYTHONPATH=src python3 -m pytest -q \
 
 讲稿：
 
-> fast 模式独立读取 sidecar，检查 SHA-256、规范编码、精确覆盖、反对易分组、误差账本、94/95 边界和资源整数算术。deep 模式还会从 Suzuki 系数重新生成全部 D4/D5 系数；本轮 deep 结果为 true，耗时 167.6 秒、峰值约 1.53 GB。最终完整常规回归是 109 passed、11 deselected。
+> fast 模式独立读取 sidecar，检查 SHA-256、规范编码、精确覆盖、反对易分组、误差账本、94/95 边界和资源整数算术。deep 模式还会从 Suzuki 系数重新生成全部 D4/D5 系数；本轮 deep 结果为 true，耗时 167.6 秒、峰值约 1.53 GB。最终完整常规回归是 112 passed、11 deselected。
 
 ## 8:15--9:20｜第 8 页：超算结果应怎样解读
 

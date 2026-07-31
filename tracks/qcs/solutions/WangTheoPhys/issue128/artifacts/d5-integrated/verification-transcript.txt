@@ -35,7 +35,7 @@ NORMAL TEST SUITE
 Command:
   PYTHONPATH=src /Users/thomasjwang/miniforge3/bin/python3 -m pytest -q
 Observed:
-  109 passed, 11 deselected in 74.04s
+  112 passed, 11 deselected in 175.21s
 
 FOCUSED D5 CERTIFICATE SUITE
 Command:
