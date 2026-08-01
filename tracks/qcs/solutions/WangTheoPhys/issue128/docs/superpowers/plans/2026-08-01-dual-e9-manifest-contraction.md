@@ -45,7 +45,7 @@ def test_manifest_group_assignment_is_canonical_and_complete() -> None:
         range(manifests[0].total_groups)
     )
     assert all(
-        group.ordinal % 3 == manifest.shard_index
+        manifest_shard_index(group.ordinal, 3) == manifest.shard_index
         for manifest in manifests
         for group in manifest.groups
     )
@@ -141,7 +141,7 @@ word_map = cubic_formula_log_series(stages, degree)[degree]
 ordered = sorted(word_map.items(), key=lambda item: (item[0][1:], item[0][0]))
 raw_groups = groupby(ordered, key=lambda item: item[0][1:])
 for ordinal, (suffix, items) in enumerate(raw_groups):
-    shard_index = ordinal % shard_count
+    shard_index = manifest_shard_index(ordinal, shard_count)
 ```
 
 Require odd `degree >= 3`, `shard_count >= 1`, nonzero coefficients, group sizes
@@ -297,6 +297,12 @@ For every manifest word, call `evaluator.evaluate(word)`, retain support at
 most four, lift coordinates to `L=6` with explicit alias rejection, and apply
 the exact cubic word coefficient only after rational Pauli contraction.  Clear
 the cache after every suffix group.
+
+Use a manifest-only target-support evaluator.  After evaluating a suffix of
+length `m`, discard terms above support `4 + degree - m`; each remaining outer
+commutator changes support by at most one, so discarded terms cannot reach the
+final support-four pairing.  The frozen in-memory evaluator remains unchanged,
+and the E5/E7 tests below certify equality of the resulting dual pairings.
 
 - [ ] **Step 4: Add an in-memory path equivalence test on selected groups**
 

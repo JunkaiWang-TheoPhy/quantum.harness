@@ -9,11 +9,16 @@ from .commutant_witness import (
     square_real_pauli_terms,
 )
 from .cubic_field import Cubic
-from .dual_word_manifest import FORMULA_NAME, WordManifest
+from .dual_word_manifest import (
+    FORMULA_NAME,
+    WordManifest,
+    manifest_shard_index,
+)
 from .lattice import SquareLattice
 from .local_commutators import (
     SymplecticDyadicLocalDensityEvaluator,
     _iter_set_bits,
+    symplectic_local_fragment_adjoint,
 )
 
 
@@ -33,6 +38,48 @@ class ManifestPairingPartial:
     tau_w: Cubic
 
 
+class _TargetSupportEvaluator:
+    """Exact nested commutators pruned by reachable final support."""
+
+    def __init__(self, degree: int, target_support: int) -> None:
+        self.degree = degree
+        self.target_support = target_support
+        self.base = SymplecticDyadicLocalDensityEvaluator(
+            shared_coordinates=True
+        )
+        self.registries = self.base.registries
+        self.cache = {}
+
+    @staticmethod
+    def denominator_exponent(key: tuple[int, ...]) -> int:
+        return SymplecticDyadicLocalDensityEvaluator.denominator_exponent(key)
+
+    def evaluate(self, key: tuple[int, ...]):
+        if not key:
+            raise ValueError("nested-commutator key must be nonempty")
+        if len(key) > self.degree:
+            raise ValueError("nested-commutator key exceeds target degree")
+        if key in self.cache:
+            return self.cache[key]
+        if len(key) == 1:
+            operator = self.base.evaluate(key)
+        else:
+            operator = symplectic_local_fragment_adjoint(
+                self.registries[key[-1]],
+                key[0],
+                self.evaluate(key[1:]),
+            )
+        remaining_outer = self.degree - len(key)
+        support_cap = self.target_support + remaining_outer
+        operator = {
+            pauli: coefficient
+            for pauli, coefficient in operator.items()
+            if (pauli[0] | pauli[1]).bit_count() <= support_cap
+        }
+        self.cache[key] = operator
+        return operator
+
+
 def _validate_manifest_for_contraction(manifest: WordManifest) -> None:
     if manifest.degree < 3 or manifest.degree % 2 == 0:
         raise ValueError("manifest degree must be odd and at least three")
@@ -46,7 +93,12 @@ def _validate_manifest_for_contraction(manifest: WordManifest) -> None:
     if ordinals != tuple(sorted(set(ordinals))):
         raise ValueError("manifest groups are duplicated or unordered")
     for group in manifest.groups:
-        if group.ordinal % manifest.shard_count != manifest.shard_index:
+        if not 0 <= group.ordinal < manifest.total_groups:
+            raise ValueError("manifest group ordinal is outside global range")
+        if (
+            manifest_shard_index(group.ordinal, manifest.shard_count)
+            != manifest.shard_index
+        ):
             raise ValueError("manifest group does not belong to its shard")
         if len(group.suffix) != manifest.degree - 1:
             raise ValueError("manifest suffix length does not match degree")
@@ -80,7 +132,7 @@ def contract_word_manifest(
     cells = lattice.n_sites // 4
     hamiltonian = heisenberg_symplectic_terms(lattice)
     squared = square_real_pauli_terms(hamiltonian)
-    evaluator = SymplecticDyadicLocalDensityEvaluator(shared_coordinates=True)
+    evaluator = _TargetSupportEvaluator(manifest.degree, target_support=4)
     registry = evaluator.registries[0]
     denominator = manifest.degree * (
         1 << evaluator.denominator_exponent((0,) * manifest.degree)

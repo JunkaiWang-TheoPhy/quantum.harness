@@ -15,6 +15,26 @@ from .cubic_field import Cubic, CubicStage
 from .cubic_local import cubic_formula_log_series
 
 FORMULA_NAME = "five_copy_fourth_order_suzuki_four_matchings"
+_UINT64_MASK = (1 << 64) - 1
+
+
+def manifest_shard_index(group_ordinal: int, shard_count: int) -> int:
+    """Assign one group with a deterministic SplitMix64 avalanche.
+
+    Lexical base-four ordinals expose the innermost suffix letters in their
+    low bits. Direct modulo assignment would pin those letters per shard and
+    create severe nested-commutator load imbalance.
+    """
+
+    if group_ordinal < 0:
+        raise ValueError("group ordinal must be nonnegative")
+    if shard_count < 1:
+        raise ValueError("shard count must be positive")
+    value = (group_ordinal + 0x9E3779B97F4A7C15) & _UINT64_MASK
+    value = ((value ^ (value >> 30)) * 0xBF58476D1CE4E5B9) & _UINT64_MASK
+    value = ((value ^ (value >> 27)) * 0x94D049BB133111EB) & _UINT64_MASK
+    value ^= value >> 31
+    return value % shard_count
 
 
 @dataclass(frozen=True, slots=True)
@@ -244,7 +264,7 @@ def _parse_manifest_payload(payload: object) -> WordManifest:
             or isinstance(ordinal, bool)
             or ordinal < 0
             or ordinal >= total_groups
-            or ordinal % shard_count != shard_index
+            or manifest_shard_index(ordinal, shard_count) != shard_index
         ):
             raise ValueError("word group ordinal is inconsistent with shard")
         suffix = _parse_word(raw_group.get("suffix"), degree - 1, "suffix")
@@ -350,7 +370,8 @@ def build_word_manifests(
             groups=tuple(
                 group
                 for group in groups
-                if group.ordinal % shard_count == shard_index
+                if manifest_shard_index(group.ordinal, shard_count)
+                == shard_index
             ),
             implementation_sources=sources,
         )

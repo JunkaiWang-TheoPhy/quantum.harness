@@ -44,6 +44,19 @@ Thus E9 is exactly sixteen times the E7 word/group count.  Rebuilding this map
 inside every array task would waste roughly 6.1 CPU-hours across 64 shards and
 multiply shared-node startup memory pressure.
 
+A production-shape calibration exposed a second constraint.  Lexical suffix
+ordinals are base-four integers, so direct `ordinal % 64` assignment fixes the
+three innermost fragment labels in each worker.  Shard zero therefore received
+only suffixes ending in `000`, whose nested commutators vanish, while other
+workers would carry the nonzero load.  The selected assignment now applies the
+fixed SplitMix64 avalanche to the ordinal before reduction modulo the shard
+count.  For all 65,536 groups this gives 961--1,086 groups per shard, and every
+shard contains all 64 possible innermost three-letter patterns.
+
+The balanced 64-file preparation completed in 482.94 seconds with a
+933,577,904-byte peak footprint and produced 29 MB of canonical JSON.  Child
+sizes range from 961 to 1,086 groups and 3,844 to 4,344 words.
+
 ## Approaches considered
 
 ### A. Rebuild the word map in every worker
@@ -56,7 +69,8 @@ to distinguish word-generation failures from Pauli-contraction failures.
 ### B. Pre-sharded canonical word manifests (selected)
 
 Run one preparation job that generates the degree-nine map once, orders words
-by `(suffix, first_letter)`, assigns suffix groups by round-robin ordinal, and
+by `(suffix, first_letter)`, assigns suffix groups through a deterministic
+SplitMix64 avalanche of the lexical ordinal, and
 writes one canonical manifest per worker.  Every manifest records exact cubic
 coefficients, group ordinals, the full manifest-set digest, and implementation
 source hashes.  Workers consume only one manifest and perform the existing
@@ -110,6 +124,21 @@ or an iterable of manifest groups.  The scientific evaluator is unchanged:
 4. contract exactly with `H`, `H^2`, and
    `W=H^2-(3N/8)I+H/2`; and
 5. clear the evaluator cache at group boundaries.
+
+The manifest path adds an exact reachability prune that is absent from the
+frozen E7 implementation.  At an intermediate suffix of length `m`, there are
+`degree-m` outer commutators left and support can decrease by at most one per
+commutator.  Terms with support greater than
+
+```text
+4 + degree - m
+```
+
+therefore cannot return to the support-at-most-four dual target and are deleted
+immediately.  Full E5 and selected E7 comparisons require exact agreement with
+the unpruned evaluator.  On the measured E9 heavy group, this reduced wall time
+from 182.03 seconds to 5.71 seconds without changing any pairing; a 32-group
+mixed sample took 21.57 seconds, or 0.674 seconds per group.
 
 The worker artifact records word, nonzero-word, retained-term, and group
 counts, exact `tau_h`, `tau_h2`, and `tau_w`, peak RSS, wall time, scheduler

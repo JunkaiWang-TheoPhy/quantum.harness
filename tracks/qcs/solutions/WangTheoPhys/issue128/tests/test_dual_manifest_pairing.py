@@ -97,12 +97,14 @@ def test_one_degree_seven_group_matches_frozen_in_memory_path() -> None:
         shard_count=shard_count,
         implementation_sources=SOURCES,
     )[shard_index]
+    selected = replace(manifest, groups=manifest.groups[:1])
+    group_ordinal = selected.groups[0].ordinal
 
-    observed = contract_word_manifest(manifest, length=6)
+    observed = contract_word_manifest(selected, length=6)
     expected = contract_log_degree_shard(
         stages,
         7,
-        shard_index,
+        group_ordinal,
         shard_count,
         length=6,
     )

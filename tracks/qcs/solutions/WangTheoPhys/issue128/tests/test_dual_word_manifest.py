@@ -10,6 +10,7 @@ from trottercert.dual_word_manifest import (
     build_word_manifests,
     load_manifest_index,
     load_word_manifest,
+    manifest_shard_index,
     verify_manifest_index,
     write_manifest_set,
 )
@@ -29,7 +30,7 @@ def test_manifest_group_assignment_is_canonical_and_complete() -> None:
         range(manifests[0].total_groups)
     )
     assert all(
-        group.ordinal % 3 == manifest.shard_index
+        manifest_shard_index(group.ordinal, 3) == manifest.shard_index
         for manifest in manifests
         for group in manifest.groups
     )
@@ -39,6 +40,23 @@ def test_manifest_group_assignment_is_canonical_and_complete() -> None:
         for group in groups
     )
     assert sum(len(group.records) for group in groups) == 1020
+
+
+def test_production_assignment_mixes_innermost_suffix_patterns() -> None:
+    assignments = [manifest_shard_index(ordinal, 64) for ordinal in range(65536)]
+    counts = [assignments.count(shard) for shard in range(64)]
+    trailing_patterns = [
+        {
+            ordinal % 64
+            for ordinal, assigned in enumerate(assignments)
+            if assigned == shard
+        }
+        for shard in range(64)
+    ]
+
+    assert min(counts) == 961
+    assert max(counts) == 1086
+    assert all(patterns == set(range(64)) for patterns in trailing_patterns)
 
 
 def test_manifest_set_round_trips_and_binds_children(tmp_path: Path) -> None:

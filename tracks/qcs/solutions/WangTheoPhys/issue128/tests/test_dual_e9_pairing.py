@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 from dataclasses import replace
+from fractions import Fraction
 from pathlib import Path
 
 import pytest
@@ -26,6 +27,7 @@ from trottercert.dual_word_manifest import (
     WordManifest,
     WordRecord,
     build_word_manifests,
+    manifest_shard_index,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -38,7 +40,11 @@ SOURCES = {"source.py": "a" * 64}
 
 
 def _manifest(index: int) -> WordManifest:
-    ordinals = (index, index + 2)
+    ordinals = tuple(
+        ordinal
+        for ordinal in range(4)
+        if manifest_shard_index(ordinal, 2) == index
+    )
     groups = tuple(
         WordGroup(
             ordinal=ordinal,
@@ -79,8 +85,8 @@ def _index() -> ManifestIndex:
                 shard_index=index,
                 path=f"manifest-{index:03d}.json",
                 sha256=str(index + 1) * 64,
-                group_count=2,
-                word_count=2,
+                group_count=len(_manifest(index).groups),
+                word_count=len(_manifest(index).groups),
             )
             for index in range(2)
         ),
@@ -96,10 +102,10 @@ def _partial(index: int) -> ManifestPairingPartial:
         shard_index=index,
         shard_count=2,
         total_groups=4,
-        group_indices=(index, index + 2),
-        word_count=2,
-        nonzero_word_count=2,
-        retained_term_count=8,
+        group_indices=tuple(group.ordinal for group in _manifest(index).groups),
+        word_count=len(_manifest(index).groups),
+        nonzero_word_count=len(_manifest(index).groups),
+        retained_term_count=4 * len(_manifest(index).groups),
         tau_h=tau_h,
         tau_h2=tau_h2,
         tau_w=tau_h2 + tau_h / 2,
@@ -217,19 +223,22 @@ def test_actual_degree_nine_one_group_worker_smoke() -> None:
         shard_count=64,
         implementation_sources=SOURCES,
     )
-    first_group = production[0].groups[0]
+    heavy_group = next(
+        group for group in production[0].groups if group.ordinal == 4818
+    )
+    test_group = replace(heavy_group, ordinal=0)
     manifest = replace(
         production[0],
         shard_count=1,
         total_groups=1,
-        total_words=len(first_group.records),
-        groups=(first_group,),
+        total_words=len(test_group.records),
+        groups=(test_group,),
     )
     index = ManifestIndex(
         degree=9,
         shard_count=1,
         total_groups=1,
-        total_words=len(first_group.records),
+        total_words=len(test_group.records),
         word_set_digest=manifest.word_set_digest,
         formula=FORMULA_NAME,
         implementation_sources=manifest.implementation_sources,
@@ -239,7 +248,7 @@ def test_actual_degree_nine_one_group_worker_smoke() -> None:
                 path="manifest-000.json",
                 sha256="e" * 64,
                 group_count=1,
-                word_count=len(first_group.records),
+                word_count=len(test_group.records),
             ),
         ),
     )
@@ -254,5 +263,11 @@ def test_actual_degree_nine_one_group_worker_smoke() -> None:
     )
 
     verify_worker_payload(payload, index, manifest)
-    assert payload["word_count"] in (3, 4)
+    assert payload["word_count"] == 4
     assert payload["group_indices"] == [0]
+    assert partial.retained_term_count == 112299
+    assert partial.tau_w == Cubic(
+        Fraction(-8181997, 4608000000000),
+        Fraction(-64514921, 55296000000000),
+        Fraction(-39898969, 55296000000000),
+    )
