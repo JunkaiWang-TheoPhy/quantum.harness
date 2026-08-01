@@ -17,12 +17,15 @@ set -euo pipefail
 # invocation used by the frozen source-closure implementation.
 source /etc/profile.d/modules.sh
 module load git/2.30.2-gcc-7.3.1
+module load apps/apptainer/1.3.4
 
 : "${ISSUE128_RUN_ID:?ISSUE128_RUN_ID must identify this immutable run}"
 : "${ISSUE128_GROUPED_SOURCE_COMMIT:?missing frozen generator commit}"
 : "${ISSUE128_SUBMISSION_COMMIT:?missing submission artifact commit}"
 : "${ISSUE128_BUILD_SOURCE_ROOT:?missing staged frozen generator tree}"
 : "${ISSUE128_SUBMISSION_SOURCE_ROOT:?missing staged submission tree}"
+: "${ISSUE128_APPTAINER_IMAGE:?missing frozen Apptainer image}"
+: "${ISSUE128_APPTAINER_IMAGE_SHA256:?missing frozen Apptainer image digest}"
 
 export PYTHONHASHSEED=0
 export OMP_NUM_THREADS=1
@@ -38,8 +41,18 @@ BUILD_ROOT="$ISSUE128_BUILD_SOURCE_ROOT"
 BUILD_ISSUE="$BUILD_ROOT/tracks/qcs/solutions/WangTheoPhys/issue128"
 FRESH="$OUT/fresh"
 PYTHON_BIN="${ISSUE128_PYTHON:-python3}"
+export APPTAINERENV_PREPEND_PATH="$(dirname "$(command -v git)")"
+PYTHON_CMD=(
+  apptainer exec
+  --bind /public/software:/public/software:ro
+  "$ISSUE128_APPTAINER_IMAGE"
+  "$PYTHON_BIN"
+)
 
-"$PYTHON_BIN" - <<'PY'
+test "$(sha256sum "$ISSUE128_APPTAINER_IMAGE" | awk '{print $1}')" = \
+  "$ISSUE128_APPTAINER_IMAGE_SHA256"
+
+"${PYTHON_CMD[@]}" - <<'PY'
 from importlib.metadata import version
 
 expected = {
@@ -65,7 +78,7 @@ test ! -e "$OUT"
 mkdir -p "$OUT" "$FRESH"
 
 set +e
-/usr/bin/time -v "$PYTHON_BIN" -u \
+/usr/bin/time -v "${PYTHON_CMD[@]}" -u \
   "$SUBMISSION_ISSUE/scripts/reference_verify_grouped_xxz.py" \
   "$SUBMISSION_ISSUE/benchmarks/paper-a/grouped-xxz-pilot.json" \
   "$SUBMISSION_ISSUE/benchmarks/paper-a/grouped-xxz-pilot-witness.json.gz" \
@@ -73,7 +86,7 @@ set +e
 REFERENCE_RC=$?
 
 if [[ "$REFERENCE_RC" -eq 0 ]]; then
-  /usr/bin/time -v "$PYTHON_BIN" -u \
+  /usr/bin/time -v "${PYTHON_CMD[@]}" -u \
     "$BUILD_ISSUE/scripts/compile_grouped_xxz.py" --build \
     --delta 1/2 --pipeline direct-theorem \
     --summary "$FRESH/delta-1-2.json" \
@@ -85,7 +98,7 @@ else
 fi
 
 if [[ "$DELTA_HALF_RC" -eq 0 ]]; then
-  /usr/bin/time -v "$PYTHON_BIN" -u \
+  /usr/bin/time -v "${PYTHON_CMD[@]}" -u \
     "$BUILD_ISSUE/scripts/compile_grouped_xxz.py" --build \
     --delta 2/1 --pipeline direct-theorem \
     --summary "$FRESH/delta-2-1.json" \
@@ -97,7 +110,7 @@ else
 fi
 
 if [[ "$DELTA_TWO_RC" -eq 0 ]]; then
-  /usr/bin/time -v "$PYTHON_BIN" -u \
+  /usr/bin/time -v "${PYTHON_CMD[@]}" -u \
     "$BUILD_ISSUE/scripts/compile_grouped_xxz.py" --merge-pilot \
     "$FRESH/delta-1-2.json" "$FRESH/delta-1-2-witness.json.gz" \
     "$FRESH/delta-2-1.json" "$FRESH/delta-2-1-witness.json.gz" \
@@ -122,7 +135,7 @@ else
 fi
 set -e
 
-"$PYTHON_BIN" - "$OUT" "$ISSUE128_RUN_ID" \
+"${PYTHON_CMD[@]}" - "$OUT" "$ISSUE128_RUN_ID" \
   "$ISSUE128_GROUPED_SOURCE_COMMIT" "$ISSUE128_SUBMISSION_COMMIT" \
   "$REFERENCE_RC" "$DELTA_HALF_RC" "$DELTA_TWO_RC" "$MERGE_RC" \
   "$SUMMARY_CMP_RC" "$WITNESS_CMP_RC" <<'PY'
