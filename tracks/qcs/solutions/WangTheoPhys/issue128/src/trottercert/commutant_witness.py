@@ -200,6 +200,20 @@ class QuadraticWitnessMoments:
     squared_normalized_pairing: Cubic
 
 
+@dataclass(frozen=True, slots=True)
+class QuadraticWitnessRecord:
+    """Exact nonzero obstruction record without a claimed norm normalization."""
+
+    h2_coefficient: Fraction
+    identity_coefficient: Fraction
+    hamiltonian_coefficient: Fraction
+    identity_pairing: Fraction
+    hamiltonian_pairing: Fraction
+    defect_pairing: Cubic
+    exact_nonzero_obstruction: bool
+    normalization_status: str
+
+
 def quadratic_witness_moments(
     hamiltonian: Mapping[SymplecticPauli, Fraction],
     squared: Mapping[SymplecticPauli, Fraction],
@@ -373,6 +387,11 @@ def verify_quadratic_witness_payload(payload: Mapping[str, object]) -> None:
     tau_h = _parse_rational(moments.get("tau_h"), "tau_h")
     tau_h2 = _parse_rational(moments.get("tau_h2"), "tau_h2")
     tau_h3 = _parse_rational(moments.get("tau_h3"), "tau_h3")
+    h2_coefficient = _parse_rational(
+        witness.get("h2_coefficient"), "H-squared coefficient"
+    )
+    if h2_coefficient != 1:
+        raise ValueError("quadratic witness H-squared coefficient must equal one")
     identity_coefficient = _parse_rational(
         witness.get("identity_coefficient"), "identity coefficient"
     )
@@ -404,3 +423,45 @@ def verify_quadratic_witness_payload(payload: Mapping[str, object]) -> None:
         raise ValueError("finite-step claim exceeds the certificate")
     if payload.get("hpc_authorized") is not False:
         raise ValueError("certificate does not authorize HPC")
+
+
+def quadratic_witness_record(
+    payload: Mapping[str, object],
+) -> QuadraticWitnessRecord:
+    """Verify and parse the exact gauge pairings of a witness certificate."""
+
+    verify_quadratic_witness_payload(payload)
+    moments = payload["moments"]
+    witness = payload["witness"]
+    pairings = payload["pairings"]
+    if not all(isinstance(section, Mapping) for section in (moments, witness, pairings)):
+        raise ValueError("certificate sections must be mappings")
+
+    tau_h = _parse_rational(moments.get("tau_h"), "tau_h")
+    tau_h2 = _parse_rational(moments.get("tau_h2"), "tau_h2")
+    tau_h3 = _parse_rational(moments.get("tau_h3"), "tau_h3")
+    h2_coefficient = _parse_rational(
+        witness.get("h2_coefficient"), "H-squared coefficient"
+    )
+    identity_coefficient = _parse_rational(
+        witness.get("identity_coefficient"), "identity coefficient"
+    )
+    hamiltonian_coefficient = _parse_rational(
+        witness.get("hamiltonian_coefficient"), "Hamiltonian coefficient"
+    )
+    return QuadraticWitnessRecord(
+        h2_coefficient=h2_coefficient,
+        identity_coefficient=identity_coefficient,
+        hamiltonian_coefficient=hamiltonian_coefficient,
+        identity_pairing=(
+            tau_h2 + identity_coefficient + hamiltonian_coefficient * tau_h
+        ),
+        hamiltonian_pairing=(
+            tau_h3
+            + identity_coefficient * tau_h
+            + hamiltonian_coefficient * tau_h2
+        ),
+        defect_pairing=_parse_cubic(pairings.get("tau_w_e5"), "tau_w_e5"),
+        exact_nonzero_obstruction=True,
+        normalization_status="exact_norm_certificate_required",
+    )

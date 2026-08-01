@@ -47,6 +47,18 @@ class MatrixGaugeDecomposition:
     witness_matrix: sp.ImmutableMatrix | None
 
 
+@dataclass(frozen=True)
+class ExactDualWitnessCheck:
+    """Exact trace-moment obligations for a spectral dual witness."""
+
+    commutes: bool
+    identity_orthogonal: bool
+    retiming_orthogonal: bool
+    identity_pairing: sp.Expr
+    retiming_pairing: sp.Expr
+    pairing: sp.Expr
+
+
 def _exact_rational(value: object, *, field: str) -> sp.Rational:
     if isinstance(value, bool) or isinstance(value, float):
         raise ValueError(f"{field} must contain exact rational values")
@@ -393,4 +405,48 @@ def decompose_matrix_spectral_gauge(
         witness_matrix=(
             None if witness_matrix is None else sp.ImmutableMatrix(witness_matrix)
         ),
+    )
+
+
+def check_exact_dual_witness(
+    hamiltonian: sp.MatrixBase,
+    defect: sp.MatrixBase,
+    witness: sp.MatrixBase,
+) -> ExactDualWitnessCheck:
+    """Return exact commutant and gauge-orthogonality trace moments.
+
+    Unlike the NumPy discovery helper, this routine accepts only exact
+    Hermitian SymPy matrices.  It therefore provides the production-certificate
+    semantics without an eigensolver tolerance.
+    """
+
+    exact_hamiltonian = _validate_exact_hermitian(
+        hamiltonian,
+        field="hamiltonian",
+    )
+    exact_defect = _validate_exact_hermitian(defect, field="defect")
+    exact_witness = _validate_exact_hermitian(witness, field="witness")
+    if not (
+        exact_hamiltonian.shape == exact_defect.shape == exact_witness.shape
+    ):
+        raise ValueError(
+            "hamiltonian, defect, and witness must have the same square dimension"
+        )
+
+    commutator = (
+        exact_witness * exact_hamiltonian
+        - exact_hamiltonian * exact_witness
+    ).applyfunc(sp.simplify)
+    identity_pairing = sp.simplify(sp.trace(exact_witness))
+    retiming_pairing = sp.simplify(
+        sp.trace(exact_witness * exact_hamiltonian)
+    )
+    pairing = sp.simplify(sp.trace(exact_witness * exact_defect))
+    return ExactDualWitnessCheck(
+        commutes=commutator == sp.zeros(exact_hamiltonian.rows),
+        identity_orthogonal=identity_pairing == 0,
+        retiming_orthogonal=retiming_pairing == 0,
+        identity_pairing=identity_pairing,
+        retiming_pairing=retiming_pairing,
+        pairing=pairing,
     )
