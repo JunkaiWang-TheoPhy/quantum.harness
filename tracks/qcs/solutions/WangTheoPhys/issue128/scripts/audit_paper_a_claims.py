@@ -15,6 +15,7 @@ REFERENCE_CHECKER = "scripts/reference_verify.py"
 TRANSCRIPT = "artifacts/d5-integrated/verification-transcript.txt"
 MUTATION_CHECKER = "tests/test_certificate_mutations.py"
 VERIFICATION_SECTION = "docs/manuscript/sections/verification.tex"
+LIMITATIONS_SECTION = "docs/manuscript/sections/limitations.tex"
 CLAIM_MANIFEST = "artifacts/publication/paper-a-claim-SHA256SUMS"
 
 CERTIFICATE_CLAIMS = {
@@ -54,6 +55,26 @@ FORBIDDEN_PHRASES = (
     "physically minimal",
     "universal 4.1357",
     "certified fivefold",
+)
+FIVEFOLD_OPEN_MARKER = re.compile(
+    r"\\subsection\{The fivefold boundary is open\}.*?"
+    r"This is arithmetic, not a 78-step error certificate\..*?"
+    r"\$r=78\$ is therefore not certified\.",
+    re.DOTALL,
+)
+POSITIVE_FIVEFOLD_PATTERNS = (
+    re.compile(
+        r"\bfivefold\b[^.\n]{0,100}\b(?:is\s+|has\s+been\s+)?"
+        r"(?<!not\s)(?:achieved|certified|met|attained|closed)\b",
+    ),
+    re.compile(
+        r"\b(?<!not\s)(?:achieved|certified|met|attained)\b[^.\n]{0,100}"
+        r"\bfivefold\b",
+    ),
+    re.compile(
+        r"\br\s*=\s*\$?78\$?[^.\n]{0,40}\b(?:is|has\s+been)\s+"
+        r"(?<!not\s)(?:certified|accepted)\b",
+    ),
 )
 
 CLAIM_BINDINGS: dict[str, tuple[str, re.Pattern[str]]] = {
@@ -160,6 +181,7 @@ CLAIM_MANIFEST_PATHS = {
     REFERENCE_CHECKER,
     TRANSCRIPT,
     MUTATION_CHECKER,
+    LIMITATIONS_SECTION,
     *(location for location, _marker in CLAIM_BINDINGS.values()),
 }
 
@@ -341,6 +363,8 @@ def audit_claims(matrix_path: Path, root: Path) -> list[str]:
         for item in matrix.get("excluded_pending_claims", [])
         if isinstance(item, dict) and isinstance(item.get("name"), str)
     }
+    if "fivefold_global_certificate" not in excluded_names:
+        errors.append("fivefold_global_certificate must remain an excluded pending claim")
 
     claims = matrix.get("claims")
     if not isinstance(claims, dict):
@@ -487,6 +511,17 @@ def audit_claims(matrix_path: Path, root: Path) -> list[str]:
     manuscript_tree = root / "docs/manuscript"
     if manuscript_tree.is_dir():
         manuscript_paths.update(manuscript_tree.rglob("*.tex"))
+    limitations_path = root / LIMITATIONS_SECTION
+    if not limitations_path.is_file():
+        errors.append(f"missing fivefold limitations file {LIMITATIONS_SECTION}")
+    else:
+        try:
+            limitations_text = limitations_path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as error:
+            errors.append(f"cannot read fivefold limitations file: {error}")
+        else:
+            if FIVEFOLD_OPEN_MARKER.search(limitations_text) is None:
+                errors.append("fivefold open/not-certified manuscript marker is absent")
     for path in manuscript_paths:
         try:
             lowered = path.read_text(encoding="utf-8").lower()
@@ -502,6 +537,12 @@ def audit_claims(matrix_path: Path, root: Path) -> list[str]:
             errors.append(
                 f"{path.relative_to(root)}: excluded strengthened-control numeric token"
             )
+        for pattern in POSITIVE_FIVEFOLD_PATTERNS:
+            if pattern.search(lowered):
+                errors.append(
+                    f"{path.relative_to(root)}: forbidden positive fivefold claim"
+                )
+                break
     return errors
 
 

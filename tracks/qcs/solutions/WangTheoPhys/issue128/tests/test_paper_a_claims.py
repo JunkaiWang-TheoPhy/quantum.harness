@@ -91,6 +91,11 @@ def _write_fixture(root: Path) -> Path:
             "Discovery jobs are untrusted producers. A third program uses "
             "only the Python standard library.\n"
         ),
+        "limitations.tex": (
+            "\\subsection{The fivefold boundary is open}\n"
+            "This is arithmetic, not a 78-step error certificate.\n"
+            "$r=78$ is therefore not certified.\n"
+        ),
     }
     for name, text in sections.items():
         (root / "docs/manuscript/sections" / name).write_text(text, encoding="utf-8")
@@ -149,7 +154,11 @@ def _write_fixture(root: Path) -> Path:
             {
                 "name": "strengthened_control_ratio",
                 "reason": "Excluded until independent evidence exists.",
-            }
+            },
+            {
+                "name": "fivefold_global_certificate",
+                "reason": "Open and not certified by this release.",
+            },
         ],
         "claims": claims,
     }
@@ -172,6 +181,7 @@ def _rewrite_manifest(root: Path) -> None:
             "results.tex",
             "reproducibility.tex",
             "verification.tex",
+            "limitations.tex",
         )),
     ]
     manifest = root / "artifacts/publication/paper-a-claim-SHA256SUMS"
@@ -286,6 +296,31 @@ def test_excluded_strengthened_number_is_forbidden_in_manuscript(
         _rewrite_manifest(case_root)
         errors = audit_claims(matrix_path, case_root)
         assert any("excluded strengthened-control numeric token" in error for error in errors)
+
+
+def test_positive_fivefold_claim_is_forbidden_after_hash_refresh(
+    tmp_path: Path,
+) -> None:
+    matrix_path = _write_fixture(tmp_path)
+    limitations = tmp_path / "docs/manuscript/sections/limitations.tex"
+    limitations.write_text(
+        limitations.read_text(encoding="utf-8")
+        + "The fivefold target is achieved at r=78.\n",
+        encoding="utf-8",
+    )
+    _rewrite_manifest(tmp_path)
+    errors = audit_claims(matrix_path, tmp_path)
+    assert any("forbidden positive fivefold claim" in error for error in errors)
+
+
+def test_fivefold_open_marker_is_required(tmp_path: Path) -> None:
+    matrix_path = _write_fixture(tmp_path)
+    limitations = tmp_path / "docs/manuscript/sections/limitations.tex"
+    limitations.write_text("Fivefold discussion removed.\n", encoding="utf-8")
+    _rewrite_manifest(tmp_path)
+    assert "fivefold open/not-certified manuscript marker is absent" in audit_claims(
+        matrix_path, tmp_path
+    )
 
 
 def test_claim_audit_requires_dedicated_manifest_path(tmp_path: Path) -> None:

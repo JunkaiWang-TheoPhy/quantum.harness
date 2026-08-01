@@ -5,6 +5,10 @@
     {
       "name": "strengthened_control_ratio",
       "reason": "Excluded from the Paper A release until an independent hash-bound source and semantic checker exist."
+    },
+    {
+      "name": "fivefold_global_certificate",
+      "reason": "Open and not certified by the current Paper A release."
     }
   ],
   "claims": {
