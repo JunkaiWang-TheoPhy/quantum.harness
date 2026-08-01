@@ -6,21 +6,40 @@ import subprocess
 import sys
 from dataclasses import replace
 from fractions import Fraction
+from itertools import product
 from pathlib import Path
 
 import pytest
 
-from trottercert.algebra import PauliString
+from trottercert.algebra import PauliString, PauliSum
 from trottercert.cubic_field import Cubic, fourth_order_suzuki_cubic_stages
 from trottercert.grouped_xxz import (
+    FINITE_STEP_ERROR_FORMULA,
+    THEOREM_CENTER,
+    THEOREM_DUHAMEL_CONVENTION,
+    THEOREM_FACTORIAL_DENOMINATOR,
+    THEOREM_IDENTIFIER,
+    THEOREM_ORDER,
+    AnticommutingGroupRecord,
     StageRecord,
+    SymplecticCoefficient,
     XXZCompileSpec,
+    build_finite_xxz_ledger,
     canonical_json_bytes,
+    discover_anticommuting_groups,
+    discover_xxz_groups,
     fraction_pair,
     replay_schedule_resources,
+    sqrt_fraction_interval,
     strict_fraction_pair,
+    verify_anticommuting_groups,
+    verify_finite_xxz_ledger,
+    verify_xxz_groups,
     verify_xxz_suzuki_schedule,
+    weighted_symplectic_nested_commutator,
+    weighted_xxz_fragment,
     xxz_suzuki_schedule,
+    xxz_triangle_baseline,
 )
 from trottercert.hamiltonian import (
     finite_torus_xxz_hamiltonian,
@@ -28,8 +47,8 @@ from trottercert.hamiltonian import (
     four_matching_xxz_fragments,
     xxz_bond_operator,
 )
+from trottercert.higher_order import nested_commutator
 from trottercert.lattice import SquareLattice
-
 
 ROOT = Path(__file__).resolve().parents[1]
 CLI = ROOT / "scripts" / "compile_grouped_xxz.py"
@@ -259,3 +278,208 @@ def test_build_cli_fails_closed_until_task_8() -> None:
     )
     assert completed.returncode != 0
     assert "Task 8" in completed.stderr
+
+
+def _open_fragment_operators(
+    fragment_bonds: tuple[tuple[tuple[int, int], ...], ...],
+    delta: Fraction,
+) -> tuple[PauliSum, ...]:
+    fragments = []
+    for bonds in fragment_bonds:
+        operator = PauliSum.zero()
+        for left, right in bonds:
+            operator += xxz_bond_operator(left, right, delta)
+        fragments.append(operator)
+    return tuple(fragments)
+
+
+def _pauli_masks(operator: PauliSum) -> dict[tuple[int, int], tuple[Fraction, Fraction]]:
+    result: dict[tuple[int, int], tuple[Fraction, Fraction]] = {}
+    for pauli, coefficient in operator.terms.items():
+        x_mask = z_mask = 0
+        for site, axis in pauli.ops:
+            bit = 1 << site
+            if axis in {"X", "Y"}:
+                x_mask |= bit
+            if axis in {"Y", "Z"}:
+                z_mask |= bit
+        result[(x_mask, z_mask)] = (coefficient.real, coefficient.imag)
+    return result
+
+
+@pytest.mark.parametrize("delta", [Fraction(1, 2), Fraction(2)])
+def test_weighted_symplectic_backend_matches_every_reduced_word(
+    delta: Fraction,
+) -> None:
+    fragment_bonds = (((0, 1),), ((1, 2),))
+    weighted = weighted_xxz_fragment(fragment_bonds[0], delta)
+    assert weighted.common_denominator == 4 * delta.denominator
+    assert weighted.axis_numerators == (
+        delta.denominator,
+        delta.denominator,
+        delta.numerator,
+    )
+
+    references = _open_fragment_operators(fragment_bonds, delta)
+    cache: dict[tuple[int, ...], PauliSum] = {}
+    for degree in (3, 5):
+        for key in product(range(2), repeat=degree):
+            observed = {
+                (term.x_mask, term.z_mask): (term.real, term.imag)
+                for term in weighted_symplectic_nested_commutator(
+                    fragment_bonds,
+                    delta,
+                    key,
+                )
+            }
+            assert observed == _pauli_masks(nested_commutator(references, key, cache))
+
+
+def test_bounded_ledger_is_raw_prefix_with_exact_projection_and_blocks() -> None:
+    progress: list[tuple[int, int]] = []
+    ledger = build_finite_xxz_ledger(
+        XXZCompileSpec.pilot(Fraction(1, 2)),
+        max_records=40,
+        progress=lambda completed, projected: progress.append((completed, projected)),
+    )
+    verify_finite_xxz_ledger(ledger)
+
+    assert ledger.theorem_identifier == THEOREM_IDENTIFIER
+    assert ledger.order == THEOREM_ORDER == 4
+    assert ledger.center == THEOREM_CENTER == 20
+    assert ledger.factorial_denominator == THEOREM_FACTORIAL_DENOMINATOR == 120
+    assert ledger.duhamel_convention == THEOREM_DUHAMEL_CONVENTION
+    assert ledger.finite_step_error_formula == FINITE_STEP_ERROR_FORMULA
+    assert ledger.projected_record_count == 61_677
+    assert len(ledger.raw_records) == 40
+    assert not ledger.complete
+    assert progress[-1] == (40, 61_677)
+    assert len({record.record_id for record in ledger.raw_records}) == 40
+    assert all(record.weight_interval.lower > 0 for record in ledger.raw_records)
+    assert all(len(record.block_key) == 5 for record in ledger.raw_records)
+
+    weights: dict[tuple[int, ...], Fraction] = {}
+    for record in ledger.raw_records:
+        weights[record.block_key] = (
+            weights.get(record.block_key, Fraction()) + record.weight_interval.upper
+        )
+    assert {block.block_key: block.raw_weight_upper for block in ledger.blocks} == weights
+    for block in ledger.blocks:
+        assert block.terms == tuple(sorted(block.terms, key=lambda term: term.mask))
+        assert all(not term.is_zero for term in block.terms)
+
+
+def test_ledger_verifier_rejects_raw_weight_and_preweighted_block_mutations() -> None:
+    ledger = build_finite_xxz_ledger(
+        XXZCompileSpec.pilot(Fraction(2)),
+        max_records=5,
+    )
+    first_record = ledger.raw_records[0]
+    bad_record = replace(
+        first_record,
+        weight_interval=first_record.weight_interval * 2,
+    )
+    with pytest.raises(ValueError):
+        verify_finite_xxz_ledger(
+            replace(ledger, raw_records=(bad_record,) + ledger.raw_records[1:])
+        )
+
+    nonzero_index = next(index for index, block in enumerate(ledger.blocks) if block.terms)
+    block = ledger.blocks[nonzero_index]
+    preweighted = replace(
+        block,
+        terms=tuple(
+            replace(
+                term,
+                real=term.real * block.raw_weight_upper,
+                imag=term.imag * block.raw_weight_upper,
+            )
+            for term in block.terms
+        ),
+    )
+    blocks = list(ledger.blocks)
+    blocks[nonzero_index] = preweighted
+    with pytest.raises(ValueError, match="unweighted"):
+        verify_finite_xxz_ledger(replace(ledger, blocks=tuple(blocks)))
+
+
+def _four_term_fixture() -> tuple[SymplecticCoefficient, ...]:
+    return (
+        SymplecticCoefficient(1, 0, Fraction(1), Fraction()),  # XI
+        SymplecticCoefficient(0, 1, Fraction(1), Fraction()),  # ZI
+        SymplecticCoefficient(2, 0, Fraction(1), Fraction()),  # IX
+        SymplecticCoefficient(0, 2, Fraction(1), Fraction()),  # IZ
+    )
+
+
+def test_exact_group_verifier_checks_coverage_commutation_and_sqrt_interval() -> None:
+    terms = _four_term_fixture()
+    groups = discover_anticommuting_groups(terms)
+    bound = verify_anticommuting_groups(terms, groups)
+    assert len(groups) == 2
+    assert bound == sum((group.norm_interval.upper for group in groups), Fraction())
+    for group in groups:
+        assert group.squared_norm == 2
+        assert group.norm_interval.lower**2 <= 2 <= group.norm_interval.upper**2
+        assert group.norm_interval.upper - group.norm_interval.lower <= Fraction(1, 10**30)
+
+    duplicate = replace(groups[0], terms=groups[0].terms + (groups[0].terms[0],))
+    with pytest.raises(ValueError, match="duplicate"):
+        verify_anticommuting_groups(terms, (duplicate,) + groups[1:])
+    with pytest.raises(ValueError, match="coverage"):
+        verify_anticommuting_groups(terms, (groups[0],))
+
+    commuting = AnticommutingGroupRecord(
+        terms=(terms[0], terms[2]),
+        squared_norm=Fraction(2),
+        norm_interval=sqrt_fraction_interval(Fraction(2)),
+    )
+    remainder = AnticommutingGroupRecord(
+        terms=(terms[1], terms[3]),
+        squared_norm=Fraction(2),
+        norm_interval=sqrt_fraction_interval(Fraction(2)),
+    )
+    with pytest.raises(ValueError, match="anticommute"):
+        verify_anticommuting_groups(terms, (commuting, remainder))
+
+
+def test_theorem_group_witness_is_block_local_delta_bound_and_unweighted() -> None:
+    ledger = build_finite_xxz_ledger(
+        XXZCompileSpec.pilot(Fraction(1, 2)),
+        max_records=1,
+    )
+    groups = discover_xxz_groups(ledger)
+    grouped = verify_xxz_groups(ledger, groups)
+    baseline = xxz_triangle_baseline(ledger)
+    assert grouped <= baseline
+    assert all(record.delta == Fraction(1, 2) for record in groups)
+    assert all(record.ledger_digest == ledger.ledger_digest for record in groups)
+    assert {record.block_key for record in groups} == {
+        block.block_key for block in ledger.blocks
+    }
+
+    other_delta = build_finite_xxz_ledger(
+        XXZCompileSpec.pilot(Fraction(2)),
+        max_records=1,
+    )
+    with pytest.raises(ValueError, match="Delta|digest"):
+        verify_xxz_groups(other_delta, groups)
+
+    nonempty_index = next(
+        index
+        for index, record in enumerate(groups)
+        if record.groups and record.groups[0].terms
+    )
+    record = groups[nonempty_index]
+    first_group = record.groups[0]
+    doubled_norm = replace(
+        first_group,
+        norm_interval=first_group.norm_interval * 2,
+    )
+    mutated_groups = list(groups)
+    mutated_groups[nonempty_index] = replace(
+        record,
+        groups=(doubled_norm,) + record.groups[1:],
+    )
+    with pytest.raises(ValueError, match="norm"):
+        verify_xxz_groups(ledger, tuple(mutated_groups))
