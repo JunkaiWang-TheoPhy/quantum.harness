@@ -1,0 +1,127 @@
+{
+  "claim": {
+    "finite_step_missing": "certified local-log branch and all-order remainder",
+    "finite_step_status": "inconclusive",
+    "leading_order_status": "no_go",
+    "quotient": "image(i ad_H) + span(I,H)",
+    "statement": "E5 is not in image(i ad_H) + span(I,H)"
+  },
+  "formula": {
+    "alpha_minimal_polynomial": "alpha^3-4",
+    "fragment_order": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "id": "five_copy_fourth_order_suzuki"
+  },
+  "hpc_authorized": false,
+  "implementation_sources": {
+    "src/trottercert/commutant_witness.py": "aef3dc5c09cbeb70464184dc6f8778a235652ed691770de513ca436f67718973",
+    "src/trottercert/cubic_field.py": "279ff5517e041b443483fbfcd50797748796ba52fa2937f208b1e92f6e0a74f3",
+    "src/trottercert/cubic_local.py": "dbe33aec6ca5835c4db46f38fe403817c635ce867c4de38f6dbcc04d47e82d1b"
+  },
+  "kind": "issue128_quadratic_commutant_witness",
+  "lifting": {
+    "matches_full_hamiltonian": true,
+    "matching_reconstruction_terms": 864,
+    "translations": 36,
+    "unit_cell": [
+      2,
+      2
+    ]
+  },
+  "model": {
+    "boundary": "periodic",
+    "hamiltonian": "sum_<uv>(XX+YY+ZZ)/4",
+    "length": 12,
+    "normalized_trace": "tau(A)=Tr(A)/2^(L^2)"
+  },
+  "moments": {
+    "tau_h": [
+      0,
+      1
+    ],
+    "tau_h2": [
+      54,
+      1
+    ],
+    "tau_h3": [
+      -27,
+      1
+    ]
+  },
+  "pairings": {
+    "basis": [
+      "1",
+      "alpha",
+      "alpha^2"
+    ],
+    "tau_h2_e5": [
+      [
+        -8399,
+        80000
+      ],
+      [
+        -71051,
+        1280000
+      ],
+      [
+        -6583,
+        160000
+      ]
+    ],
+    "tau_h_e5": [
+      [
+        10767,
+        200000
+      ],
+      [
+        91083,
+        3200000
+      ],
+      [
+        8439,
+        400000
+      ]
+    ],
+    "tau_w_e5": [
+      [
+        -7807,
+        100000
+      ],
+      [
+        -66043,
+        1600000
+      ],
+      [
+        -6119,
+        200000
+      ]
+    ],
+    "tau_w_e5_nonzero": true
+  },
+  "proof": {
+    "commutation_reason": "W is a polynomial in H",
+    "commutes_with_hamiltonian": true,
+    "orthogonal_to_hamiltonian": true,
+    "orthogonal_to_identity": true
+  },
+  "schema_version": 1,
+  "witness": {
+    "expression": "H^2 + identity_coefficient I + hamiltonian_coefficient H",
+    "h2_coefficient": [
+      1,
+      1
+    ],
+    "hamiltonian_coefficient": [
+      1,
+      2
+    ],
+    "identity_coefficient": [
+      -54,
+      1
+    ]
+  }
+}

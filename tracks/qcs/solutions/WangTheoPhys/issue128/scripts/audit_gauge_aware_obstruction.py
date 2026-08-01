@@ -11,13 +11,17 @@ from typing import Any
 
 import sympy as sp
 
+from trottercert.commutant_witness import verify_quadratic_witness_payload
 from trottercert.spectral_gauge import decompose_matrix_spectral_gauge
-
 
 ISSUE_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SOURCE = (
     ISSUE_ROOT
     / "docs/experiments/processor-obstruction/exact-obstruction.json"
+)
+DEFAULT_WITNESS = (
+    ISSUE_ROOT
+    / "docs/experiments/processor-obstruction/quadratic-commutant-witness.json"
 )
 
 
@@ -37,6 +41,21 @@ def _read_source(path: Path) -> tuple[dict[str, Any], bytes]:
         raise ValueError(f"cannot read source obstruction artifact: {path}") from exc
     if not isinstance(payload, dict):
         raise ValueError("source obstruction artifact must contain a JSON object")
+    return payload, encoded
+
+
+def _read_witness(path: Path) -> tuple[dict[str, Any], bytes]:
+    try:
+        encoded = path.read_bytes()
+        payload = json.loads(encoded)
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"cannot read quadratic witness artifact: {path}") from exc
+    if not isinstance(payload, dict):
+        raise ValueError("quadratic witness artifact must contain a JSON object")
+    try:
+        verify_quadratic_witness_payload(payload)
+    except ValueError as exc:
+        raise ValueError(f"quadratic witness artifact is invalid: {exc}") from exc
     return payload, encoded
 
 
@@ -102,8 +121,12 @@ def _reference_examples() -> dict[str, Any]:
     }
 
 
-def build_payload(source: Path) -> dict[str, Any]:
+def build_payload(
+    source: Path,
+    witness: Path = DEFAULT_WITNESS,
+) -> dict[str, Any]:
     source_payload, encoded = _read_source(source)
+    witness_payload, witness_encoded = _read_witness(witness)
     overlap = source_payload.get(
         "e5_hilbert_schmidt_overlap_with_h_per_cell"
     )
@@ -133,11 +156,18 @@ def build_payload(source: Path) -> dict[str, Any]:
             "claim": "E5 is not in image(i ad_H) at fixed target time",
         },
         "calibrated_spectral_obstruction": {
-            "status": "inconclusive",
-            "reason": (
-                "the attached witness H lies in the allowed time-calibration "
-                "direction; no independent commutant witness orthogonal to I,H "
-                "is attached"
+            "leading_order_status": "no_go",
+            "finite_step_status": "inconclusive",
+            "witness": "H^2 - 54 I + H/2",
+            "witness_artifact": {
+                "path": _source_label(witness),
+                "sha256": hashlib.sha256(witness_encoded).hexdigest(),
+            },
+            "exact_cubic_pairing": witness_payload["pairings"]["tau_w_e5"],
+            "claim": "E5 is not in image(i ad_H) + span(I,H)",
+            "finite_step_missing": (
+                "a certified local-log branch and all-order remainder small "
+                "enough to preserve the leading pairing"
             ),
         },
         "restricted_support_processor": {
@@ -151,14 +181,18 @@ def build_payload(source: Path) -> dict[str, Any]:
         "reference_examples": _reference_examples(),
         "hpc_authorized": False,
         "next_gate": (
-            "attach an exact commutant witness orthogonal to I,H or close a "
-            "processed local-log remainder before physical E7"
+            "close the processed local-log branch and all-order remainder "
+            "before claiming a finite-step eigenphase lower bound or running E7"
         ),
     }
 
 
-def verify_payload(payload: dict[str, Any], source: Path) -> None:
-    expected = build_payload(source)
+def verify_payload(
+    payload: dict[str, Any],
+    source: Path,
+    witness: Path = DEFAULT_WITNESS,
+) -> None:
+    expected = build_payload(source, witness)
     submitted_source = payload.get("source")
     if not isinstance(submitted_source, dict):
         raise ValueError("source metadata is missing")
@@ -179,6 +213,7 @@ def _encoded(payload: dict[str, Any]) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", type=Path, default=DEFAULT_SOURCE)
+    parser.add_argument("--witness", type=Path, default=DEFAULT_WITNESS)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--verify", action="store_true")
     args = parser.parse_args()
@@ -188,7 +223,7 @@ def main() -> None:
             payload = json.loads(args.output.read_text())
         except (OSError, json.JSONDecodeError) as exc:
             raise SystemExit(f"cannot read audit output: {args.output}") from exc
-        verify_payload(payload, args.source)
+        verify_payload(payload, args.source, args.witness)
         print(
             "gauge-aware audit valid: "
             f"source_sha256={payload['source']['sha256']}",
@@ -196,7 +231,7 @@ def main() -> None:
         )
         return
 
-    payload = build_payload(args.source)
+    payload = build_payload(args.source, args.witness)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(_encoded(payload))
     print(

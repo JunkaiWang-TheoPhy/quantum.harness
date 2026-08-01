@@ -144,18 +144,38 @@ cycle, not a claim of exact order lifting by endpoint conjugation.
 
 ## Calibration-aware refinement
 
-The exact `<H,E5>` witness proves the endpoint no-go at fixed target time.  It
-is not, by itself, a retiming-robust spectral obstruction: `H` belongs to the
-allowed time/energy-calibration direction.  After quotienting by
+The exact `<H,E5>` witness proves the endpoint no-go at fixed target time but
+is absorbed by the allowed time/energy-calibration direction.  The independent
+quadratic commutant witness
+
+```text
+W = H^2 - 54 I + H/2
+```
+
+closes that gap on the periodic 12-by-12 lattice.  Exact Pauli orthogonality
+gives
+
+```text
+tau(H^2) = 54,        tau(H^3) = -27,
+tau(W) = 0,           tau(WH) = 0,          [W,H] = 0,
+tau(W E5) =
+  -7807/100000
+  - (66043/1600000) alpha
+  - (6119/200000) alpha^2 != 0,
+alpha^3 = 4.
+```
+
+Therefore, after quotienting by
 
 ```text
 image(i ad_H) + span(I) + span(H),
 ```
 
-the evidence attached to this experiment therefore has status
-**INCONCLUSIVE**.  A calibrated spectral no-go requires an independent exact
-commutant witness orthogonal to both `I` and `H`, or an equivalent nontrivial
-block-diagonal obstruction.
+the leading defect still has a nonzero spectral component.  The calibrated
+**leading-order** status is now **NO-GO**.  This is not yet a finite-step
+eigenphase lower bound at total time one: that promotion still requires a
+certified local-log branch and an all-order remainder small enough to preserve
+the leading pairing.
 
 Likewise, the support-six result remains a rigorous no-go for the stated
 short-support processor class in operator space.  Support alone does not
@@ -165,8 +185,10 @@ no-go.
 The fail-closed refinement is recorded in:
 
 ```text
+quadratic-commutant-witness.json
+sha256: de045d5613b87010298ecd2b96c4cc685a13c2d35a1da965255b41ac1094c749
 gauge-aware-audit.json
-sha256: c410b39e7462468efb72e87f4692e86c20c9421a756b879c3c43ba8570aae2a8
+sha256: 486f0e1573f677b2f9f5fbe331f7c2e19e0d7b6481e526c0b04944ad05f0899a
 source exact-obstruction sha256:
 b993596dcacb714c20bbae7b3e38c254e639268e57ab529823079db732f61103
 ```
@@ -174,6 +196,11 @@ b993596dcacb714c20bbae7b3e38c254e639268e57ab529823079db732f61103
 Reproduce and verify it from the Issue-128 directory:
 
 ```bash
+PYTHONPATH=src python -u -m scripts.certify_quadratic_commutant_witness
+
+PYTHONPATH=src python -u -m scripts.certify_quadratic_commutant_witness \
+  --verify
+
 PYTHONPATH=src python -u -m scripts.audit_gauge_aware_obstruction \
   --source docs/experiments/processor-obstruction/exact-obstruction.json \
   --output docs/experiments/processor-obstruction/gauge-aware-audit.json
@@ -184,7 +211,9 @@ PYTHONPATH=src python -u -m scripts.audit_gauge_aware_obstruction \
   --verify
 ```
 
-The audit also contains three exact reference problems: an off-diagonal defect
-removed by a commutator, an `H`-parallel defect removed only after time
-calibration, and a genuine commutant witness that survives phase and time
-calibration.  It explicitly records `hpc_authorized=false`.
+The full quadratic-witness recomputation takes about four minutes on the
+current local host and peaks below 200 MB.  The audit also contains three exact
+reference problems: an off-diagonal defect removed by a commutator, an
+`H`-parallel defect removed only after time calibration, and a genuine
+commutant witness that survives phase and time calibration.  Both artifacts
+explicitly record `hpc_authorized=false`.

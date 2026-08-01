@@ -5,8 +5,29 @@
     "span(H)"
   ],
   "calibrated_spectral_obstruction": {
-    "reason": "the attached witness H lies in the allowed time-calibration direction; no independent commutant witness orthogonal to I,H is attached",
-    "status": "inconclusive"
+    "claim": "E5 is not in image(i ad_H) + span(I,H)",
+    "exact_cubic_pairing": [
+      [
+        -7807,
+        100000
+      ],
+      [
+        -66043,
+        1600000
+      ],
+      [
+        -6119,
+        200000
+      ]
+    ],
+    "finite_step_missing": "a certified local-log branch and all-order remainder small enough to preserve the leading pairing",
+    "finite_step_status": "inconclusive",
+    "leading_order_status": "no_go",
+    "witness": "H^2 - 54 I + H/2",
+    "witness_artifact": {
+      "path": "docs/experiments/processor-obstruction/quadratic-commutant-witness.json",
+      "sha256": "de045d5613b87010298ecd2b96c4cc685a13c2d35a1da965255b41ac1094c749"
+    }
   },
   "fixed_time_endpoint_processor": {
     "claim": "E5 is not in image(i ad_H) at fixed target time",
@@ -30,7 +51,7 @@
   },
   "hpc_authorized": false,
   "kind": "issue128_gauge_aware_processor_obstruction_audit",
-  "next_gate": "attach an exact commutant witness orthogonal to I,H or close a processed local-log remainder before physical E7",
+  "next_gate": "close the processed local-log branch and all-order remainder before claiming a finite-step eigenphase lower bound or running E7",
   "reference_examples": {
     "hamiltonian_parallel": {
       "calibrated_status": "removable",
