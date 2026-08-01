@@ -335,6 +335,10 @@
     "ownership": "paper-b",
     "release_included": false
   },
+  "docs/plans/2026-08-01-pf4-tfim-bch-mapping-design.md": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
   "docs/plans/2026-08-01-quadratic-commutant-witness-design.md": {
     "ownership": "paper-b",
     "release_included": false
@@ -411,6 +415,10 @@
     "ownership": "paper-b",
     "release_included": false
   },
+  "docs/report/pf4-tfim-bch-ledger.md": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
   "docs/report/references.bib": {
     "ownership": "shared",
     "release_included": false
@@ -476,6 +484,10 @@
     "release_included": false
   },
   "docs/superpowers/plans/2026-08-01-paper-b-prxq-gates-implementation.md": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/superpowers/plans/2026-08-01-pf4-tfim-bch-mapping.md": {
     "ownership": "paper-b",
     "release_included": false
   },
@@ -691,6 +703,10 @@
     "ownership": "paper-b",
     "release_included": false
   },
+  "src/trottercert/corrector_cost.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
   "src/trottercert/crosscheck.py": {
     "ownership": "shared",
     "release_included": true
@@ -782,6 +798,10 @@
   "src/trottercert/pareto.py": {
     "ownership": "shared",
     "release_included": true
+  },
+  "src/trottercert/pf4_bch_mapping.py": {
+    "ownership": "paper-b",
+    "release_included": false
   },
   "src/trottercert/processed_budget.py": {
     "ownership": "exploratory",
@@ -889,6 +909,10 @@
   },
   "tests/test_compare_exact_stage_degrees.py": {
     "ownership": "exploratory",
+    "release_included": false
+  },
+  "tests/test_corrector_cost.py": {
+    "ownership": "paper-b",
     "release_included": false
   },
   "tests/test_cubic_field.py": {
@@ -1041,6 +1065,10 @@
   },
   "tests/test_pareto.py": {
     "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_pf4_bch_mapping.py": {
+    "ownership": "paper-b",
     "release_included": false
   },
   "tests/test_processed_budget.py": {
