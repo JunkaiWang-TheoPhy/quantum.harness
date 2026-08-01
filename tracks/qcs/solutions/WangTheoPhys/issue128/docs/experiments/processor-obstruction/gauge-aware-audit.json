@@ -1,0 +1,160 @@
+{
+  "allowed_calibration_gauge": [
+    "image(i ad_H)",
+    "span(I)",
+    "span(H)"
+  ],
+  "calibrated_spectral_obstruction": {
+    "reason": "the attached witness H lies in the allowed time-calibration direction; no independent commutant witness orthogonal to I,H is attached",
+    "status": "inconclusive"
+  },
+  "fixed_time_endpoint_processor": {
+    "claim": "E5 is not in image(i ad_H) at fixed target time",
+    "exact_cubic_overlap": [
+      [
+        3589,
+        2400000
+      ],
+      [
+        30361,
+        38400000
+      ],
+      [
+        2813,
+        4800000
+      ]
+    ],
+    "source_nonzero": true,
+    "status": "no_go",
+    "witness": "H"
+  },
+  "hpc_authorized": false,
+  "kind": "issue128_gauge_aware_processor_obstruction_audit",
+  "next_gate": "attach an exact commutant witness orthogonal to I,H or close a processed local-log remainder before physical E7",
+  "reference_examples": {
+    "hamiltonian_parallel": {
+      "calibrated_status": "removable",
+      "defect": [
+        [
+          "-1",
+          "0"
+        ],
+        [
+          "0",
+          "1"
+        ]
+      ],
+      "fixed_time_status": "spectral_obstruction",
+      "fixed_time_witness": [
+        [
+          "1",
+          "0"
+        ],
+        [
+          "0",
+          "-1"
+        ]
+      ],
+      "hamiltonian": [
+        [
+          "-1",
+          "0"
+        ],
+        [
+          "0",
+          "1"
+        ]
+      ]
+    },
+    "independent_commutant": {
+      "commutes_with_hamiltonian": true,
+      "defect": [
+        [
+          "2",
+          "0",
+          "0"
+        ],
+        [
+          "0",
+          "-3",
+          "0"
+        ],
+        [
+          "0",
+          "0",
+          "1"
+        ]
+      ],
+      "hamiltonian": [
+        [
+          "-1",
+          "0",
+          "0"
+        ],
+        [
+          "0",
+          "0",
+          "0"
+        ],
+        [
+          "0",
+          "0",
+          "2"
+        ]
+      ],
+      "orthogonal_to_hamiltonian": true,
+      "orthogonal_to_identity": true,
+      "status": "spectral_obstruction",
+      "witness": [
+        [
+          "2",
+          "0",
+          "0"
+        ],
+        [
+          "0",
+          "-3",
+          "0"
+        ],
+        [
+          "0",
+          "0",
+          "1"
+        ]
+      ]
+    },
+    "off_diagonal": {
+      "defect": [
+        [
+          "0",
+          "1"
+        ],
+        [
+          "1",
+          "0"
+        ]
+      ],
+      "hamiltonian": [
+        [
+          "-1",
+          "0"
+        ],
+        [
+          "0",
+          "1"
+        ]
+      ],
+      "status": "removable"
+    }
+  },
+  "restricted_support_processor": {
+    "reason": "support-six residuals cannot be canceled by support-at-most-four processors, but support alone does not lower-bound eigenphase error",
+    "spectral_implication": "not_established",
+    "status": "operator_no_go_only"
+  },
+  "schema_version": 1,
+  "source": {
+    "path": "docs/experiments/processor-obstruction/exact-obstruction.json",
+    "sha256": "b993596dcacb714c20bbae7b3e38c254e639268e57ab529823079db732f61103"
+  }
+}
