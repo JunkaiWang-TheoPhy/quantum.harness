@@ -1099,3 +1099,261 @@ def xxz_triangle_baseline(ledger: XXZLedger) -> Fraction:
             raise ValueError("degree-five theorem block is not Hermitian")
         total += weights[block.block_key] * pauli_l1
     return total / ledger.factorial_denominator
+
+
+XXZ_METHOD = "direct_finite_high_order_theorem_grouped_norm"
+
+
+@dataclass(frozen=True, slots=True)
+class XXZCertificate:
+    """Exact finite-step closure for one complete same-Delta theorem ledger."""
+
+    status: XXZStatus
+    method: str
+    spec: XXZCompileSpec
+    ledger_digest: str
+    raw_record_count: int
+    theorem_identifier: str
+    order: int
+    center: int
+    factorial_denominator: int
+    duhamel_convention: str
+    finite_step_error_formula: str
+    grouped_constant: Fraction
+    triangle_constant: Fraction
+    candidate_steps: int
+    candidate_error: Fraction
+    candidate_previous_error: Fraction | None
+    baseline_steps: int
+    baseline_error: Fraction
+    baseline_previous_error: Fraction | None
+    candidate_resources: int
+    baseline_resources: int
+    bond_growth: Fraction
+    cell_base: Fraction
+
+
+def _minimal_fourth_order_steps(constant: Fraction, tolerance: Fraction) -> int:
+    """Return the least positive ``r`` satisfying ``constant/r**4 <= tolerance``."""
+
+    if not isinstance(constant, Fraction) or not isinstance(tolerance, Fraction):
+        raise TypeError("finite-step constants and tolerance must be exact Fractions")
+    if constant < 0:
+        raise ValueError("finite-step constant must be nonnegative")
+    if tolerance <= 0:
+        raise ValueError("finite-step tolerance must be positive")
+    if constant <= tolerance:
+        return 1
+    lower = 1
+    upper = 2
+    while constant > tolerance * upper**THEOREM_ORDER:
+        lower = upper
+        upper *= 2
+    while lower + 1 < upper:
+        middle = (lower + upper) // 2
+        if constant <= tolerance * middle**THEOREM_ORDER:
+            upper = middle
+        else:
+            lower = middle
+    return upper
+
+
+def _fourth_order_error(constant: Fraction, steps: int) -> Fraction:
+    if isinstance(steps, bool) or not isinstance(steps, int) or steps < 1:
+        raise ValueError("finite-step count must be a positive integer")
+    return constant / steps**THEOREM_ORDER
+
+
+def _close_xxz_certificate(
+    ledger: XXZLedger,
+    *,
+    grouped_constant: Fraction,
+    triangle_constant: Fraction,
+) -> XXZCertificate:
+    """Close exact arithmetic after a caller has verified a complete ledger.
+
+    This helper deliberately does not establish ledger authenticity.  The
+    production compiler and :func:`verify_xxz_certificate` do that before
+    accepting the returned finite-step fields.
+    """
+
+    if not isinstance(ledger, XXZLedger):
+        raise TypeError("ledger must be an XXZLedger")
+    if not ledger.complete:
+        raise ValueError("finite-step closure requires a complete ledger")
+    if not isinstance(grouped_constant, Fraction) or not isinstance(
+        triangle_constant,
+        Fraction,
+    ):
+        raise TypeError("theorem constants must be exact Fractions")
+    if grouped_constant < 0 or triangle_constant < 0:
+        raise ValueError("theorem constants must be nonnegative")
+
+    tolerance = ledger.spec.tolerance
+    candidate_steps = _minimal_fourth_order_steps(grouped_constant, tolerance)
+    baseline_steps = _minimal_fourth_order_steps(triangle_constant, tolerance)
+    schedule = xxz_suzuki_schedule()
+    delta_absolute = abs(ledger.spec.delta)
+    certificate = XXZCertificate(
+        status="certified",
+        method=XXZ_METHOD,
+        spec=ledger.spec,
+        ledger_digest=ledger.ledger_digest,
+        raw_record_count=len(ledger.raw_records),
+        theorem_identifier=ledger.theorem_identifier,
+        order=ledger.order,
+        center=ledger.center,
+        factorial_denominator=ledger.factorial_denominator,
+        duhamel_convention=ledger.duhamel_convention,
+        finite_step_error_formula=ledger.finite_step_error_formula,
+        grouped_constant=grouped_constant,
+        triangle_constant=triangle_constant,
+        candidate_steps=candidate_steps,
+        candidate_error=_fourth_order_error(grouped_constant, candidate_steps),
+        candidate_previous_error=(
+            None
+            if candidate_steps == 1
+            else _fourth_order_error(grouped_constant, candidate_steps - 1)
+        ),
+        baseline_steps=baseline_steps,
+        baseline_error=_fourth_order_error(triangle_constant, baseline_steps),
+        baseline_previous_error=(
+            None
+            if baseline_steps == 1
+            else _fourth_order_error(triangle_constant, baseline_steps - 1)
+        ),
+        candidate_resources=replay_schedule_resources(schedule, candidate_steps),
+        baseline_resources=replay_schedule_resources(schedule, baseline_steps),
+        bond_growth=max(Fraction(1), (1 + delta_absolute) / 2),
+        cell_base=(2 + delta_absolute) / 2,
+    )
+    verify_xxz_finite_step_fields(certificate)
+    return certificate
+
+
+def verify_xxz_finite_step_fields(certificate: XXZCertificate) -> None:
+    """Verify exact minimal-step, adjacent-step, resource, and growth fields."""
+
+    if not isinstance(certificate, XXZCertificate):
+        raise TypeError("certificate must be an XXZCertificate")
+    if certificate.status != "certified" or certificate.method != XXZ_METHOD:
+        raise ValueError("XXZ certificate status or method is incorrect")
+    if (
+        certificate.theorem_identifier != THEOREM_IDENTIFIER
+        or certificate.order != THEOREM_ORDER
+        or certificate.center != THEOREM_CENTER
+        or certificate.factorial_denominator != THEOREM_FACTORIAL_DENOMINATOR
+        or certificate.duhamel_convention != THEOREM_DUHAMEL_CONVENTION
+        or certificate.finite_step_error_formula != FINITE_STEP_ERROR_FORMULA
+    ):
+        raise ValueError("XXZ certificate theorem metadata is incorrect")
+    for name, constant in (
+        ("grouped", certificate.grouped_constant),
+        ("triangle", certificate.triangle_constant),
+    ):
+        if not isinstance(constant, Fraction) or constant < 0:
+            raise ValueError(f"{name} theorem constant must be an exact nonnegative Fraction")
+
+    tolerance = certificate.spec.tolerance
+
+    def verify_row(
+        name: str,
+        constant: Fraction,
+        steps: int,
+        accepted_error: Fraction,
+        previous_error: Fraction | None,
+        resources: int,
+    ) -> None:
+        expected_steps = _minimal_fourth_order_steps(constant, tolerance)
+        if steps != expected_steps:
+            raise ValueError(f"{name} step is not the exact minimal accepted step")
+        expected_error = _fourth_order_error(constant, steps)
+        if accepted_error != expected_error or accepted_error > tolerance:
+            raise ValueError(f"{name} accepted finite-step error is incorrect")
+        expected_previous = (
+            None
+            if steps == 1
+            else _fourth_order_error(constant, steps - 1)
+        )
+        if previous_error != expected_previous:
+            raise ValueError(f"{name} previous-step error is incorrect")
+        if previous_error is not None and previous_error <= tolerance:
+            raise ValueError(f"{name} previous step does not prove minimality")
+        expected_resources = replay_schedule_resources(xxz_suzuki_schedule(), steps)
+        if resources != expected_resources or resources != 30 * steps + 1:
+            raise ValueError(f"{name} merged-group resource count is incorrect")
+
+    verify_row(
+        "candidate",
+        certificate.grouped_constant,
+        certificate.candidate_steps,
+        certificate.candidate_error,
+        certificate.candidate_previous_error,
+        certificate.candidate_resources,
+    )
+    verify_row(
+        "baseline",
+        certificate.triangle_constant,
+        certificate.baseline_steps,
+        certificate.baseline_error,
+        certificate.baseline_previous_error,
+        certificate.baseline_resources,
+    )
+    delta_absolute = abs(certificate.spec.delta)
+    if certificate.bond_growth != max(Fraction(1), (1 + delta_absolute) / 2):
+        raise ValueError("XXZ bond-growth metadata is incorrect")
+    if certificate.cell_base != (2 + delta_absolute) / 2:
+        raise ValueError("XXZ cell-base metadata is incorrect")
+
+
+def verify_xxz_certificate(
+    certificate: XXZCertificate,
+    ledger: XXZLedger,
+    groups: tuple[TheoremBlockGroupRecord, ...],
+) -> None:
+    """Recompute a production certificate from its complete ledger and groups."""
+
+    if not isinstance(ledger, XXZLedger) or not ledger.complete:
+        raise ValueError("XXZ certificate verification requires a complete ledger")
+    verify_finite_xxz_ledger(ledger)
+    grouped_constant = verify_xxz_groups(ledger, groups)
+    triangle_constant = xxz_triangle_baseline(ledger)
+    expected = _close_xxz_certificate(
+        ledger,
+        grouped_constant=grouped_constant,
+        triangle_constant=triangle_constant,
+    )
+    if certificate != expected:
+        raise ValueError("XXZ certificate differs from complete-ledger replay")
+
+
+def compile_grouped_xxz(
+    spec: XXZCompileSpec,
+    *,
+    ledger: XXZLedger | None = None,
+    groups: tuple[TheoremBlockGroupRecord, ...] | None = None,
+) -> XXZCertificate:
+    """Compile the direct finite theorem, requiring full raw-ledger coverage."""
+
+    if not isinstance(spec, XXZCompileSpec):
+        raise TypeError("spec must be an XXZCompileSpec")
+    selected_ledger = ledger if ledger is not None else build_finite_xxz_ledger(spec)
+    if selected_ledger.spec != spec:
+        raise ValueError("supplied ledger does not match the requested XXZ spec")
+    # Fail before any expensive replay or grouping when a profiling prefix is
+    # accidentally supplied to the scientific compile path.
+    if not selected_ledger.complete:
+        raise ValueError("compile_grouped_xxz requires a complete ledger")
+    verify_finite_xxz_ledger(selected_ledger)
+    selected_groups = (
+        discover_xxz_groups(selected_ledger) if groups is None else groups
+    )
+    grouped_constant = verify_xxz_groups(selected_ledger, selected_groups)
+    triangle_constant = xxz_triangle_baseline(selected_ledger)
+    certificate = _close_xxz_certificate(
+        selected_ledger,
+        grouped_constant=grouped_constant,
+        triangle_constant=triangle_constant,
+    )
+    verify_xxz_certificate(certificate, selected_ledger, selected_groups)
+    return certificate

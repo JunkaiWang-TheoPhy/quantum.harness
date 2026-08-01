@@ -23,9 +23,12 @@ from trottercert.grouped_xxz import (
     AnticommutingGroupRecord,
     StageRecord,
     SymplecticCoefficient,
+    XXZCertificate,
     XXZCompileSpec,
+    _close_xxz_certificate,
     build_finite_xxz_ledger,
     canonical_json_bytes,
+    compile_grouped_xxz,
     discover_anticommuting_groups,
     discover_xxz_groups,
     fraction_pair,
@@ -34,6 +37,7 @@ from trottercert.grouped_xxz import (
     strict_fraction_pair,
     verify_anticommuting_groups,
     verify_finite_xxz_ledger,
+    verify_xxz_finite_step_fields,
     verify_xxz_groups,
     verify_xxz_suzuki_schedule,
     weighted_symplectic_nested_commutator,
@@ -483,3 +487,65 @@ def test_theorem_group_witness_is_block_local_delta_bound_and_unweighted() -> No
     )
     with pytest.raises(ValueError, match="norm"):
         verify_xxz_groups(ledger, tuple(mutated_groups))
+
+
+def test_fake_complete_ledger_closes_exact_adjacent_steps_and_resources() -> None:
+    bounded = build_finite_xxz_ledger(
+        XXZCompileSpec.pilot(Fraction(1, 2)),
+        max_records=1,
+    )
+    fake_complete = replace(bounded, complete=True)
+    certificate = _close_xxz_certificate(
+        fake_complete,
+        grouped_constant=Fraction(16, 10**6),
+        triangle_constant=Fraction(81, 10**6),
+    )
+    assert isinstance(certificate, XXZCertificate)
+    verify_xxz_finite_step_fields(certificate)
+
+    assert certificate.method == "direct_finite_high_order_theorem_grouped_norm"
+    assert certificate.grouped_constant == Fraction(16, 10**6)
+    assert certificate.triangle_constant == Fraction(81, 10**6)
+    assert certificate.candidate_steps == 2
+    assert certificate.candidate_error == Fraction(1, 10**6)
+    assert certificate.candidate_previous_error == Fraction(16, 10**6)
+    assert certificate.baseline_steps == 3
+    assert certificate.baseline_error == Fraction(1, 10**6)
+    assert certificate.baseline_previous_error == Fraction(81, 16 * 10**6)
+    assert certificate.candidate_resources == 30 * 2 + 1
+    assert certificate.baseline_resources == 30 * 3 + 1
+    assert certificate.candidate_steps != 393
+    assert certificate.bond_growth == 1
+    assert certificate.cell_base == Fraction(5, 4)
+
+
+def test_finite_step_verifier_rejects_nonminimal_step_and_resource_mutations() -> None:
+    bounded = build_finite_xxz_ledger(
+        XXZCompileSpec.pilot(Fraction(2)),
+        max_records=1,
+    )
+    certificate = _close_xxz_certificate(
+        replace(bounded, complete=True),
+        grouped_constant=Fraction(16, 10**6),
+        triangle_constant=Fraction(81, 10**6),
+    )
+    attacks = (
+        replace(certificate, candidate_steps=3),
+        replace(certificate, candidate_error=Fraction()),
+        replace(certificate, candidate_previous_error=Fraction()),
+        replace(certificate, baseline_steps=4),
+        replace(certificate, baseline_resources=certificate.baseline_resources + 30),
+        replace(certificate, bond_growth=Fraction(1)),
+        replace(certificate, cell_base=Fraction(1)),
+    )
+    for attacked in attacks:
+        with pytest.raises(ValueError):
+            verify_xxz_finite_step_fields(attacked)
+
+
+def test_compile_grouped_xxz_rejects_real_bounded_ledger_before_grouping() -> None:
+    spec = XXZCompileSpec.pilot(Fraction(1, 2))
+    bounded = build_finite_xxz_ledger(spec, max_records=1)
+    assert not bounded.complete
+    with pytest.raises(ValueError, match="complete ledger"):
+        compile_grouped_xxz(spec, ledger=bounded)
