@@ -35,6 +35,18 @@ class GaugeDecomposition:
     status: str
 
 
+@dataclass(frozen=True)
+class MatrixGaugeDecomposition:
+    hamiltonian: sp.ImmutableMatrix
+    defect: sp.ImmutableMatrix
+    include_global_phase: bool
+    include_time_calibration: bool
+    gauge: GaugeDecomposition
+    projection_matrix: sp.ImmutableMatrix
+    residual_matrix: sp.ImmutableMatrix
+    witness_matrix: sp.ImmutableMatrix | None
+
+
 def _exact_rational(value: object, *, field: str) -> sp.Rational:
     if isinstance(value, bool) or isinstance(value, float):
         raise ValueError(f"{field} must contain exact rational values")
@@ -213,3 +225,172 @@ def verify_gauge_decomposition(result: GaugeDecomposition) -> None:
         and result.scope is not GaugeScope.FULL_COMMUTATOR_IMAGE
     ):
         raise ValueError("spectral obstruction requires the full commutator image")
+
+
+def hermitian_basis(dimension: int) -> tuple[sp.Matrix, ...]:
+    """Return an exact ordered real basis of Hermitian matrices."""
+
+    if isinstance(dimension, bool) or not isinstance(dimension, int) or dimension < 1:
+        raise ValueError("Hermitian basis dimension must be a positive integer")
+    result: list[sp.Matrix] = []
+    for row in range(dimension):
+        matrix = sp.zeros(dimension)
+        matrix[row, row] = 1
+        result.append(matrix)
+    for row in range(dimension):
+        for column in range(row + 1, dimension):
+            matrix = sp.zeros(dimension)
+            matrix[row, column] = 1
+            matrix[column, row] = 1
+            result.append(matrix)
+    for row in range(dimension):
+        for column in range(row + 1, dimension):
+            matrix = sp.zeros(dimension)
+            matrix[row, column] = sp.I
+            matrix[column, row] = -sp.I
+            result.append(matrix)
+    return tuple(result)
+
+
+def _validate_exact_hermitian(
+    matrix: sp.MatrixBase,
+    *,
+    field: str,
+) -> sp.ImmutableMatrix:
+    if not isinstance(matrix, sp.MatrixBase):
+        raise ValueError(f"{field} must be an exact Hermitian matrix")
+    if matrix.rows != matrix.cols or matrix.rows < 1:
+        raise ValueError(f"{field} must be a nonempty square Hermitian matrix")
+    exact = sp.ImmutableMatrix(matrix)
+    for value in exact:
+        if value.has(sp.Float):
+            raise ValueError(f"{field} must contain exact entries")
+        real_part, imaginary_part = sp.expand_complex(value).as_real_imag()
+        _exact_rational(real_part, field=field)
+        _exact_rational(imaginary_part, field=field)
+    hermitian_residual = (exact - exact.H).applyfunc(sp.simplify)
+    if hermitian_residual != sp.zeros(exact.rows):
+        raise ValueError(f"{field} must be Hermitian")
+    return exact
+
+
+def hermitian_coordinates(matrix: sp.Matrix) -> tuple[sp.Expr, ...]:
+    """Return exact coordinates in :func:`hermitian_basis` order."""
+
+    exact = _validate_exact_hermitian(matrix, field="matrix")
+    dimension = exact.rows
+    coordinates: list[sp.Expr] = [
+        _exact_rational(exact[index, index], field="matrix")
+        for index in range(dimension)
+    ]
+    for row in range(dimension):
+        for column in range(row + 1, dimension):
+            real_part = sp.expand_complex(exact[row, column]).as_real_imag()[0]
+            coordinates.append(_exact_rational(real_part, field="matrix"))
+    for row in range(dimension):
+        for column in range(row + 1, dimension):
+            imaginary_part = sp.expand_complex(exact[row, column]).as_real_imag()[1]
+            coordinates.append(_exact_rational(imaginary_part, field="matrix"))
+    return tuple(coordinates)
+
+
+def matrix_from_hermitian_coordinates(
+    coordinates: Sequence[ExactScalar],
+    dimension: int,
+) -> sp.Matrix:
+    """Reconstruct a matrix from exact real Hermitian coordinates."""
+
+    basis = hermitian_basis(dimension)
+    exact_coordinates = _exact_vector(coordinates, field="coordinates")
+    if len(exact_coordinates) != dimension * dimension:
+        raise ValueError("coordinate count must equal the square matrix dimension")
+    result = sp.zeros(dimension)
+    for coefficient, matrix in zip(exact_coordinates, basis):
+        result += coefficient * matrix
+    return result.applyfunc(sp.simplify)
+
+
+def decompose_matrix_spectral_gauge(
+    hamiltonian: sp.MatrixBase,
+    defect: sp.MatrixBase,
+    *,
+    include_global_phase: bool = True,
+    include_time_calibration: bool = True,
+) -> MatrixGaugeDecomposition:
+    """Decompose an exact defect by the complete finite-matrix spectral gauge."""
+
+    if not isinstance(include_global_phase, bool) or not isinstance(
+        include_time_calibration,
+        bool,
+    ):
+        raise ValueError("gauge inclusion flags must be boolean")
+    exact_hamiltonian = _validate_exact_hermitian(
+        hamiltonian,
+        field="hamiltonian",
+    )
+    exact_defect = _validate_exact_hermitian(defect, field="defect")
+    if exact_hamiltonian.shape != exact_defect.shape:
+        raise ValueError("hamiltonian and defect must have the same square dimension")
+
+    dimension = exact_hamiltonian.rows
+    basis = hermitian_basis(dimension)
+    generators: list[tuple[sp.Expr, ...]] = []
+    for processor in basis:
+        image = sp.I * (
+            processor * exact_hamiltonian - exact_hamiltonian * processor
+        )
+        generators.append(hermitian_coordinates(sp.Matrix(image)))
+    if include_global_phase:
+        generators.append(hermitian_coordinates(sp.eye(dimension)))
+    if include_time_calibration:
+        generators.append(hermitian_coordinates(sp.Matrix(exact_hamiltonian)))
+
+    metric = (1,) * dimension + (2,) * (dimension * (dimension - 1))
+    gauge = decompose_gauge(
+        hermitian_coordinates(sp.Matrix(exact_defect)),
+        generators,
+        metric=metric,
+        scope=GaugeScope.FULL_COMMUTATOR_IMAGE,
+        completeness_id="exact-full-hermitian-basis-v1",
+    )
+    projection_matrix = matrix_from_hermitian_coordinates(
+        gauge.projection,
+        dimension,
+    )
+    residual_matrix = matrix_from_hermitian_coordinates(
+        gauge.residual,
+        dimension,
+    )
+    witness_matrix: sp.Matrix | None
+    if gauge.primitive_witness is None:
+        witness_matrix = None
+    else:
+        witness_matrix = matrix_from_hermitian_coordinates(
+            gauge.primitive_witness,
+            dimension,
+        )
+        commutator = (
+            witness_matrix * exact_hamiltonian
+            - exact_hamiltonian * witness_matrix
+        ).applyfunc(sp.simplify)
+        if commutator != sp.zeros(dimension):
+            raise ArithmeticError("full-image witness does not commute with Hamiltonian")
+        if include_global_phase and sp.simplify(sp.trace(witness_matrix)) != 0:
+            raise ArithmeticError("calibrated witness is not orthogonal to identity")
+        if include_time_calibration and sp.simplify(
+            sp.trace(witness_matrix * exact_hamiltonian)
+        ) != 0:
+            raise ArithmeticError("calibrated witness is not orthogonal to Hamiltonian")
+
+    return MatrixGaugeDecomposition(
+        hamiltonian=exact_hamiltonian,
+        defect=exact_defect,
+        include_global_phase=include_global_phase,
+        include_time_calibration=include_time_calibration,
+        gauge=gauge,
+        projection_matrix=sp.ImmutableMatrix(projection_matrix),
+        residual_matrix=sp.ImmutableMatrix(residual_matrix),
+        witness_matrix=(
+            None if witness_matrix is None else sp.ImmutableMatrix(witness_matrix)
+        ),
+    )
