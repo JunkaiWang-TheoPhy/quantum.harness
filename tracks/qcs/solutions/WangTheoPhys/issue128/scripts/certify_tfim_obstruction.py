@@ -6,11 +6,19 @@ import argparse
 import hashlib
 import json
 import os
+import sys
 from collections.abc import Mapping
 from fractions import Fraction
 from pathlib import Path
 from typing import Any
 
+ISSUE_ROOT = Path(__file__).resolve().parents[1]
+SOURCE_ROOT = ISSUE_ROOT / "src"
+for import_root in (ISSUE_ROOT, SOURCE_ROOT):
+    if str(import_root) not in sys.path:
+        sys.path.insert(0, str(import_root))
+
+from scripts import reference_tfim_gauge_witness as gauge_reference
 from trottercert.cubic_field import Cubic
 from trottercert.pf4_bch_mapping import (
     pf4_suzuki_gamma,
@@ -26,19 +34,26 @@ from trottercert.trace_obstruction import (
     verify_identity_record,
 )
 
-ISSUE_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = (
     ISSUE_ROOT
     / "docs/experiments/processor-obstruction/tfim-family-obstruction.json"
 )
+GAUGE_ARTIFACT_RELATIVE = (
+    "docs/experiments/processor-obstruction/tfim-gauge-witness.json"
+)
+GAUGE_ARTIFACT = ISSUE_ROOT / GAUGE_ARTIFACT_RELATIVE
 CHECKED_LENGTHS = (4, 6, 8)
 CHECK_H = Fraction(2)
 CHECK_J = Fraction(3)
 SUZUKI_U = Cubic(Fraction(4, 15), Fraction(1, 15), Fraction(1, 60))
 SOURCE_PATHS = (
+    ISSUE_ROOT / "pyproject.toml",
+    ISSUE_ROOT / "requirements-reproducibility.txt",
+    ISSUE_ROOT / "scripts/__init__.py",
+    ISSUE_ROOT / "scripts/reference_tfim_gauge_witness.py",
+    ISSUE_ROOT / "src/trottercert/__init__.py",
     ISSUE_ROOT / "src/trottercert/algebra.py",
     ISSUE_ROOT / "src/trottercert/cubic_field.py",
-    ISSUE_ROOT / "src/trottercert/cubic_local.py",
     ISSUE_ROOT / "src/trottercert/intervals.py",
     ISSUE_ROOT / "src/trottercert/pf4_bch_mapping.py",
     ISSUE_ROOT / "src/trottercert/tfim_obstruction.py",
@@ -62,7 +77,12 @@ EXPECTED_CLAIM = {
     "operator_lower_bound_status": (
         "certified_exact_algebraic_leading_coefficient"
     ),
-    "affine_gauge_status": "not_claimed",
+    "affine_gauge_status": (
+        "qualitative_certified_periodic_tfim_h_eq_j_eq_1_checked_"
+        "L_4_6_8_10_only"
+    ),
+    "affine_gauge_universal_induction_status": "not_claimed",
+    "affine_gauge_quantitative_distance_status": "not_claimed",
     "finite_step_no_go": "not_claimed",
     "total_time_eigenphase_status": "not_claimed",
     "promotion_status": "promoted_scoped_family_theorem",
@@ -82,6 +102,23 @@ EXPECTED_QUADRATIC_COEFFICIENTS = {
     "trace_c2": [1, 1],
     "trace_cd": [-4, 1],
     "trace_d2": [8, 3],
+}
+TOP_FIELDS = {
+    "schema_version",
+    "kind",
+    "family",
+    "checked_lengths",
+    "checked_parameters",
+    "formulas",
+    "exact_coefficients",
+    "suzuki_coefficient_field",
+    "checked_instances",
+    "assumptions",
+    "pf4_identity",
+    "gauge_witness_binding",
+    "implementation_sources",
+    "claim",
+    "payload_sha256",
 }
 
 
@@ -106,8 +143,15 @@ def _source_label(path: Path) -> str:
 
 def canonical_bytes(payload: object) -> bytes:
     return (
-        json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n"
-    ).encode()
+        json.dumps(
+            payload,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=True,
+            allow_nan=False,
+        )
+        + "\n"
+    ).encode("ascii")
 
 
 def _payload_digest(payload: Mapping[str, object]) -> str:
@@ -135,6 +179,40 @@ def _result_json(
             raise TypeError(f"{key} must be an exact Cubic")
         encoded[key] = _cubic(value)
     return encoded
+
+
+def _gauge_witness_binding() -> dict[str, object]:
+    gauge_payload = gauge_reference.load_payload(GAUGE_ARTIFACT)
+    gauge_reference.verify_payload(gauge_payload, ISSUE_ROOT)
+    gauge_claim = _mapping(gauge_payload.get("claim"), "gauge witness claim")
+    if gauge_payload.get("checked_lengths") != [4, 6, 8, 10]:
+        raise ValueError("gauge witness checked lengths changed")
+    if gauge_claim.get("qualitative_status") != "certified_on_checked_instances":
+        raise ValueError("gauge witness qualitative status is not certified")
+    expected_scope = "periodic TFIM h=j=1 at L=4,6,8,10"
+    if gauge_claim.get("scope") != expected_scope:
+        raise ValueError("gauge witness claim scope changed")
+    if gauge_claim.get("finite_step_status") != "not_claimed":
+        raise ValueError("gauge witness improperly claims finite-step closure")
+    if gauge_claim.get("quantitative_distance_status") != "not_claimed":
+        raise ValueError("gauge witness improperly claims a quantitative distance")
+    if gauge_claim.get("universal_even_l_ge_6_status") != (
+        "analytic_formula_recorded_induction_not_machine_proved"
+    ):
+        raise ValueError("gauge witness universal-induction status changed")
+    raw = GAUGE_ARTIFACT.read_bytes()
+    payload_sha256 = gauge_payload.get("payload_sha256")
+    if not isinstance(payload_sha256, str) or len(payload_sha256) != 64:
+        raise ValueError("gauge witness payload digest is malformed")
+    return {
+        "path": GAUGE_ARTIFACT_RELATIVE,
+        "kind": gauge_reference.ARTIFACT_KIND,
+        "schema_version": gauge_reference.SCHEMA_VERSION,
+        "file_sha256": hashlib.sha256(raw).hexdigest(),
+        "payload_sha256": payload_sha256,
+        "qualitative_status": "certified_on_checked_instances",
+        "scope": expected_scope,
+    }
 
 
 def _suzuki_field_json() -> dict[str, object]:
@@ -170,7 +248,7 @@ def build_payload() -> dict[str, Any]:
         for length in CHECKED_LENGTHS
     }
     payload: dict[str, Any] = {
-        "schema_version": 2,
+        "schema_version": 3,
         "kind": "tfim_exact_pf4_endpoint_conjugation_family",
         "family": {
             "hamiltonian": "H=A+B, A=h sum_i X_i, B=j sum_i Z_i Z_{i+1}",
@@ -221,8 +299,13 @@ def build_payload() -> dict[str, Any]:
                 "bound on the normalized trace norm of H"
             ),
             (
-                "affine rescaling, finite-step TFIM, and total-time eigenphase "
-                "claims are outside this certificate"
+                "the bound gauge witness proves only qualitative exclusion for "
+                "periodic TFIM h=j=1 at L=4,6,8,10"
+            ),
+            (
+                "universal gauge induction, quantitative gauge distance, "
+                "finite-step TFIM, and total-time eigenphase claims remain "
+                "outside this certificate"
             ),
         ],
         "pf4_identity": {
@@ -231,6 +314,7 @@ def build_payload() -> dict[str, Any]:
             "formula": pf4_record.formula,
             "identity_digest": pf4_record.identity_digest,
         },
+        "gauge_witness_binding": _gauge_witness_binding(),
         "implementation_sources": {
             _source_label(path): _sha(path) for path in SOURCE_PATHS
         },
@@ -246,10 +330,24 @@ def _mapping(value: object, field: str) -> Mapping[str, object]:
     return value
 
 
+def _reject_numeric_aliases(value: object, path: str = "artifact") -> None:
+    if isinstance(value, (bool, float)):
+        raise TypeError(f"{path}: forbidden JSON numeric alias")
+    if isinstance(value, list):
+        for index, item in enumerate(value):
+            _reject_numeric_aliases(item, f"{path}[{index}]")
+    elif isinstance(value, Mapping):
+        for key, item in value.items():
+            _reject_numeric_aliases(item, f"{path}.{key}")
+
+
 def verify_payload(payload: Mapping[str, object]) -> None:
     if not isinstance(payload, Mapping):
         raise TypeError("TFIM family payload must be a mapping")
-    if payload.get("schema_version") != 2:
+    if set(payload) != TOP_FIELDS:
+        raise ValueError("TFIM family top-level field set mismatch")
+    _reject_numeric_aliases(payload)
+    if payload.get("schema_version") != 3:
         raise ValueError("schema version mismatch")
     if payload.get("kind") != "tfim_exact_pf4_endpoint_conjugation_family":
         raise ValueError("artifact kind mismatch")
@@ -300,6 +398,8 @@ def verify_payload(payload: Mapping[str, object]) -> None:
         "identity_digest": record.identity_digest,
     }:
         raise ValueError("PF4 identity record mismatch")
+    if payload.get("gauge_witness_binding") != _gauge_witness_binding():
+        raise ValueError("gauge witness artifact binding mismatch")
 
     instances = _mapping(payload.get("checked_instances"), "checked instances")
     for length in CHECKED_LENGTHS:
@@ -342,7 +442,7 @@ def load_payload(path: Path) -> dict[str, Any]:
         raise ValueError(f"cannot read TFIM family artifact: {path}") from error
     try:
         payload = json.loads(raw, object_pairs_hook=_unique_object)
-    except json.JSONDecodeError as error:
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
         raise ValueError(f"cannot parse TFIM family artifact: {path}") from error
     if not isinstance(payload, dict):
         raise TypeError("TFIM family artifact must contain a JSON object")
