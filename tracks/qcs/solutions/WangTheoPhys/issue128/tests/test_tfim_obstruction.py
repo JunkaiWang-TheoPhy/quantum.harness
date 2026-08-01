@@ -13,23 +13,29 @@ import pytest
 
 from scripts.certify_tfim_obstruction import (
     DEFAULT_OUTPUT,
+    EXPECTED_CLAIM,
+    FAMILY_DOMAIN,
+    OPERATOR_LOWER_BOUND_FORMULA,
     build_payload,
     canonical_bytes,
     load_payload,
     verify_payload,
 )
-from trottercert.tfim_obstruction import tfim_trace_moments
+from trottercert.cubic_field import Cubic
+from trottercert.pf4_bch_mapping import pf4_suzuki_gamma
+from trottercert.tfim_obstruction import (
+    CUBIC_RESULT_KEYS,
+    RATIONAL_RESULT_KEYS,
+    tfim_trace_moments,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts/certify_tfim_obstruction.py"
-EXPECTED_KEYS = {
-    "trace_c2_over_d",
-    "trace_d2_over_d",
-    "trace_cd_over_d",
-    "trace_h2_over_d",
-    "obstruction_over_d",
-    "operator_lower_bound",
-}
+EXPECTED_KEYS = set(RATIONAL_RESULT_KEYS) | set(CUBIC_RESULT_KEYS)
+
+
+def _positive_cubic(value: Cubic) -> bool:
+    return value.a0 > 0 and value.a1 > 0 and value.a2 > 0
 
 
 @pytest.mark.parametrize("length", (4, 6, 8))
@@ -39,39 +45,81 @@ def test_tfim_even_periodic_trace_formulas(length: int) -> None:
     moments = tfim_trace_moments(length, h, j, periodic=True)
 
     assert set(moments) == EXPECTED_KEYS
-    assert all(isinstance(value, Fraction) for value in moments.values())
+    assert all(
+        isinstance(moments[key], Fraction) for key in RATIONAL_RESULT_KEYS
+    )
+    assert all(isinstance(moments[key], Cubic) for key in CUBIC_RESULT_KEYS)
     assert moments["trace_c2_over_d"] == 128 * length * h**4 * j**2
     assert moments["trace_d2_over_d"] == 128 * length * h**2 * j**4
     assert moments["trace_cd_over_d"] == 0
     assert moments["trace_h2_over_d"] == length * (h**2 + j**2)
 
 
-def test_quadratic_core_and_conditional_bound_are_exact() -> None:
-    moments = tfim_trace_moments(4, Fraction(2), Fraction(3), periodic=True)
-    expected_core = (
-        Fraction(1, 2) * moments["trace_c2_over_d"]
-        + Fraction(14, 3) * moments["trace_cd_over_d"]
-        + Fraction(4, 3) * moments["trace_d2_over_d"]
+def test_quadratic_core_pairing_and_endpoint_bound_are_exact() -> None:
+    length = 4
+    h = Fraction(2)
+    j = Fraction(3)
+    moments = tfim_trace_moments(length, h, j, periodic=True)
+    core = (
+        moments["trace_c2_over_d"]
+        - 4 * moments["trace_cd_over_d"]
+        + Fraction(8, 3) * moments["trace_d2_over_d"]
     )
-    assert moments["obstruction_over_d"] == expected_core
-    assert moments["operator_lower_bound"] == expected_core / (4 * (2 + 3))
+    norm_upper = length * (abs(h) + abs(j))
+
+    assert moments["quadratic_core_over_d"] == core
+    assert moments["trace_h_e5_over_d"] == pf4_suzuki_gamma() * core
+    assert moments["hamiltonian_norm_upper"] == norm_upper
+    assert moments["endpoint_conjugation_lower_bound"] == (
+        pf4_suzuki_gamma() * core / norm_upper
+    )
 
 
-def test_zero_hamiltonian_has_zero_conditional_quantities() -> None:
+@pytest.mark.parametrize(
+    ("h", "j", "strict"),
+    (
+        (Fraction(2), Fraction(3), True),
+        (Fraction(-2), Fraction(3), True),
+        (Fraction(2), Fraction(-3), True),
+        (Fraction(0), Fraction(3), False),
+        (Fraction(2), Fraction(0), False),
+        (Fraction(0), Fraction(0), False),
+        (Fraction(2, 3), Fraction(-5, 7), True),
+    ),
+)
+def test_strict_obstruction_exactly_matches_noncommuting_domain(
+    h: Fraction,
+    j: Fraction,
+    strict: bool,
+) -> None:
+    moments = tfim_trace_moments(4, h, j, periodic=True)
+    pairing = moments["trace_h_e5_over_d"]
+    lower_bound = moments["endpoint_conjugation_lower_bound"]
+
+    assert isinstance(pairing, Cubic)
+    assert isinstance(lower_bound, Cubic)
+    assert _positive_cubic(pairing) is strict
+    assert _positive_cubic(lower_bound) is strict
+    if not strict:
+        assert pairing == Cubic.zero()
+        assert lower_bound == Cubic.zero()
+
+
+def test_zero_hamiltonian_has_zero_exact_quantities() -> None:
     moments = tfim_trace_moments(4, Fraction(0), Fraction(0), periodic=True)
-    assert all(value == 0 for value in moments.values())
+
+    assert all(moments[key] == 0 for key in RATIONAL_RESULT_KEYS)
+    assert all(moments[key] == Cubic.zero() for key in CUBIC_RESULT_KEYS)
 
 
-def test_zero_hamiltonian_piecewise_domain_is_certificate_bound() -> None:
+def test_family_domain_and_piecewise_bound_are_certificate_bound() -> None:
     payload = build_payload()
+
+    assert payload["schema_version"] == 2
     assert payload["formulas"]["operator_lower_bound"] == (
-        "0 if h=j=0; otherwise "
-        "abs(obstruction_over_d)/(length*(abs(h)+abs(j)))"
+        OPERATOR_LOWER_BOUND_FORMULA
     )
-    assert payload["family"]["domain"] == (
-        "even length >= 4; exact rational h,j; "
-        "operator_lower_bound=0 at h=j=0"
-    )
+    assert payload["family"]["domain"] == FAMILY_DOMAIN
 
 
 def test_implementation_source_map_is_exact_and_complete() -> None:
@@ -80,10 +128,13 @@ def test_implementation_source_map_is_exact_and_complete() -> None:
         "scripts/certify_tfim_obstruction.py",
         "src/trottercert/algebra.py",
         "src/trottercert/cubic_field.py",
+        "src/trottercert/cubic_local.py",
         "src/trottercert/intervals.py",
+        "src/trottercert/pf4_bch_mapping.py",
         "src/trottercert/tfim_obstruction.py",
         "src/trottercert/trace_obstruction.py",
     }
+
     assert set(sources) == expected_paths
     assert sources == {
         relative: hashlib.sha256((ROOT / relative).read_bytes()).hexdigest()
@@ -105,25 +156,31 @@ def test_family_domain_is_fail_closed(length, h, j, message: str) -> None:
         tfim_trace_moments(length, h, j, periodic=True)
 
 
-def test_payload_inherits_unverified_pf4_gate() -> None:
+def test_payload_promotes_only_the_scoped_family_theorem() -> None:
     payload = build_payload()
     claim = payload["claim"]
 
-    assert claim["trace_moment_status"] == "certified_exact_pauli_counting"
-    assert (
-        claim["pf4_bch_mapping_status"]
-        == "algebraic_form_only_unverified_bch_mapping"
+    assert claim == EXPECTED_CLAIM
+    assert claim["pf4_bch_mapping_status"] == (
+        "proved_exact_suzuki_pf4_free_trace_identity"
     )
-    assert claim["obstruction_status"] == "conditional_not_certified"
-    assert claim["operator_lower_bound_status"] == "conditional_not_certified"
+    assert claim["endpoint_conjugation_status"] == (
+        "certified_leading_order_fixed_time_fixed_normalization"
+    )
+    assert claim["operator_lower_bound_status"] == (
+        "certified_exact_algebraic_leading_coefficient"
+    )
+    assert claim["promotion_status"] == "promoted_scoped_family_theorem"
+    assert claim["affine_gauge_status"] == "not_claimed"
     assert claim["finite_step_no_go"] == "not_claimed"
-    assert claim["promotion_status"] == "blocked_pending_pf4_bch_mapping"
+    assert claim["total_time_eigenphase_status"] == "not_claimed"
     verify_payload(payload)
 
 
 def test_frozen_payload_is_canonical_and_verifies() -> None:
     raw = DEFAULT_OUTPUT.read_bytes()
     payload = load_payload(DEFAULT_OUTPUT)
+
     assert raw == canonical_bytes(payload)
     verify_payload(payload)
 
@@ -147,6 +204,7 @@ def test_cli_build_and_verify(tmp_path: Path) -> None:
         capture_output=True,
         text=True,
     )
+
     assert verified.returncode == 0, verified.stderr
     assert output.read_bytes() == canonical_bytes(load_payload(output))
 
@@ -162,7 +220,7 @@ def test_cli_verify_rejects_noncanonical_json(
         expected_error = "canonical"
     else:
         canonical = canonical_bytes(payload)
-        raw = b'{"schema_version":1,' + canonical[1:]
+        raw = b'{"schema_version":2,' + canonical[1:]
         expected_error = "duplicate JSON key"
     path = tmp_path / f"{serialization}.json"
     path.write_bytes(raw)
@@ -174,14 +232,36 @@ def test_cli_verify_rejects_noncanonical_json(
         capture_output=True,
         text=True,
     )
+
     assert completed.returncode != 0
     assert expected_error in completed.stderr
 
 
-def test_mutated_trace_cd_is_rejected_distinctly() -> None:
+def test_mutated_schema_version_is_rejected_distinctly() -> None:
     forged = copy.deepcopy(build_payload())
-    forged["checked_instances"]["4"]["trace_cd_over_d"] = [1, 1]
-    with pytest.raises(ValueError, match="trace_cd_over_d mismatch"):
+    forged["schema_version"] = 1
+    with pytest.raises(ValueError, match="schema version mismatch"):
+        verify_payload(forged)
+
+
+def test_old_quadratic_coefficient_is_rejected_distinctly() -> None:
+    forged = copy.deepcopy(build_payload())
+    forged["exact_coefficients"]["pf4_quadratic_core"]["trace_cd"] = [14, 3]
+    with pytest.raises(ValueError, match="PF4 quadratic coefficients mismatch"):
+        verify_payload(forged)
+
+
+def test_mutated_gamma_coordinate_is_rejected_distinctly() -> None:
+    forged = copy.deepcopy(build_payload())
+    forged["suzuki_coefficient_field"]["gamma_coordinates"][2] = [1, 30]
+    with pytest.raises(ValueError, match="gamma coordinate mismatch"):
+        verify_payload(forged)
+
+
+def test_mutated_trace_pairing_is_rejected_distinctly() -> None:
+    forged = copy.deepcopy(build_payload())
+    forged["checked_instances"]["4"]["trace_h_e5_over_d"][0][0] += 1
+    with pytest.raises(ValueError, match="trace_h_e5_over_d mismatch"):
         verify_payload(forged)
 
 
@@ -211,7 +291,7 @@ def test_mutated_source_hash_is_rejected_distinctly() -> None:
     ("section", "field"),
     (("formulas", "operator_lower_bound"), ("family", "domain")),
 )
-def test_mutated_zero_hamiltonian_piecewise_rule_is_rejected(
+def test_mutated_piecewise_rule_is_rejected(
     section: str,
     field: str,
 ) -> None:
@@ -221,13 +301,13 @@ def test_mutated_zero_hamiltonian_piecewise_rule_is_rejected(
         verify_payload(forged)
 
 
-def test_gate_cannot_be_promoted_by_rehashing() -> None:
+@pytest.mark.parametrize(
+    "field",
+    ("affine_gauge_status", "finite_step_no_go", "total_time_eigenphase_status"),
+)
+def test_unproved_claim_cannot_be_promoted_by_rehashing(field: str) -> None:
     forged = copy.deepcopy(build_payload())
-    forged["claim"]["pf4_bch_mapping_status"] = "proved"
-    forged["claim"]["obstruction_status"] = "proved"
-    forged["claim"]["operator_lower_bound_status"] = "proved"
-    forged["claim"]["finite_step_no_go"] = "proved"
-    forged["claim"]["promotion_status"] = "promoted"
+    forged["claim"][field] = "proved"
     forged["payload_sha256"] = "0" * 64
     with pytest.raises(ValueError, match="claim gate mismatch"):
         verify_payload(forged)

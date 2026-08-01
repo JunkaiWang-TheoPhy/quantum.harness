@@ -1,24 +1,28 @@
-"""Exact Pauli counting for the periodic transverse-field Ising family.
-
-Only the Pauli trace moments and the resulting *conditional* PF4 algebraic
-quantities are certified here.  Turning those quantities into an operator
-obstruction still requires the independently missing PF4 BCH mapping.
-"""
+"""Exact PF4 trace obstruction for the periodic transverse-field Ising family."""
 
 from __future__ import annotations
 
 from fractions import Fraction
 
 from .algebra import PauliString, PauliSum, QComplex, commutator
-from .trace_obstruction import pf4_trace_quadratic_form
+from .cubic_field import Cubic
+from .pf4_bch_mapping import pf4_suzuki_gamma
+from .trace_obstruction import (
+    pf4_suzuki_trace_pairing,
+    pf4_trace_quadratic_form,
+)
 
-MOMENT_KEYS = (
+RATIONAL_RESULT_KEYS = (
     "trace_c2_over_d",
     "trace_d2_over_d",
     "trace_cd_over_d",
     "trace_h2_over_d",
-    "obstruction_over_d",
-    "operator_lower_bound",
+    "quadratic_core_over_d",
+    "hamiltonian_norm_upper",
+)
+CUBIC_RESULT_KEYS = (
+    "trace_h_e5_over_d",
+    "endpoint_conjugation_lower_bound",
 )
 
 
@@ -99,19 +103,20 @@ def tfim_trace_moments(
     h: Fraction,
     j: Fraction,
     periodic: bool,
-) -> dict[str, Fraction]:
-    """Count exact normalized TFIM trace moments by Pauli orthogonality.
+) -> dict[str, Fraction | Cubic]:
+    """Count exact moments and the scoped PF4 obstruction coefficient.
 
     With ``A = h sum_i X_i`` and ``B = j sum_i Z_i Z_{i+1}``, this uses
     ``C = [A,[A,B]]`` and ``D = [B,[B,A]]``.  The returned
-    ``obstruction_over_d`` is only the plan-stated rational quadratic core
+    ``quadratic_core_over_d`` is the exact rational core
 
-    ``Tr(C^2)/(2d) + 14 Tr(CD)/(3d) + 4 Tr(D^2)/(3d)``.
+    ``Tr(C^2)/d - 4 Tr(CD)/d + 8 Tr(D^2)/(3d)``.
 
-    ``operator_lower_bound`` divides its absolute value by the Pauli l1 upper
-    bound on ``||A+B||`` when that bound is nonzero, and is defined to be zero
-    at ``h=j=0``.  Both quantities are conditional algebraic values, not
-    certified PF4 operator obstructions until the BCH mapping is proved.
+    The exact Suzuki cubic prefactor converts this core into
+    ``Tr((A+B)E5)/d``.  Dividing its absolute value by the Pauli-l1 upper bound
+    on the normalized trace norm of ``A+B`` gives a rigorous leading-order
+    lower-bound coefficient against pure endpoint conjugation.  It does not
+    quotient additions proportional to the identity or Hamiltonian.
     """
 
     _validate_family_inputs(length, h, j, periodic)
@@ -130,18 +135,27 @@ def tfim_trace_moments(
             raise ArithmeticError("exact Pauli count disagrees with closed TFIM formula")
 
     quadratic_core = pf4_trace_quadratic_form(c2, cd, d2, Fraction(1))
+    trace_pairing = pf4_suzuki_trace_pairing(c2, cd, d2)
     hamiltonian_norm_upper = hamiltonian.exact_real_l1()
     if hamiltonian_norm_upper:
-        conditional_lower_bound = abs(quadratic_core) / hamiltonian_norm_upper
+        endpoint_lower_bound = (
+            pf4_suzuki_gamma()
+            * abs(quadratic_core)
+            / hamiltonian_norm_upper
+        )
     else:
         if quadratic_core:
             raise ArithmeticError("zero Hamiltonian norm with nonzero trace form")
-        conditional_lower_bound = Fraction()
+        if trace_pairing != Cubic.zero():
+            raise ArithmeticError("zero Hamiltonian norm with nonzero PF4 pairing")
+        endpoint_lower_bound = Cubic.zero()
     return {
         "trace_c2_over_d": c2,
         "trace_d2_over_d": d2,
         "trace_cd_over_d": cd,
         "trace_h2_over_d": h2,
-        "obstruction_over_d": quadratic_core,
-        "operator_lower_bound": conditional_lower_bound,
+        "quadratic_core_over_d": quadratic_core,
+        "hamiltonian_norm_upper": hamiltonian_norm_upper,
+        "trace_h_e5_over_d": trace_pairing,
+        "endpoint_conjugation_lower_bound": endpoint_lower_bound,
     }
