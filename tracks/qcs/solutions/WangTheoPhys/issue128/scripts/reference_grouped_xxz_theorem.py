@@ -22,6 +22,7 @@ THEOREM_ORDER = 4
 THEOREM_CENTER = 20
 THEOREM_DECIMAL_DIGITS = 18
 PROJECTED_RECORD_COUNT = 61_677
+COMPRESSED_STREAM_DOMAIN = "grouped_xxz_raw_theorem_record_v1"
 
 
 @dataclass(frozen=True, slots=True)
@@ -179,11 +180,33 @@ class RawTheoremRecord:
     composition: tuple[int, ...]
     base_stage_index: int
     fragment_word: tuple[int, ...]
-    weight_upper: Fraction
+    weight_interval: Interval
+
+    @property
+    def block_key(self) -> tuple[int, ...]:
+        return self.fragment_word
+
+    @property
+    def weight_lower(self) -> Fraction:
+        return self.weight_interval.lower
+
+    @property
+    def weight_upper(self) -> Fraction:
+        return self.weight_interval.upper
 
 
 @dataclass(frozen=True, slots=True)
 class RawTheoremSummary:
+    record_count: int
+    projected_record_count: int
+    complete: bool
+    stream_sha256: str
+    word_weights: tuple[tuple[tuple[int, ...], Fraction], ...]
+
+
+@dataclass(frozen=True, slots=True)
+class CompressedRawTheoremSummary:
+    stream_domain: str
     record_count: int
     projected_record_count: int
     complete: bool
@@ -344,21 +367,28 @@ def iter_raw_theorem_records(
     ) -> Iterator[RawTheoremRecord]:
         nonlocal emitted
         outer: list[int] = []
-        scalar_upper = Fraction(_multinomial(composition))
+        scalar = Interval.point(_multinomial(composition))
         for stage_index, power in zip(indices, composition, strict=True):
             stage = stages[stage_index - 1]
-            scalar_upper *= stage.coefficient_interval.absolute().upper**power
+            positive = stage.coefficient_interval.absolute()
+            scalar = Interval(
+                scalar.lower * positive.lower**power,
+                scalar.upper * positive.upper**power,
+            )
             outer.extend([stage.fragment_index] * power)
-        weight_cache: dict[Fraction, Fraction] = {}
+        weight_cache: dict[Interval, Interval] = {}
         for base_index in range(1, j):
             if max_records is not None and emitted >= max_records:
                 return
             base_stage = stages[base_index - 1]
-            base_upper = base_stage.coefficient_interval.absolute().upper
-            weight_upper = weight_cache.get(base_upper)
-            if weight_upper is None:
-                weight_upper = scalar_upper * base_upper
-                weight_cache[base_upper] = weight_upper
+            base_interval = base_stage.coefficient_interval.absolute()
+            weight_interval = weight_cache.get(base_interval)
+            if weight_interval is None:
+                weight_interval = Interval(
+                    scalar.lower * base_interval.lower,
+                    scalar.upper * base_interval.upper,
+                )
+                weight_cache[base_interval] = weight_interval
             composition_text = ",".join(str(value) for value in composition)
             emitted += 1
             yield RawTheoremRecord(
@@ -369,7 +399,7 @@ def iter_raw_theorem_records(
                 composition=composition,
                 base_stage_index=base_index,
                 fragment_word=tuple(outer) + (base_stage.fragment_index,),
-                weight_upper=weight_upper,
+                weight_interval=weight_interval,
             )
 
     for j in range(2, THEOREM_CENTER + 1):
@@ -405,6 +435,32 @@ def record_payload(record: RawTheoremRecord) -> dict[str, object]:
         "fragment_word": list(record.fragment_word),
         "weight_upper": fraction_pair(record.weight_upper),
     }
+
+
+def compressed_record_payload(record: RawTheoremRecord) -> dict[str, object]:
+    """Return the exact record schema hashed by the compressed ledger."""
+
+    if not isinstance(record, RawTheoremRecord):
+        raise TypeError("record must be a RawTheoremRecord")
+    return {
+        "adjoint_stage_indices": list(record.adjoint_stage_indices),
+        "base_stage_index": record.base_stage_index,
+        "block_key": list(record.block_key),
+        "composition": list(record.composition),
+        "fragment_word": list(record.fragment_word),
+        "partial_sum_index": record.partial_sum_index,
+        "record_id": record.record_id,
+        "side": record.side,
+        "stream_domain": COMPRESSED_STREAM_DOMAIN,
+        "weight_interval": [
+            fraction_pair(record.weight_lower),
+            fraction_pair(record.weight_upper),
+        ],
+    }
+
+
+def canonical_compressed_record_bytes(record: RawTheoremRecord) -> bytes:
+    return canonical_json_bytes(compressed_record_payload(record))
 
 
 def canonical_json_bytes(payload: object) -> bytes:
@@ -535,17 +591,25 @@ def decode_record_payload(payload: object) -> RawTheoremRecord:
         raise ValueError("record identifier is not canonical")
     stages = theorem_stages()
     expected_word: list[int] = []
-    scalar_upper = Fraction(_multinomial(composition))
+    scalar = Interval.point(_multinomial(composition))
     for stage_index, power in zip(indices, composition, strict=True):
         stage = stages[stage_index - 1]
         expected_word.extend([stage.fragment_index] * power)
-        scalar_upper *= stage.coefficient_interval.absolute().upper**power
+        positive = stage.coefficient_interval.absolute()
+        scalar = Interval(
+            scalar.lower * positive.lower**power,
+            scalar.upper * positive.upper**power,
+        )
     base_stage = stages[base_index - 1]
     expected_word.append(base_stage.fragment_index)
-    expected_weight = scalar_upper * base_stage.coefficient_interval.absolute().upper
+    base_positive = base_stage.coefficient_interval.absolute()
+    expected_interval = Interval(
+        scalar.lower * base_positive.lower,
+        scalar.upper * base_positive.upper,
+    )
     if word != tuple(expected_word) or len(word) != THEOREM_ORDER + 1:
         raise ValueError("record actual fragment word is invalid")
-    if weight_upper != expected_weight or weight_upper <= 0:
+    if weight_upper != expected_interval.upper or weight_upper <= 0:
         raise ValueError("record upper weight is invalid")
     return RawTheoremRecord(
         record_id=record_id,
@@ -555,8 +619,54 @@ def decode_record_payload(payload: object) -> RawTheoremRecord:
         composition=composition,
         base_stage_index=base_index,
         fragment_word=word,
-        weight_upper=weight_upper,
+        weight_interval=expected_interval,
     )
+
+
+def decode_compressed_record_payload(payload: object) -> RawTheoremRecord:
+    """Strictly decode the domain-separated compressed-stream record schema."""
+
+    fields = {
+        "adjoint_stage_indices",
+        "base_stage_index",
+        "block_key",
+        "composition",
+        "fragment_word",
+        "partial_sum_index",
+        "record_id",
+        "side",
+        "stream_domain",
+        "weight_interval",
+    }
+    if not isinstance(payload, Mapping) or set(payload) != fields:
+        raise ValueError("compressed raw record field set mismatch")
+    _reject_numeric_aliases(payload)
+    if payload["stream_domain"] != COMPRESSED_STREAM_DOMAIN:
+        raise ValueError("compressed raw record stream domain mismatch")
+    interval_payload = payload["weight_interval"]
+    if not isinstance(interval_payload, list) or len(interval_payload) != 2:
+        raise TypeError("weight_interval must contain two fraction pairs")
+    lower = strict_fraction_pair(interval_payload[0], "weight_interval.lower")
+    upper = strict_fraction_pair(interval_payload[1], "weight_interval.upper")
+    if lower > upper:
+        raise ValueError("weight_interval endpoints are reversed")
+    legacy = {
+        "record_id": payload["record_id"],
+        "side": payload["side"],
+        "partial_sum_index": payload["partial_sum_index"],
+        "adjoint_stage_indices": payload["adjoint_stage_indices"],
+        "composition": payload["composition"],
+        "base_stage_index": payload["base_stage_index"],
+        "fragment_word": payload["fragment_word"],
+        "weight_upper": interval_payload[1],
+    }
+    record = decode_record_payload(legacy)
+    block_key = _strict_int_tuple(payload["block_key"], "block_key")
+    if block_key != record.fragment_word:
+        raise ValueError("compressed raw record block key differs from actual word")
+    if Interval(lower, upper) != record.weight_interval:
+        raise ValueError("compressed raw record exact interval is invalid")
+    return record
 
 
 def summarize_raw_theorem(max_records: int | None = None) -> RawTheoremSummary:
@@ -574,6 +684,34 @@ def summarize_raw_theorem(max_records: int | None = None) -> RawTheoremSummary:
     if count != expected:
         raise ArithmeticError("raw theorem stream ended at the wrong count")
     return RawTheoremSummary(
+        record_count=count,
+        projected_record_count=projected,
+        complete=count == projected,
+        stream_sha256=digest.hexdigest(),
+        word_weights=tuple(sorted(weights.items())),
+    )
+
+
+def summarize_compressed_raw_theorem(
+    max_records: int | None = None,
+) -> CompressedRawTheoremSummary:
+    """Hash the exact schema consumed by the compressed production ledger."""
+
+    digest = hashlib.sha256()
+    weights: dict[tuple[int, ...], Fraction] = {}
+    count = 0
+    for record in iter_raw_theorem_records(max_records):
+        digest.update(canonical_compressed_record_bytes(record))
+        weights[record.fragment_word] = (
+            weights.get(record.fragment_word, Fraction()) + record.weight_upper
+        )
+        count += 1
+    projected = projected_record_count()
+    expected = projected if max_records is None else min(max_records, projected)
+    if count != expected:
+        raise ArithmeticError("compressed raw theorem stream has the wrong count")
+    return CompressedRawTheoremSummary(
+        stream_domain=COMPRESSED_STREAM_DOMAIN,
         record_count=count,
         projected_record_count=projected,
         complete=count == projected,
@@ -600,13 +738,44 @@ def summary_payload(summary: RawTheoremSummary) -> dict[str, object]:
     }
 
 
+def compressed_summary_payload(
+    summary: CompressedRawTheoremSummary,
+) -> dict[str, object]:
+    return {
+        "schema_version": 1,
+        "summary_domain": "grouped_xxz_compressed_raw_theorem_summary_v1",
+        "stream_domain": summary.stream_domain,
+        "theorem_identifier": THEOREM_IDENTIFIER,
+        "order": THEOREM_ORDER,
+        "center": THEOREM_CENTER,
+        "stage_count": STAGE_COUNT,
+        "record_count": summary.record_count,
+        "projected_record_count": summary.projected_record_count,
+        "coverage_status": "complete" if summary.complete else "bounded_prefix",
+        "stream_sha256": summary.stream_sha256,
+        "word_weights": [
+            {"fragment_word": list(word), "weight_upper": fraction_pair(weight)}
+            for word, weight in summary.word_weights
+        ],
+    }
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--max-records", type=int)
+    parser.add_argument(
+        "--stream-schema",
+        choices=("legacy-upper-v1", "compressed-v1"),
+        default="legacy-upper-v1",
+    )
     parser.add_argument("--output", type=Path)
     arguments = parser.parse_args(argv)
-    summary = summarize_raw_theorem(arguments.max_records)
-    encoded = canonical_json_bytes(summary_payload(summary))
+    if arguments.stream_schema == "compressed-v1":
+        compressed_summary = summarize_compressed_raw_theorem(arguments.max_records)
+        encoded = canonical_json_bytes(compressed_summary_payload(compressed_summary))
+    else:
+        summary = summarize_raw_theorem(arguments.max_records)
+        encoded = canonical_json_bytes(summary_payload(summary))
     if arguments.output is None:
         print(encoded.decode("ascii"), end="")
     else:
