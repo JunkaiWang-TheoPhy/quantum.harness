@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import json
 import os
+import random
 import subprocess
 import sys
 from dataclasses import replace
 from fractions import Fraction
 from itertools import product
 from pathlib import Path
+from time import monotonic
 
 import pytest
 
@@ -15,6 +17,7 @@ from trottercert.algebra import PauliString, PauliSum
 from trottercert.cubic_field import Cubic, fourth_order_suzuki_cubic_stages
 from trottercert.grouped_xxz import (
     FINITE_STEP_ERROR_FORMULA,
+    GROUPING_ALGORITHM_IDENTIFIER,
     THEOREM_CENTER,
     THEOREM_DUHAMEL_CONVENTION,
     THEOREM_FACTORIAL_DENOMINATOR,
@@ -416,7 +419,88 @@ def _four_term_fixture() -> tuple[SymplecticCoefficient, ...]:
     )
 
 
+def _test_anticommutes(
+    left: tuple[int, int],
+    right: tuple[int, int],
+) -> bool:
+    return bool(
+        ((left[0] & right[1]).bit_count() + (left[1] & right[0]).bit_count())
+        & 1
+    )
+
+
+def _naive_pair_only_groups(
+    terms: tuple[SymplecticCoefficient, ...],
+) -> tuple[tuple[SymplecticCoefficient, ...], ...]:
+    ordered = sorted(terms, key=lambda term: (-abs(term.real), term.mask))
+    unmatched = set(range(len(ordered)))
+    groups: list[tuple[SymplecticCoefficient, ...]] = []
+    for index, term in enumerate(ordered):
+        if index not in unmatched:
+            continue
+        unmatched.remove(index)
+        partner = next(
+            (
+                candidate
+                for candidate in sorted(unmatched)
+                if _test_anticommutes(term.mask, ordered[candidate].mask)
+            ),
+            None,
+        )
+        if partner is None:
+            groups.append((term,))
+        else:
+            unmatched.remove(partner)
+            groups.append((term, ordered[partner]))
+    assert not unmatched
+    return tuple(groups)
+
+
+def _test_group_record(
+    terms: tuple[SymplecticCoefficient, ...],
+) -> AnticommutingGroupRecord:
+    squared = sum((term.real * term.real for term in terms), Fraction())
+    return AnticommutingGroupRecord(
+        terms=terms,
+        squared_norm=squared,
+        norm_interval=sqrt_fraction_interval(squared),
+    )
+
+
+def test_pair_only_bitsets_choose_the_same_earliest_partners_as_naive_scan() -> None:
+    fixtures = [_four_term_fixture()]
+    generator = random.Random(20260801)
+    for qubits, count in ((2, 9), (3, 20), (4, 40)):
+        masks: set[tuple[int, int]] = set()
+        while len(masks) < count:
+            mask = (
+                generator.randrange(1 << qubits),
+                generator.randrange(1 << qubits),
+            )
+            if mask != (0, 0):
+                masks.add(mask)
+        fixtures.append(
+            tuple(
+                SymplecticCoefficient(
+                    x_mask,
+                    z_mask,
+                    Fraction(generator.choice((-3, -2, -1, 1, 2, 3)), 7),
+                    Fraction(),
+                )
+                for x_mask, z_mask in masks
+            )
+        )
+
+    for terms in fixtures:
+        observed = discover_anticommuting_groups(terms)
+        expected = _naive_pair_only_groups(terms)
+        assert tuple(group.terms for group in observed) == expected
+        assert all(len(group.terms) in (1, 2) for group in observed)
+        verify_anticommuting_groups(terms, observed)
+
+
 def test_exact_group_verifier_checks_coverage_commutation_and_sqrt_interval() -> None:
+    assert sqrt_fraction_interval.cache_info().maxsize == 8192
     terms = _four_term_fixture()
     groups = discover_anticommuting_groups(terms)
     bound = verify_anticommuting_groups(terms, groups)
@@ -447,6 +531,42 @@ def test_exact_group_verifier_checks_coverage_commutation_and_sqrt_interval() ->
         verify_anticommuting_groups(terms, (commuting, remainder))
 
 
+def test_pair_only_verifier_rejects_larger_group_even_if_pairwise_anticommuting() -> None:
+    terms = (
+        SymplecticCoefficient(1, 0, Fraction(1), Fraction()),
+        SymplecticCoefficient(0, 1, Fraction(1), Fraction()),
+        SymplecticCoefficient(1, 1, Fraction(1), Fraction()),
+    )
+    oversized = AnticommutingGroupRecord(
+        terms=terms,
+        squared_norm=Fraction(3),
+        norm_interval=sqrt_fraction_interval(Fraction(3)),
+    )
+    with pytest.raises(ValueError, match="singleton or pair"):
+        verify_anticommuting_groups(terms, (oversized,))
+
+
+@pytest.mark.slow
+def test_pair_only_200_record_profile_is_bounded_and_fully_verified() -> None:
+    started = monotonic()
+    ledger = build_finite_xxz_ledger(
+        XXZCompileSpec.pilot(Fraction(1, 2)),
+        max_records=200,
+    )
+    groups = discover_xxz_groups(ledger)
+    grouped_bound = verify_xxz_groups(ledger, groups)
+    elapsed = monotonic() - started
+    group_sizes = [len(group.terms) for record in groups for group in record.groups]
+
+    assert len(ledger.raw_records) == 200
+    assert sum(len(block.terms) for block in ledger.blocks) == 402_720
+    assert group_sizes.count(2) == 200_552
+    assert group_sizes.count(1) == 1_616
+    assert all(size in (1, 2) for size in group_sizes)
+    assert grouped_bound <= xxz_triangle_baseline(ledger)
+    assert elapsed < 180
+
+
 def test_theorem_group_witness_is_block_local_delta_bound_and_unweighted() -> None:
     ledger = build_finite_xxz_ledger(
         XXZCompileSpec.pilot(Fraction(1, 2)),
@@ -458,6 +578,10 @@ def test_theorem_group_witness_is_block_local_delta_bound_and_unweighted() -> No
     assert grouped <= baseline
     assert all(record.delta == Fraction(1, 2) for record in groups)
     assert all(record.ledger_digest == ledger.ledger_digest for record in groups)
+    assert all(
+        record.grouping_algorithm == GROUPING_ALGORITHM_IDENTIFIER
+        for record in groups
+    )
     assert {record.block_key for record in groups} == {
         block.block_key for block in ledger.blocks
     }
@@ -488,6 +612,66 @@ def test_theorem_group_witness_is_block_local_delta_bound_and_unweighted() -> No
     with pytest.raises(ValueError, match="norm"):
         verify_xxz_groups(ledger, tuple(mutated_groups))
 
+    wrong_algorithm = list(groups)
+    wrong_algorithm[0] = replace(
+        wrong_algorithm[0],
+        grouping_algorithm="unbound_pairing_heuristic",
+    )
+    with pytest.raises(ValueError, match="algorithm identifier"):
+        verify_xxz_groups(ledger, tuple(wrong_algorithm))
+
+
+def test_group_verifier_rejects_alternative_valid_pairing() -> None:
+    ledger = build_finite_xxz_ledger(
+        XXZCompileSpec.pilot(Fraction(1, 2)),
+        max_records=1,
+    )
+    records = list(discover_xxz_groups(ledger))
+    record = records[0]
+    alternative = list(record.groups)
+    replacement: tuple[
+        int,
+        int,
+        AnticommutingGroupRecord,
+        AnticommutingGroupRecord,
+    ] | None = None
+    for left_index, left_group in enumerate(record.groups):
+        if len(left_group.terms) != 2:
+            continue
+        for right_index in range(left_index + 1, len(record.groups)):
+            right_group = record.groups[right_index]
+            if len(right_group.terms) != 2:
+                continue
+            a, b = left_group.terms
+            c, d = right_group.terms
+            for first, second in (((a, c), (b, d)), ((a, d), (b, c))):
+                if _test_anticommutes(first[0].mask, first[1].mask) and (
+                    _test_anticommutes(second[0].mask, second[1].mask)
+                ):
+                    replacement = (
+                        left_index,
+                        right_index,
+                        _test_group_record(first),
+                        _test_group_record(second),
+                    )
+                    break
+            if replacement is not None:
+                break
+        if replacement is not None:
+            break
+    assert replacement is not None
+    left_index, right_index, first, second = replacement
+    alternative[left_index] = first
+    alternative[right_index] = second
+    assert verify_anticommuting_groups(
+        ledger.blocks[0].terms,
+        tuple(alternative),
+    ) > 0
+
+    records[0] = replace(record, groups=tuple(alternative))
+    with pytest.raises(ValueError, match="deterministic pair discovery"):
+        verify_xxz_groups(ledger, tuple(records))
+
 
 def test_fake_complete_ledger_closes_exact_adjacent_steps_and_resources() -> None:
     bounded = build_finite_xxz_ledger(
@@ -504,6 +688,7 @@ def test_fake_complete_ledger_closes_exact_adjacent_steps_and_resources() -> Non
     verify_xxz_finite_step_fields(certificate)
 
     assert certificate.method == "direct_finite_high_order_theorem_grouped_norm"
+    assert certificate.grouping_algorithm == GROUPING_ALGORITHM_IDENTIFIER
     assert certificate.grouped_constant == Fraction(16, 10**6)
     assert certificate.triangle_constant == Fraction(81, 10**6)
     assert certificate.candidate_steps == 2
@@ -535,6 +720,7 @@ def test_finite_step_verifier_rejects_nonminimal_step_and_resource_mutations() -
         replace(certificate, candidate_previous_error=Fraction()),
         replace(certificate, baseline_steps=4),
         replace(certificate, baseline_resources=certificate.baseline_resources + 30),
+        replace(certificate, grouping_algorithm="unbound_pairing_heuristic"),
         replace(certificate, bond_growth=Fraction(1)),
         replace(certificate, cell_base=Fraction(1)),
     )

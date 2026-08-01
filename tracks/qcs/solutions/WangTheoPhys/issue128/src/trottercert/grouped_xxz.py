@@ -11,6 +11,7 @@ import json
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from fractions import Fraction
+from functools import lru_cache
 from hashlib import sha256
 from itertools import pairwise
 from math import comb, factorial, isqrt
@@ -37,6 +38,7 @@ THEOREM_FACTORIAL_DENOMINATOR = factorial(THEOREM_ORDER + 1)
 THEOREM_DECIMAL_DIGITS = 18
 THEOREM_DUHAMEL_CONVENTION = "published_triangle_duhamel_1_over_5_factorial"
 FINITE_STEP_ERROR_FORMULA = "E_r=K/r^4_for_T=1"
+GROUPING_ALGORITHM_IDENTIFIER = "deterministic_pair_only_bitset_v1"
 
 
 def fraction_pair(value: Fraction) -> list[int]:
@@ -879,6 +881,7 @@ def verify_finite_xxz_ledger(ledger: XXZLedger) -> None:
         raise ValueError("ledger digest is incorrect")
 
 
+@lru_cache(maxsize=8192)
 def sqrt_fraction_interval(
     value: Fraction,
     *,
@@ -926,6 +929,7 @@ class TheoremBlockGroupRecord:
     finite_step_error_formula: str
     delta: Fraction
     ledger_digest: str
+    grouping_algorithm: str
     block_key: tuple[int, ...]
     groups: tuple[AnticommutingGroupRecord, ...]
 
@@ -944,7 +948,16 @@ def _group_record(
 def discover_anticommuting_groups(
     terms: Sequence[SymplecticCoefficient],
 ) -> tuple[AnticommutingGroupRecord, ...]:
-    """Greedily partition real terms using exact magnitudes and mask ordering."""
+    """Deterministically match each term with its earliest anticommuting partner.
+
+    Terms are ordered by decreasing exact coefficient magnitude and then by
+    their symplectic mask.  Two bitsets per occupied site coordinate encode,
+    for every still-unmatched candidate, the exact symplectic linear
+    functional (32 bitsets on the frozen 16-site pilot).  The least
+    significant candidate bit is therefore the earliest available
+    anticommuting partner in the frozen order.  Every output group is a
+    singleton or a pair.
+    """
 
     if any(not isinstance(term, SymplecticCoefficient) for term in terms):
         raise TypeError("group discovery terms must be SymplecticCoefficient values")
@@ -953,19 +966,53 @@ def discover_anticommuting_groups(
     if len({term.mask for term in terms}) != len(terms):
         raise ValueError("coefficient map contains duplicate Pauli masks")
     ordered = sorted(terms, key=lambda term: (-abs(term.real), term.mask))
-    groups: list[list[SymplecticCoefficient]] = []
-    for term in ordered:
-        compatible = [
-            index
-            for index, group in enumerate(groups)
-            if all(_symplectic_anticommutes(term.mask, member.mask) for member in group)
-        ]
-        if compatible:
-            selected = max(compatible, key=lambda index: (len(groups[index]), -index))
-            groups[selected].append(term)
+    if not ordered:
+        return ()
+
+    coordinate_width = max(
+        (term.x_mask | term.z_mask).bit_length() for term in ordered
+    )
+    coordinate_bitsets = [0] * (2 * coordinate_width)
+    for index, term in enumerate(ordered):
+        candidate_bit = 1 << index
+        z_mask = term.z_mask
+        while z_mask:
+            low_bit = z_mask & -z_mask
+            coordinate_bitsets[low_bit.bit_length() - 1] |= candidate_bit
+            z_mask -= low_bit
+        x_mask = term.x_mask
+        while x_mask:
+            low_bit = x_mask & -x_mask
+            coordinate_bitsets[
+                coordinate_width + low_bit.bit_length() - 1
+            ] |= candidate_bit
+            x_mask -= low_bit
+
+    unmatched = (1 << len(ordered)) - 1
+    groups: list[AnticommutingGroupRecord] = []
+    for index, term in enumerate(ordered):
+        term_bit = 1 << index
+        if not unmatched & term_bit:
+            continue
+        unmatched ^= term_bit
+
+        anticommuting = 0
+        functional = term.x_mask | (term.z_mask << coordinate_width)
+        while functional:
+            low_bit = functional & -functional
+            anticommuting ^= coordinate_bitsets[low_bit.bit_length() - 1]
+            functional -= low_bit
+        candidates = anticommuting & unmatched
+        if candidates:
+            partner_bit = candidates & -candidates
+            partner_index = partner_bit.bit_length() - 1
+            unmatched ^= partner_bit
+            groups.append(_group_record((term, ordered[partner_index])))
         else:
-            groups.append([term])
-    return tuple(_group_record(group) for group in groups)
+            groups.append(_group_record((term,)))
+    if unmatched:
+        raise ArithmeticError("pair-only group discovery left unmatched terms")
+    return tuple(groups)
 
 
 def verify_anticommuting_groups(
@@ -994,6 +1041,8 @@ def verify_anticommuting_groups(
     for group in groups:
         if not group.terms:
             raise ValueError("anticommuting groups must be nonempty")
+        if len(group.terms) > 2:
+            raise ValueError("pair-only groups must contain a singleton or pair")
         for index, left in enumerate(group.terms):
             for right in group.terms[index + 1 :]:
                 if not _symplectic_anticommutes(left.mask, right.mask):
@@ -1025,6 +1074,7 @@ def discover_xxz_groups(
             finite_step_error_formula=ledger.finite_step_error_formula,
             delta=ledger.spec.delta,
             ledger_digest=ledger.ledger_digest,
+            grouping_algorithm=GROUPING_ALGORITHM_IDENTIFIER,
             block_key=block.block_key,
             groups=discover_anticommuting_groups(block.terms),
         )
@@ -1079,10 +1129,15 @@ def verify_xxz_groups(
             raise ValueError("group witness Delta does not match the ledger")
         if record.ledger_digest != ledger.ledger_digest:
             raise ValueError("group witness ledger digest does not match")
+        if record.grouping_algorithm != GROUPING_ALGORITHM_IDENTIFIER:
+            raise ValueError("group witness algorithm identifier is incorrect")
         block_bound = verify_anticommuting_groups(
             blocks[key].terms,
             record.groups,
         )
+        expected_groups = discover_anticommuting_groups(blocks[key].terms)
+        if record.groups != expected_groups:
+            raise ValueError("group witness differs from deterministic pair discovery")
         total += weights[key] * block_bound
     return total / ledger.factorial_denominator
 
@@ -1119,6 +1174,7 @@ class XXZCertificate:
     factorial_denominator: int
     duhamel_convention: str
     finite_step_error_formula: str
+    grouping_algorithm: str
     grouped_constant: Fraction
     triangle_constant: Fraction
     candidate_steps: int
@@ -1206,6 +1262,7 @@ def _close_xxz_certificate(
         factorial_denominator=ledger.factorial_denominator,
         duhamel_convention=ledger.duhamel_convention,
         finite_step_error_formula=ledger.finite_step_error_formula,
+        grouping_algorithm=GROUPING_ALGORITHM_IDENTIFIER,
         grouped_constant=grouped_constant,
         triangle_constant=triangle_constant,
         candidate_steps=candidate_steps,
@@ -1238,6 +1295,8 @@ def verify_xxz_finite_step_fields(certificate: XXZCertificate) -> None:
         raise TypeError("certificate must be an XXZCertificate")
     if certificate.status != "certified" or certificate.method != XXZ_METHOD:
         raise ValueError("XXZ certificate status or method is incorrect")
+    if certificate.grouping_algorithm != GROUPING_ALGORITHM_IDENTIFIER:
+        raise ValueError("XXZ certificate grouping algorithm is incorrect")
     if (
         certificate.theorem_identifier != THEOREM_IDENTIFIER
         or certificate.order != THEOREM_ORDER
@@ -1313,6 +1372,10 @@ def verify_xxz_certificate(
 ) -> None:
     """Recompute a production certificate from its complete ledger and groups."""
 
+    if not isinstance(certificate, XXZCertificate):
+        raise TypeError("certificate must be an XXZCertificate")
+    if certificate.grouping_algorithm != GROUPING_ALGORITHM_IDENTIFIER:
+        raise ValueError("XXZ certificate grouping algorithm is incorrect")
     if not isinstance(ledger, XXZLedger) or not ledger.complete:
         raise ValueError("XXZ certificate verification requires a complete ledger")
     verify_finite_xxz_ledger(ledger)
