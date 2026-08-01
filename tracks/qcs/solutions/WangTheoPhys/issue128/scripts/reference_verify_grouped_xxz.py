@@ -27,6 +27,9 @@ from reference_grouped_xxz_theorem import (
 ROOT = SCRIPT_DIR.parent
 SUMMARY_SCHEMA = "grouped_xxz_per_delta_summary_v1"
 WITNESS_SCHEMA = "grouped_xxz_per_delta_witness_v1"
+MERGED_SUMMARY_SCHEMA = "grouped_xxz_two_point_pilot_summary_v1"
+MERGED_WITNESS_SCHEMA = "grouped_xxz_two_point_pilot_witness_v1"
+MERGED_METHOD = "two_point_compressed_grouped_xxz_pilot"
 THEOREM_IDENTIFIER = "published_high_order_triangle_v1"
 DUHAMEL_CONVENTION = "published_triangle_duhamel_1_over_5_factorial"
 ERROR_FORMULA = "E_r=K/r^4_for_T=1"
@@ -599,7 +602,7 @@ def _minimal_steps(constant: Fraction, tolerance: Fraction) -> int:
     return upper
 
 
-def verify_artifact_bytes(
+def _verify_per_delta_artifact_bytes(
     summary_bytes: bytes,
     witness_gzip_bytes: bytes,
     *,
@@ -886,6 +889,235 @@ def verify_artifact_bytes(
     if summary != expected_summary:
         raise ValueError("summary differs from independently verified witness")
     return summary, witness
+
+
+def verify_merged_artifact_bytes(
+    summary_bytes: bytes,
+    witness_gzip_bytes: bytes,
+    *,
+    root: Path = ROOT,
+    expected_raw_records: int = PROJECTED_RECORD_COUNT,
+) -> tuple[tuple[dict[str, object], dict[str, object]], ...]:
+    """Verify the canonical two-point pilot and both embedded artifacts."""
+
+    expected_raw_records = _integer(expected_raw_records, "expected_raw_records", 1)
+    if expected_raw_records > PROJECTED_RECORD_COUNT:
+        raise ValueError("expected raw record count exceeds theorem projection")
+    summary = _load_canonical(summary_bytes, "merged summary")
+    _expect_keys(
+        summary,
+        {
+            "method",
+            "payload_sha256",
+            "rows",
+            "schema",
+            "source_closure",
+            "status",
+            "witness",
+        },
+        "merged summary",
+    )
+    if (
+        summary["schema"] != MERGED_SUMMARY_SCHEMA
+        or summary["method"] != MERGED_METHOD
+        or summary["status"] != "certified"
+        or summary["payload_sha256"] != _payload_digest(summary)
+    ):
+        raise ValueError("merged summary identity or payload digest mismatch")
+    closure = _source_closure(summary["source_closure"], root)
+    binding = _expect_keys(
+        summary["witness"],
+        {"compression", "file_sha256", "payload_sha256"},
+        "merged witness binding",
+    )
+    if binding["compression"] != "gzip-9-mtime0-empty-filename":
+        raise ValueError("merged witness compression domain mismatch")
+    if _sha(binding["file_sha256"], "merged witness file hash") != hashlib.sha256(
+        witness_gzip_bytes
+    ).hexdigest():
+        raise ValueError("merged witness file hash mismatch")
+    try:
+        witness_payload_bytes = gzip.decompress(witness_gzip_bytes)
+    except (gzip.BadGzipFile, EOFError, OSError) as error:
+        raise ValueError("invalid merged gzip witness") from error
+    if _deterministic_gzip(witness_payload_bytes) != witness_gzip_bytes:
+        raise ValueError("merged witness is not one deterministic gzip member")
+    if _sha(
+        binding["payload_sha256"], "merged witness payload hash"
+    ) != hashlib.sha256(witness_payload_bytes).hexdigest():
+        raise ValueError("merged witness payload hash mismatch")
+    witness = _load_canonical(witness_payload_bytes, "merged witness")
+    _expect_keys(
+        witness,
+        {"payload_sha256", "per_delta_artifacts", "schema", "source_closure"},
+        "merged witness",
+    )
+    if (
+        witness["schema"] != MERGED_WITNESS_SCHEMA
+        or witness["payload_sha256"] != _payload_digest(witness)
+    ):
+        raise ValueError("merged witness identity or payload digest mismatch")
+    if _source_closure(witness["source_closure"], root) != closure:
+        raise ValueError("merged source closures differ")
+    embedded = witness["per_delta_artifacts"]
+    if not isinstance(embedded, list) or len(embedded) != 2:
+        raise ValueError("merged witness must contain exactly two artifacts")
+
+    verified: list[tuple[dict[str, object], dict[str, object]]] = []
+    expected_rows = []
+    deltas = []
+    expected_embedded = []
+    for item_value in embedded:
+        item = _expect_keys(
+            item_value,
+            {"summary", "witness_payload"},
+            "embedded per-Delta artifact",
+        )
+        per_summary = item["summary"]
+        per_witness = item["witness_payload"]
+        if not isinstance(per_summary, dict) or not isinstance(per_witness, dict):
+            raise TypeError("embedded per-Delta payloads must be mappings")
+        per_summary_bytes = canonical_json_bytes(per_summary)
+        per_witness_payload_bytes = canonical_json_bytes(per_witness)
+        per_witness_gzip = _deterministic_gzip(per_witness_payload_bytes)
+        verified_summary, verified_witness = _verify_per_delta_artifact_bytes(
+            per_summary_bytes,
+            per_witness_gzip,
+            root=root,
+            expected_raw_records=expected_raw_records,
+        )
+        if verified_summary != per_summary or verified_witness != per_witness:
+            raise ValueError("embedded artifact differs from independent replay")
+        per_closure = _source_closure(per_summary["source_closure"], root)
+        if per_closure != closure:
+            raise ValueError("embedded and merged source closures differ")
+        per_binding = _expect_keys(
+            per_summary["witness"],
+            {"compression", "file_sha256", "payload_sha256"},
+            "embedded witness binding",
+        )
+        expected_file_hash = hashlib.sha256(per_witness_gzip).hexdigest()
+        expected_payload_hash = hashlib.sha256(per_witness_payload_bytes).hexdigest()
+        if (
+            per_binding["file_sha256"] != expected_file_hash
+            or per_binding["payload_sha256"] != expected_payload_hash
+        ):
+            raise ValueError("embedded original witness hash semantics mismatch")
+        spec = _expect_keys(
+            per_summary["spec"],
+            {
+                "boundary",
+                "delta",
+                "formula_identifier",
+                "length",
+                "normalization",
+                "primary_metric",
+                "stage_count",
+                "time",
+                "tolerance",
+            },
+            "embedded spec",
+        )
+        delta = _fraction(spec["delta"], "embedded delta")
+        deltas.append(delta)
+        adjacent = _expect_keys(
+            per_summary["adjacent_steps"], {"baseline", "candidate"}, "adjacent steps"
+        )
+        resources = _expect_keys(
+            per_summary["resources"], {"baseline", "candidate", "metric"}, "resources"
+        )
+        baseline = _expect_keys(
+            adjacent["baseline"], {"accepted_error", "previous_error", "steps"}, "baseline"
+        )
+        candidate = _expect_keys(
+            adjacent["candidate"], {"accepted_error", "previous_error", "steps"}, "candidate"
+        )
+        candidate_resources = _integer(
+            resources["candidate"], "candidate resources", 1
+        )
+        baseline_resources = _integer(resources["baseline"], "baseline resources", 1)
+        if candidate_resources >= baseline_resources:
+            raise ValueError("two-point row lacks positive resource transfer")
+        expected_rows.append(
+            {
+                "baseline": {
+                    "resources": baseline_resources,
+                    "steps": _integer(baseline["steps"], "baseline steps", 1),
+                },
+                "candidate": {
+                    "resources": candidate_resources,
+                    "steps": _integer(candidate["steps"], "candidate steps", 1),
+                },
+                "delta": fraction_pair(delta),
+                "method": per_summary["method"],
+                "per_delta_bindings": {
+                    "summary_sha256": hashlib.sha256(per_summary_bytes).hexdigest(),
+                    "witness_file_sha256": expected_file_hash,
+                    "witness_payload_sha256": expected_payload_hash,
+                },
+                "status": per_summary["status"],
+            }
+        )
+        expected_embedded.append(
+            {"summary": verified_summary, "witness_payload": verified_witness}
+        )
+        verified.append((verified_summary, verified_witness))
+    if tuple(deltas) != (Fraction(1, 2), Fraction(2)):
+        raise ValueError("merged rows must be canonical Delta order {1/2,2}")
+    if any(
+        row["method"] != METHOD or row["status"] != "certified"
+        for row in expected_rows
+    ):
+        raise ValueError("merged row method or status mismatch")
+
+    expected_witness = {
+        "payload_sha256": witness["payload_sha256"],
+        "per_delta_artifacts": expected_embedded,
+        "schema": MERGED_WITNESS_SCHEMA,
+        "source_closure": closure,
+    }
+    if witness != expected_witness:
+        raise ValueError("merged witness differs from exact reconstruction")
+    expected_summary = {
+        "method": MERGED_METHOD,
+        "payload_sha256": summary["payload_sha256"],
+        "rows": expected_rows,
+        "schema": MERGED_SUMMARY_SCHEMA,
+        "source_closure": closure,
+        "status": "certified",
+        "witness": binding,
+    }
+    if summary != expected_summary:
+        raise ValueError("merged summary differs from exact reconstruction")
+    return tuple(verified)
+
+
+def verify_artifact_bytes(
+    summary_bytes: bytes,
+    witness_gzip_bytes: bytes,
+    *,
+    root: Path = ROOT,
+    expected_raw_records: int = PROJECTED_RECORD_COUNT,
+) -> object:
+    """Auto-dispatch one per-Delta or merged two-point artifact."""
+
+    summary = _load_canonical(summary_bytes, "summary dispatch")
+    schema = summary.get("schema")
+    if schema == SUMMARY_SCHEMA:
+        return _verify_per_delta_artifact_bytes(
+            summary_bytes,
+            witness_gzip_bytes,
+            root=root,
+            expected_raw_records=expected_raw_records,
+        )
+    if schema == MERGED_SUMMARY_SCHEMA:
+        return verify_merged_artifact_bytes(
+            summary_bytes,
+            witness_gzip_bytes,
+            root=root,
+            expected_raw_records=expected_raw_records,
+        )
+    raise ValueError("unrecognized grouped-XXZ artifact summary schema")
 
 
 def main(argv: Sequence[str] | None = None) -> int:

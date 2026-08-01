@@ -22,6 +22,7 @@ from scripts.reference_verify_grouped_xxz import (
 )
 from trottercert.grouped_xxz import XXZCompileSpec, canonical_json_bytes
 from trottercert.grouped_xxz_artifact import (
+    build_merged_pilot_artifact,
     build_per_delta_artifact,
     source_closure,
 )
@@ -56,6 +57,39 @@ def two_record_artifact():
             ledger,
             certificate,
             source_closure(ROOT),
+        )
+    finally:
+        monkeypatch.undo()
+
+
+@pytest.fixture(scope="module")
+def two_point_mini_artifact():
+    monkeypatch = pytest.MonkeyPatch()
+    records = tuple(islice(compressed_module._iter_raw_theorem_records(), 2))
+    monkeypatch.setattr(
+        compressed_module,
+        "_projected_raw_record_count",
+        lambda: 2,
+    )
+    monkeypatch.setattr(
+        compressed_module,
+        "_iter_raw_theorem_records",
+        lambda: iter(records),
+    )
+    try:
+        closure = source_closure(ROOT)
+        artifacts = []
+        for delta in (Fraction(1, 2), Fraction(2)):
+            spec = XXZCompileSpec.pilot(delta)
+            ledger = build_compressed_xxz_ledger(spec)
+            certificate = compile_compressed_grouped_xxz(spec, ledger=ledger)
+            artifacts.append(build_per_delta_artifact(ledger, certificate, closure))
+        return build_merged_pilot_artifact(
+            artifacts[0].summary_bytes,
+            artifacts[0].witness_gzip_bytes,
+            artifacts[1].summary_bytes,
+            artifacts[1].witness_gzip_bytes,
+            closure,
         )
     finally:
         monkeypatch.undo()
@@ -119,6 +153,50 @@ def test_two_record_builder_artifact_passes_independent_replay(
     assert tuple(row["path"] for row in summary["source_closure"]["files"]) == (
         SOURCE_PATHS
     )
+
+
+def test_two_point_mini_bundle_auto_dispatches_and_replays_nested_artifacts(
+    two_point_mini_artifact,
+) -> None:
+    verified = verify_artifact_bytes(
+        two_point_mini_artifact.summary_bytes,
+        two_point_mini_artifact.witness_gzip_bytes,
+        root=ROOT,
+        expected_raw_records=2,
+    )
+    assert len(verified) == 2
+    assert [row["delta"] for row in two_point_mini_artifact.summary["rows"]] == [
+        [1, 2],
+        [2, 1],
+    ]
+    for summary, witness in verified:
+        witness_payload = canonical_json_bytes(witness)
+        witness_gzip = _deterministic_gzip(witness_payload)
+        binding = summary["witness"]
+        assert binding["file_sha256"] == hashlib.sha256(witness_gzip).hexdigest()
+        assert binding["payload_sha256"] == hashlib.sha256(
+            witness_payload
+        ).hexdigest()
+
+
+def test_two_point_mini_bundle_cli_cannot_bypass_full_coverage(
+    two_point_mini_artifact,
+    tmp_path: Path,
+) -> None:
+    summary = tmp_path / "merged.json"
+    witness = tmp_path / "merged.json.gz"
+    summary.write_bytes(two_point_mini_artifact.summary_bytes)
+    witness.write_bytes(two_point_mini_artifact.witness_gzip_bytes)
+    completed = subprocess.run(
+        [sys.executable, str(SCRIPT), str(summary), str(witness)],
+        cwd=tmp_path,
+        env={"PATH": "", "PYTHONHASHSEED": "0"},
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.returncode != 0
+    assert "ledger theorem metadata or full coverage mismatch" in completed.stderr
 
 
 def test_clean_shell_cli_rejects_small_fixture_even_with_old_override_variable(
@@ -351,6 +429,123 @@ def test_fully_resealed_semantic_mutation_matrix_is_rejected(
         raise AssertionError(mutation)
 
     summary_bytes, witness_gzip = _rebind(summary, witness)
+    with pytest.raises((TypeError, ValueError)):
+        verify_artifact_bytes(
+            summary_bytes,
+            witness_gzip,
+            root=ROOT,
+            expected_raw_records=2,
+        )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    (
+        "outer_file_hash",
+        "outer_payload_hash",
+        "outer_payload_digest",
+        "missing_embedded",
+        "reversed_canonical_order",
+        "nested_summary_hash",
+        "embedded_witness_file_semantics",
+        "embedded_witness_payload_semantics",
+        "row_steps",
+        "row_resources",
+        "row_method",
+        "row_status",
+        "nested_summary_semantics",
+        "outer_source_hash",
+        "unknown_outer_field",
+    ),
+)
+def test_merged_bundle_rejects_resealed_outer_and_nested_mutations(
+    two_point_mini_artifact,
+    mutation: str,
+) -> None:
+    summary = copy.deepcopy(two_point_mini_artifact.summary)
+    witness = copy.deepcopy(two_point_mini_artifact.witness)
+    embedded = witness["per_delta_artifacts"]
+
+    if mutation in {"outer_file_hash", "outer_payload_hash"}:
+        field = "file_sha256" if mutation == "outer_file_hash" else "payload_sha256"
+        summary["witness"][field] = "0" * 64
+        summary_bytes = canonical_json_bytes(_seal(summary))
+        witness_gzip = two_point_mini_artifact.witness_gzip_bytes
+    elif mutation == "outer_payload_digest":
+        witness["payload_sha256"] = "0" * 64
+        witness_payload = canonical_json_bytes(witness)
+        witness_gzip = _deterministic_gzip(witness_payload)
+        summary["witness"]["file_sha256"] = hashlib.sha256(witness_gzip).hexdigest()
+        summary["witness"]["payload_sha256"] = hashlib.sha256(
+            witness_payload
+        ).hexdigest()
+        summary_bytes = canonical_json_bytes(_seal(summary))
+    elif mutation == "missing_embedded":
+        embedded.pop()
+        summary["rows"].pop()
+        summary_bytes, witness_gzip = _rebind(summary, witness)
+    elif mutation == "reversed_canonical_order":
+        embedded.reverse()
+        summary["rows"].reverse()
+        summary_bytes, witness_gzip = _rebind(summary, witness)
+    elif mutation == "nested_summary_hash":
+        summary["rows"][0]["per_delta_bindings"]["summary_sha256"] = "0" * 64
+        summary_bytes = canonical_json_bytes(_seal(summary))
+        witness_gzip = two_point_mini_artifact.witness_gzip_bytes
+    elif mutation in {
+        "embedded_witness_file_semantics",
+        "embedded_witness_payload_semantics",
+    }:
+        per_summary = embedded[0]["summary"]
+        field = (
+            "file_sha256"
+            if mutation == "embedded_witness_file_semantics"
+            else "payload_sha256"
+        )
+        per_summary["witness"][field] = "0" * 64
+        _seal(per_summary)
+        row_binding = summary["rows"][0]["per_delta_bindings"]
+        row_binding["summary_sha256"] = hashlib.sha256(
+            canonical_json_bytes(per_summary)
+        ).hexdigest()
+        row_binding[f"witness_{field}"] = "0" * 64
+        summary_bytes, witness_gzip = _rebind(summary, witness)
+    elif mutation == "row_steps":
+        summary["rows"][0]["candidate"]["steps"] += 1
+        summary_bytes = canonical_json_bytes(_seal(summary))
+        witness_gzip = two_point_mini_artifact.witness_gzip_bytes
+    elif mutation == "row_resources":
+        summary["rows"][0]["candidate"]["resources"] += 30
+        summary_bytes = canonical_json_bytes(_seal(summary))
+        witness_gzip = two_point_mini_artifact.witness_gzip_bytes
+    elif mutation == "row_method":
+        summary["rows"][0]["method"] = "wrong"
+        summary_bytes = canonical_json_bytes(_seal(summary))
+        witness_gzip = two_point_mini_artifact.witness_gzip_bytes
+    elif mutation == "row_status":
+        summary["rows"][0]["status"] = "unsupported"
+        summary_bytes = canonical_json_bytes(_seal(summary))
+        witness_gzip = two_point_mini_artifact.witness_gzip_bytes
+    elif mutation == "nested_summary_semantics":
+        per_summary = embedded[0]["summary"]
+        per_summary["resources"]["candidate"] += 30
+        _seal(per_summary)
+        summary["rows"][0]["candidate"]["resources"] += 30
+        summary["rows"][0]["per_delta_bindings"]["summary_sha256"] = (
+            hashlib.sha256(canonical_json_bytes(per_summary)).hexdigest()
+        )
+        summary_bytes, witness_gzip = _rebind(summary, witness)
+    elif mutation == "outer_source_hash":
+        for closure in (summary["source_closure"], witness["source_closure"]):
+            closure["files"][0]["sha256"] = "0" * 64
+            _closure_reseal(closure)
+        summary_bytes, witness_gzip = _rebind(summary, witness)
+    elif mutation == "unknown_outer_field":
+        witness["unknown"] = 1
+        summary_bytes, witness_gzip = _rebind(summary, witness)
+    else:
+        raise AssertionError(mutation)
+
     with pytest.raises((TypeError, ValueError)):
         verify_artifact_bytes(
             summary_bytes,
