@@ -1,0 +1,1054 @@
+{
+  "CITATION.cff": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "README.md": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "artifacts/SHA256SUMS": {
+    "ownership": "obsolete",
+    "release_included": false
+  },
+  "artifacts/d5-integrated/SHA256SUMS": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "artifacts/d5-integrated/verification-transcript.txt": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "artifacts/d6-integrated/d6-d8-cross-order-comparison.json": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "artifacts/issue128-summary.json": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "artifacts/issue128-summary.txt": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "artifacts/processed-kernel-audit/s10-s11-local-audit.json": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "artifacts/publication/paper-a-claim-SHA256SUMS": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "artifacts/publication/paper-a-claim-matrix.json": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "artifacts/publication/paper-a-file-ownership.json": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "artifacts/verification-transcript.txt": {
+    "ownership": "obsolete",
+    "release_included": false
+  },
+  "certificates/issue128-certificate.json": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "certificates/issue128-d4-groups.json": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "certificates/issue128-d5-groups.json.gz": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "certificates/issue128-d5-integrated-certificate.json": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "certificates/issue128-degree3-rank.json": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "certificates/issue128-small-crosscheck.json": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "certificates/issue128-three-cluster-certificate.json": {
+    "ownership": "obsolete",
+    "release_included": false
+  },
+  "certificates/issue128-verification.txt": {
+    "ownership": "obsolete",
+    "release_included": false
+  },
+  "docs/experiments/full-phase-4x4/README.md": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "docs/experiments/full-phase-4x4/result.json": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "docs/experiments/processed-finite-step-budget/README.md": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "docs/experiments/processed-finite-step-budget/pre-e7-local-budget.json": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "docs/experiments/processed-spectral-screen/README.md": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "docs/experiments/processed-spectral-screen/promotion-decision.md": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "docs/experiments/processed-spectral-screen/random-four-fragment.json": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "docs/experiments/processor-obstruction/README.md": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/experiments/processor-obstruction/dual-e7-pairing.json": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/experiments/processor-obstruction/dual-e7-shards/shard-0.json": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/experiments/processor-obstruction/dual-e7-shards/shard-1.json": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/experiments/processor-obstruction/dual-e7-shards/shard-2.json": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/experiments/processor-obstruction/dual-e7-shards/shard-3.json": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/experiments/processor-obstruction/dual-log-tail.json": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/experiments/processor-obstruction/exact-obstruction.json": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/experiments/processor-obstruction/extensive-commutant-witness.json": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/experiments/processor-obstruction/gauge-aware-audit.json": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/experiments/processor-obstruction/quadratic-commutant-witness.json": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/followups/2026-07-29-5x-10x-audit.md": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "docs/manuscript/CITATION_AUDIT.md": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/manuscript/Makefile": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/manuscript/README.md": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/manuscript/figures/d4_norm.pdf": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/manuscript/figures/error_ledger.pdf": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/manuscript/figures/fivefold_gap.pdf": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/manuscript/figures/resources.pdf": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/manuscript/main.tex": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/manuscript/output/pdf/.gitignore": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "docs/manuscript/output/pdf/issue128-proof-carrying-trotter-paper.pdf": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/manuscript/references.bib": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/manuscript/scripts/generate_figures.py": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/manuscript/scripts/validate_claims.py": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/manuscript/sections/abstract.tex": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/manuscript/sections/appendices.tex": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/manuscript/sections/baseline.tex": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/manuscript/sections/compiler.tex": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/manuscript/sections/conclusion.tex": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/manuscript/sections/finite_step.tex": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/manuscript/sections/free_lie.tex": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/manuscript/sections/introduction.tex": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/manuscript/sections/limitations.tex": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/manuscript/sections/norm_certificate.tex": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/manuscript/sections/pauli.tex": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/manuscript/sections/problem.tex": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/manuscript/sections/related_work.tex": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/manuscript/sections/reproducibility.tex": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/manuscript/sections/results.tex": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/manuscript/sections/verification.tex": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "docs/plans/2026-07-29-anticommuting-d4-certificate-design.md": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "docs/plans/2026-07-31-e7-tree-reducer-design.md": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "docs/plans/2026-07-31-proof-carrying-trotter-paper-design.md": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "docs/plans/2026-08-01-balanced-dual-track-publication-design.md": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "docs/plans/2026-08-01-dual-e7-pairing-design.md": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/plans/2026-08-01-dual-e9-tail-design.md": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/plans/2026-08-01-dual-log-tail-via-even-generator-design.md": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/plans/2026-08-01-extensive-commutant-witness-design.md": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/plans/2026-08-01-gauge-aware-spectral-certificate-design.md": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/plans/2026-08-01-quadratic-commutant-witness-design.md": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/presentation/issue128-10-minute-talk.md": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "docs/presentation/output/issue128-10-minute-talk.pdf": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "docs/presentation/output/issue128-10-minute-talk.pptx": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "docs/presentation/output/issue128-10-minute-talk.pptx.inspect.ndjson": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "docs/report/ERRATA.md": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "docs/report/dual-e7-remainder-ledger.md": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/report/dual-e9-hpc-runbook.md": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/report/dual-log-tail-ledger.md": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/report/extensive-commutant-witness-theorem.md": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/report/issue128-d5-integrated-note.md": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "docs/report/issue128-d5-integrated-note.tex": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "docs/report/issue128-hpc-deployment-runbook.md": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/report/issue128-hpc-sprint-log.md": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/report/issue128-hpc-sprint-report.tex": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/report/issue128-technical-report.tex": {
+    "ownership": "obsolete",
+    "release_included": false
+  },
+  "docs/report/output/issue128-technical-report.pdf": {
+    "ownership": "obsolete",
+    "release_included": false
+  },
+  "docs/report/output/pdf/issue128-d5-integrated-note.pdf": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "docs/report/output/pdf/issue128-hpc-sprint-report.pdf": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/report/references.bib": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "docs/superpowers/plans/2026-07-29-anticommuting-d4-certificate.md": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "docs/superpowers/plans/2026-07-30-issue128-final-delivery.md": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "docs/superpowers/plans/2026-07-31-e7-tree-reducer.md": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "docs/superpowers/plans/2026-07-31-exact-d6-harvest.md": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "docs/superpowers/plans/2026-07-31-issue128-six-hour-hpc-sprint.md": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "docs/superpowers/plans/2026-07-31-processed-finite-step-budget.md": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "docs/superpowers/plans/2026-07-31-processed-spectral-local-gate.md": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "docs/superpowers/plans/2026-07-31-proof-carrying-trotter-paper.md": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "docs/superpowers/plans/2026-08-01-dual-e7-pairing.md": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/superpowers/plans/2026-08-01-dual-e9-manifest-contraction.md": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/superpowers/plans/2026-08-01-dual-log-tail-via-even-generator.md": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/superpowers/plans/2026-08-01-extensive-commutant-witness.md": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/superpowers/plans/2026-08-01-gauge-aware-spectral-certificates.md": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/superpowers/plans/2026-08-01-paper-a-quantum-implementation.md": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "docs/superpowers/plans/2026-08-01-paper-b-prxq-gates-implementation.md": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/superpowers/plans/2026-08-01-quadratic-commutant-witness.md": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "pyproject.toml": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "requirements-reproducibility.txt": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "scripts/__init__.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "scripts/audit_gauge_aware_obstruction.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "scripts/audit_paper_a_claims.py": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "scripts/audit_publication_scope.py": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "scripts/build_d5_certificate.py": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "scripts/build_d5_integrated_certificate.py": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "scripts/build_d6_direct.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "scripts/build_d6_grouped_sidecar.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "scripts/build_d6_integrated_certificate.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "scripts/build_d8_monolithic.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "scripts/build_d8_shard.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "scripts/build_e7_word_shard.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "scripts/build_processed_kernel_audit.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "scripts/build_v3_certificate.py": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "scripts/certify_dual_e7_pairing.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "scripts/certify_dual_e9_pairing.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "scripts/certify_dual_log_tail.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "scripts/certify_extensive_commutant_witness.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "scripts/certify_quadratic_commutant_witness.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "scripts/compare_exact_degree_payloads.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "scripts/compare_exact_stage_degrees.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "scripts/crosscheck_small.py": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "scripts/experimental_full_phase_4x4.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "scripts/experimental_processor_obstruction.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "scripts/extract_exact_degree.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "scripts/finalize_e7_partials.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "scripts/package_delivery.py": {
+    "ownership": "obsolete",
+    "release_included": false
+  },
+  "scripts/prepare_dual_log_manifests.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "scripts/reduce_d8_shards.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "scripts/reduce_e7_word_range.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "scripts/reduce_e7_word_shards.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "scripts/reference_verify.py": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "scripts/report_processed_local_budget.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "scripts/screen_matching_order.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "scripts/screen_processed_spectra.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "scripts/verify.py": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "scripts/verify_processed_kernel_audit.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "src/trottercert/__init__.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/algebra.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/anticommuting.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/baseline.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/clusters.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/commutant_witness.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "src/trottercert/crosscheck.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/cubic_field.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/cubic_local.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/d6_physical_channels.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/defect_series.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/dual_log_pairing.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "src/trottercert/dual_log_tail.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "src/trottercert/dual_manifest_pairing.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "src/trottercert/dual_word_manifest.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "src/trottercert/effective_processor.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "src/trottercert/exact_series_certificate.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/formulas.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/hamiltonian.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/higher_order.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/hpc_artifacts.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/intervals.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/lattice.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/lie_series.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/local_commutators.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/matching_screen.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "src/trottercert/orbits.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/pareto.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/processed_budget.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "src/trottercert/processed_kernels.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "src/trottercert/processed_local_bounds.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "src/trottercert/processors.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "src/trottercert/rational_lie_local.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "src/trottercert/rational_words.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "src/trottercert/refined_error.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/representation.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/resources.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/rigorous_fourth.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/series.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/spectral_duality.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "src/trottercert/spectral_gauge.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "src/trottercert/spectral_processing.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "src/trottercert/su2clusters.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/support_groups.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "src/trottercert/verify.py": {
+    "ownership": "shared",
+    "release_included": true
+  },
+  "tests/test_algebra.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_anticommuting.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_baseline.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_certificate_mutations.py": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "tests/test_clusters.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_commutant_witness.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "tests/test_compare_exact_degree_payloads.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "tests/test_compare_exact_stage_degrees.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "tests/test_cubic_field.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_cubic_local.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_cubic_right_generator.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_d5_integrated_certificate.py": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "tests/test_d6_grouped_sidecar.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "tests/test_d6_physical_channels.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "tests/test_defect_series.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_delivery_package.py": {
+    "ownership": "obsolete",
+    "release_included": false
+  },
+  "tests/test_direct_d6_identity.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "tests/test_dual_e7_pairing.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "tests/test_dual_e9_hpc_scripts.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "tests/test_dual_e9_pairing.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "tests/test_dual_log_pairing.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "tests/test_dual_log_tail.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "tests/test_dual_log_tail_certificate.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "tests/test_dual_manifest_pairing.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_dual_word_manifest.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_e7_tree_reducer.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_effective_processor.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_exact_series_certificate.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_extensive_commutant_witness.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "tests/test_extract_exact_degree.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "tests/test_gauge_aware_obstruction_audit.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "tests/test_higher_order.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_hpc_artifacts.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_intervals.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_lattice_hamiltonian.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_lie_series.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_local_commutators.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_matching_order_screen.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "tests/test_orbits.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_paper_a_claims.py": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "tests/test_pareto.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_processed_budget.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "tests/test_processed_kernel_audit.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "tests/test_processed_kernels.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "tests/test_processed_local_bounds.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "tests/test_processed_local_budget_report.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "tests/test_processed_spectral_screen.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "tests/test_processors.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_publication_scope.py": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "tests/test_rational_lie_local.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "tests/test_rational_words.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "tests/test_reduce_d8_shards.py": {
+    "ownership": "exploratory",
+    "release_included": false
+  },
+  "tests/test_reference_verify.py": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "tests/test_refined_error.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_representation.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_resources_fourth.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_resources_verify.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_rigorous_fourth.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_series_formulas.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_small_crosscheck.py": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "tests/test_spectral_duality.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "tests/test_spectral_gauge.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "tests/test_spectral_processing.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_su2clusters.py": {
+    "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_support_groups.py": {
+    "ownership": "shared",
+    "release_included": false
+  }
+}
