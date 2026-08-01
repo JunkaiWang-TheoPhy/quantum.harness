@@ -51,7 +51,15 @@
     "ownership": "obsolete",
     "release_included": false
   },
+  "benchmarks/paper-a/ablation.json": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
   "benchmarks/paper-a/ed-calibration.json": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "benchmarks/paper-a/heldout-tfim.json": {
     "ownership": "paper-a",
     "release_included": true
   },
@@ -160,6 +168,10 @@
     "release_included": false
   },
   "docs/experiments/processor-obstruction/quadratic-commutant-witness.json": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/experiments/processor-obstruction/tfim-family-obstruction.json": {
     "ownership": "paper-b",
     "release_included": false
   },
@@ -527,6 +539,10 @@
     "ownership": "exploratory",
     "release_included": false
   },
+  "scripts/build_paper_a_ablation.py": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
   "scripts/build_processed_kernel_audit.py": {
     "ownership": "exploratory",
     "release_included": false
@@ -556,6 +572,10 @@
     "release_included": false
   },
   "scripts/certify_quadratic_commutant_witness.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "scripts/certify_tfim_obstruction.py": {
     "ownership": "paper-b",
     "release_included": false
   },
@@ -620,6 +640,10 @@
     "release_included": false
   },
   "scripts/run_ed_calibration.py": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "scripts/run_heldout_model.py": {
     "ownership": "paper-a",
     "release_included": true
   },
@@ -823,6 +847,10 @@
     "ownership": "shared",
     "release_included": true
   },
+  "src/trottercert/tfim_obstruction.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
   "src/trottercert/trace_obstruction.py": {
     "ownership": "paper-b",
     "release_included": false
@@ -967,6 +995,10 @@
     "ownership": "paper-b",
     "release_included": false
   },
+  "tests/test_heldout_model.py": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
   "tests/test_higher_order.py": {
     "ownership": "shared",
     "release_included": false
@@ -998,6 +1030,10 @@
   "tests/test_orbits.py": {
     "ownership": "shared",
     "release_included": false
+  },
+  "tests/test_paper_a_ablation.py": {
+    "ownership": "paper-a",
+    "release_included": true
   },
   "tests/test_paper_a_claims.py": {
     "ownership": "paper-a",
@@ -1109,6 +1145,10 @@
   },
   "tests/test_support_groups.py": {
     "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_tfim_obstruction.py": {
+    "ownership": "paper-b",
     "release_included": false
   },
   "tests/test_xxz_transfer.py": {
