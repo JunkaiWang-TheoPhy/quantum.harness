@@ -7,9 +7,11 @@ import pytest
 
 from trottercert.commutant_witness import (
     build_quadratic_witness_payload,
+    density_aliases_on_torus,
     heisenberg_symplectic_terms,
     lift_cubic_density,
     pair_lifted_cubic_density,
+    quadratic_witness_moments,
     square_real_pauli_terms,
     verify_quadratic_witness_payload,
 )
@@ -131,3 +133,38 @@ def test_lift_rejects_coordinate_aliasing() -> None:
     pauli = ((1 << left) | (1 << wrapped), 0)
     with pytest.raises(ValueError, match="alias"):
         lift_cubic_density(registry, {pauli: Cubic.one()}, lattice)
+
+
+def test_density_alias_detection_is_size_specific() -> None:
+    registry = CoordinateRegistry()
+    left = registry.site((0, 0))
+    distant = registry.site((4, 0))
+    pauli = ((1 << left) | (1 << distant), 0)
+    density = {pauli: Cubic.one()}
+    assert density_aliases_on_torus(registry, density, 4) is True
+    assert density_aliases_on_torus(registry, density, 6) is False
+    with pytest.raises(ValueError, match="even"):
+        density_aliases_on_torus(registry, density, 5)
+
+
+def test_quadratic_witness_moments_include_exact_normalization() -> None:
+    lattice = SquareLattice(4)
+    hamiltonian = heisenberg_symplectic_terms(lattice)
+    squared = square_real_pauli_terms(hamiltonian)
+    tau_h_e5 = Cubic(1, 2, 3)
+    tau_h2_e5 = Cubic(4, 5, 6)
+    moments = quadratic_witness_moments(
+        hamiltonian,
+        squared,
+        tau_h_e5,
+        tau_h2_e5,
+    )
+    assert moments.tau_h2 == Fraction(6)
+    assert moments.tau_h3 == Fraction(-3)
+    assert moments.h_coefficient == Fraction(1, 2)
+    assert moments.tau_w2 > 0
+    assert moments.tau_w_e5 == tau_h2_e5 + tau_h_e5 / 2
+    assert (
+        moments.squared_normalized_pairing
+        == moments.tau_w_e5**2 / moments.tau_w2
+    )

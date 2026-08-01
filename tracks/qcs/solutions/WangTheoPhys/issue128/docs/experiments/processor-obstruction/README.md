@@ -186,9 +186,9 @@ The fail-closed refinement is recorded in:
 
 ```text
 quadratic-commutant-witness.json
-sha256: de045d5613b87010298ecd2b96c4cc685a13c2d35a1da965255b41ac1094c749
+sha256: d0892b7320cb22a8be1701a1fdb185d2ce9dbfbc20d191fc21bf4359cea5d391
 gauge-aware-audit.json
-sha256: 486f0e1573f677b2f9f5fbe331f7c2e19e0d7b6481e526c0b04944ad05f0899a
+sha256: 50af032bb18a340b49a5ace184848ca5a58b9233889fa9ad93c7a4b9bac45a94
 source exact-obstruction sha256:
 b993596dcacb714c20bbae7b3e38c254e639268e57ab529823079db732f61103
 ```

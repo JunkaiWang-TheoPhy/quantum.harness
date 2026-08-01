@@ -26,7 +26,7 @@
     "witness": "H^2 - 54 I + H/2",
     "witness_artifact": {
       "path": "docs/experiments/processor-obstruction/quadratic-commutant-witness.json",
-      "sha256": "de045d5613b87010298ecd2b96c4cc685a13c2d35a1da965255b41ac1094c749"
+      "sha256": "d0892b7320cb22a8be1701a1fdb185d2ce9dbfbc20d191fc21bf4359cea5d391"
     }
   },
   "fixed_time_endpoint_processor": {

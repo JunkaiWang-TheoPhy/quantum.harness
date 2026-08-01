@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from dataclasses import dataclass
 from fractions import Fraction
 
 from .cubic_field import Cubic
@@ -64,6 +65,23 @@ def _translation_offsets(
         for dy in range(0, lattice.length, step_y)
         for dx in range(0, lattice.length, step_x)
     )
+
+
+def density_aliases_on_torus(
+    registry: CoordinateRegistry,
+    density: Mapping[SymplecticPauli, object],
+    length: int,
+) -> bool:
+    """Return whether distinct sites in a density term coincide modulo L."""
+
+    if length < 4 or length % 2:
+        raise ValueError("torus length must be an even integer at least four")
+    for pauli in density:
+        coordinates = _density_coordinates(registry, pauli)
+        periodic = {(x % length, y % length) for x, y, _, _ in coordinates}
+        if len(periodic) != len(coordinates):
+            return True
+    return False
 
 
 def lift_cubic_density(
@@ -165,6 +183,58 @@ def rational_pauli_pairing(
     return sum(
         (coefficient * right.get(pauli, Fraction()) for pauli, coefficient in left.items()),
         Fraction(),
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class QuadraticWitnessMoments:
+    tau_h2: Fraction
+    tau_h3: Fraction
+    tau_h4: Fraction
+    identity_coefficient: Fraction
+    h_coefficient: Fraction
+    tau_w2: Fraction
+    tau_h_e5: Cubic
+    tau_h2_e5: Cubic
+    tau_w_e5: Cubic
+    squared_normalized_pairing: Cubic
+
+
+def quadratic_witness_moments(
+    hamiltonian: Mapping[SymplecticPauli, Fraction],
+    squared: Mapping[SymplecticPauli, Fraction],
+    tau_h_e5: Cubic,
+    tau_h2_e5: Cubic,
+) -> QuadraticWitnessMoments:
+    """Return exact moments of W=H^2-tau(H^2)I+cH, c=-tau(H^3)/tau(H^2)."""
+
+    tau_h2 = Fraction(squared.get((0, 0), 0))
+    if tau_h2 <= 0:
+        raise ValueError("tau(H^2) must be positive")
+    tau_h3 = rational_pauli_pairing(hamiltonian, squared)
+    tau_h4 = rational_pauli_pairing(squared, squared)
+    h_coefficient = -tau_h3 / tau_h2
+    identity_coefficient = -tau_h2
+    tau_w2 = (
+        tau_h4
+        - tau_h2**2
+        + 2 * h_coefficient * tau_h3
+        + h_coefficient**2 * tau_h2
+    )
+    if tau_w2 <= 0:
+        raise ValueError("quadratic witness must have positive Hilbert--Schmidt norm")
+    tau_w_e5 = tau_h2_e5 + h_coefficient * tau_h_e5
+    return QuadraticWitnessMoments(
+        tau_h2=tau_h2,
+        tau_h3=tau_h3,
+        tau_h4=tau_h4,
+        identity_coefficient=identity_coefficient,
+        h_coefficient=h_coefficient,
+        tau_w2=tau_w2,
+        tau_h_e5=tau_h_e5,
+        tau_h2_e5=tau_h2_e5,
+        tau_w_e5=tau_w_e5,
+        squared_normalized_pairing=tau_w_e5**2 / tau_w2,
     )
 
 

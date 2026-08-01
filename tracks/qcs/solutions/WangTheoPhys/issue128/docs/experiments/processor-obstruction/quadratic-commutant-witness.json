@@ -18,7 +18,7 @@
   },
   "hpc_authorized": false,
   "implementation_sources": {
-    "src/trottercert/commutant_witness.py": "aef3dc5c09cbeb70464184dc6f8778a235652ed691770de513ca436f67718973",
+    "src/trottercert/commutant_witness.py": "a5ce489e0036eec291ff42266829c80bb8969b24f232423a83d4a97a189ed3fd",
     "src/trottercert/cubic_field.py": "279ff5517e041b443483fbfcd50797748796ba52fa2937f208b1e92f6e0a74f3",
     "src/trottercert/cubic_local.py": "dbe33aec6ca5835c4db46f38fe403817c635ce867c4de38f6dbcc04d47e82d1b"
   },
