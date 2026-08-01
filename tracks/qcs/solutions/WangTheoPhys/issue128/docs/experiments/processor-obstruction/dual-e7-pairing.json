@@ -1,0 +1,106 @@
+{
+  "claim": {
+    "dual_e7_pairing": "exact",
+    "finite_step_status": "inconclusive",
+    "full_e7_operator": "not_computed",
+    "missing": "E9-and-higher dual remainder and logarithm branch"
+  },
+  "coverage": {
+    "group_count": 4096,
+    "nonzero_word_count": 12288,
+    "reduction_order_check": "forward_equals_reverse",
+    "retained_term_count": 30807360,
+    "word_count": 16380
+  },
+  "degree": 7,
+  "hpc_authorized": false,
+  "implementation_sources": {
+    "src/trottercert/commutant_witness.py": "a5ce489e0036eec291ff42266829c80bb8969b24f232423a83d4a97a189ed3fd",
+    "src/trottercert/cubic_field.py": "279ff5517e041b443483fbfcd50797748796ba52fa2937f208b1e92f6e0a74f3",
+    "src/trottercert/cubic_local.py": "dbe33aec6ca5835c4db46f38fe403817c635ce867c4de38f6dbcc04d47e82d1b",
+    "src/trottercert/dual_log_pairing.py": "232445028f4093bcca0bf123762ea4dfebebad5abc396f54f104d0c2068db667",
+    "src/trottercert/local_commutators.py": "092089493210b789833199374e515b3df7281218f52cb63b240c607c0d044fca"
+  },
+  "implementation_sources_digest": "52297dd4db6aa81d6f1b8ba45a318a0881e1f8188bf6f27844fa513dbfb13ee7",
+  "kind": "issue128_dual_e7_pairing",
+  "length": 6,
+  "pairings": {
+    "tau_h": [
+      [
+        -13614747,
+        1120000000
+      ],
+      [
+        -2527263,
+        320000000
+      ],
+      [
+        -6010753,
+        1280000000
+      ]
+    ],
+    "tau_h2": [
+      [
+        16855157,
+        640000000
+      ],
+      [
+        87480909,
+        5120000000
+      ],
+      [
+        625546937,
+        61440000000
+      ]
+    ],
+    "tau_w": [
+      [
+        18151321,
+        896000000
+      ],
+      [
+        13452561,
+        1024000000
+      ],
+      [
+        96257773,
+        12288000000
+      ]
+    ],
+    "tau_w_nonzero": true,
+    "tau_w_per_cell": [
+      [
+        18151321,
+        8064000000
+      ],
+      [
+        1494729,
+        1024000000
+      ],
+      [
+        96257773,
+        110592000000
+      ]
+    ]
+  },
+  "parents": [
+    {
+      "sha256": "d30e3fd9a8f5020b3e643d13ae31bf1e7d75901f99e2d5207910ba32acebbd5b",
+      "shard_index": 0
+    },
+    {
+      "sha256": "5bb3e6add769cf42f4f06a1cd3e98074abd7316a4143e6454247661ddd2221af",
+      "shard_index": 1
+    },
+    {
+      "sha256": "237c57a1ab41f2d69d019c3fd29ac630f4f1293c5a56cfa66ecae21f793cab5d",
+      "shard_index": 2
+    },
+    {
+      "sha256": "f4671f9eaa8c278bdb34462ddbb3b745877acd444bb5fbdd8f98e645678288dd",
+      "shard_index": 3
+    }
+  ],
+  "schema_version": 1,
+  "shard_count": 4
+}
