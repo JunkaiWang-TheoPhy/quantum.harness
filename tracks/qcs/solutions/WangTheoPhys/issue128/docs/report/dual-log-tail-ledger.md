@@ -211,7 +211,11 @@ The verifier rebuilds the stages, D4--D7 constants, all intermediate
 rationals, source hashes, E5/E7 hashes, bounds, and claim.  Lowering a bound or
 changing any claim-bearing input causes strict regeneration mismatch.
 
-The final focused run completed with `35 passed, 4 deselected` in 165.41
-seconds.  The complete non-slow Issue-128 suite completed with `270 passed, 16
-deselected` in 393.56 seconds.  Ruff import/typing checks, bytecode compilation,
-and `git diff --check` also passed before publication.
+The final focused dual-tail run completed with `27 passed` in 1.14 seconds.
+A detached, genuine Git worktree at the then-current branch head ran the 27
+dual-tail tests plus all seven committed delivery-package tests with `34
+passed` in 16.73 seconds.  The shared dirty worktree's non-slow run reached
+`298 passed, 16 deselected` and four failures, all in an uncommitted concurrent
+`test_publication_scope.py` suite whose ownership manifest did not yet classify
+an untracked `CITATION.cff`; those files are outside this certificate change.
+Ruff import/typing checks, bytecode compilation, and `git diff --check` passed.
