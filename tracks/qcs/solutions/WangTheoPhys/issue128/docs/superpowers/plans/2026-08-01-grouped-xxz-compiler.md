@@ -250,6 +250,92 @@ Run: `python -m pytest -q tests/test_grouped_xxz.py`
 
 Commit: `git commit -m "feat(issue128): certify grouped XXZ norm witnesses"`
 
+### Task 5A: Compress the Production Ledger by Exact D4 Orbits
+
+**Files:**
+- Create: `src/trottercert/grouped_xxz_compressed.py`
+- Create: `tests/test_grouped_xxz_compressed.py`
+- Modify: `scripts/compile_grouped_xxz.py`
+
+**Interfaces:**
+- Consumes: `_iter_raw_theorem_records()`, `_FiniteXXZSymplecticEvaluator`,
+  `discover_anticommuting_groups()`, and the frozen actions in
+  `grouped_xxz_orbits.py`.
+- Produces: `build_compressed_xxz_ledger(spec, *, max_records=None, progress=None)`.
+- Produces: `verify_compressed_xxz_ledger(ledger)` and
+  `compile_compressed_grouped_xxz(spec, ledger=None)`.
+- A bounded ledger has `complete=False` and cannot be passed to the compiler.
+
+- [ ] **Step 1: Write failing raw-stream and orbit tests**
+
+Require the first 200 raw records to have the same identities, exact weights,
+actual-word coverage, and canonical stream digest as the uncompressed ledger.
+For every active word, require one frozen symmetry that maps its canonical
+representative to it.  Mutating a word weight, representative, symmetry id, or
+stream digest must fail semantic replay after resealing outer digests.
+
+- [ ] **Step 2: Implement the streaming theorem ledger**
+
+Serialize each raw record with `canonical_json_bytes` as it is enumerated,
+update one SHA-256 stream digest, and accumulate exact positive weights in a
+dictionary keyed by the actual five-letter word.  Store only the count, digest,
+and sorted per-word weights.  Do not retain the 61,677 raw dataclasses and do
+not aggregate weights into representative records.
+
+- [ ] **Step 3: Evaluate and verify canonical representative blocks**
+
+For each active canonical representative, use the exact finite-torus evaluator
+once, freeze its sorted `SymplecticCoefficient` map, and build
+`deterministic_pair_only_bitset_v1` groups.  Verify the eight site/fragment
+actions structurally and require exact transported-map equality on bounded
+integration fixtures.  Store actual-word-to-representative symmetry metadata,
+but never duplicate transported term maps.
+
+- [ ] **Step 4: Reconstruct both theorem constants literally**
+
+Loop over sorted actual words and add `w_k*U_rep(k)` or
+`w_k*||C_rep(k)||_1` one word at a time before dividing by `5!`.  The verifier
+independently repeats this loop.  It rejects a submitted representative-weight
+sum even if the final scalar is numerically equal.
+
+- [ ] **Step 5: Close full certificates and fail closed on prefixes**
+
+For a complete ledger, compute the least positive candidate and baseline steps
+using exact integer fourth-power comparisons, store both accepted errors and
+strict predecessor errors, and replay `G(r)=30*r+1`.  Calling the certificate
+compiler with `complete=False`, a missing word, or a partial orbit is an error.
+
+- [ ] **Step 6: Run the 200-record end-to-end profile for both anisotropies**
+
+Run:
+
+```bash
+python -m pytest -q -m slow tests/test_grouped_xxz_compressed.py \
+  -k compressed_200_record_profile
+```
+
+Record raw count, active words, representative count, representative Pauli
+terms, pair/singleton counts, grouped/triangle ratio, wall time, and peak RSS.
+Authorize a full local run only if the measured projection is below 10 minutes
+and 16 GB; otherwise package the same immutable commit for Slurm.
+
+- [ ] **Step 7: Commit the compressed core**
+
+```bash
+git add tracks/qcs/solutions/WangTheoPhys/issue128/src/trottercert/grouped_xxz_compressed.py \
+  tracks/qcs/solutions/WangTheoPhys/issue128/tests/test_grouped_xxz_compressed.py \
+  tracks/qcs/solutions/WangTheoPhys/issue128/scripts/compile_grouped_xxz.py
+git commit -m "perf(issue128): compress grouped XXZ theorem orbits"
+```
+
+- [ ] **Step 8: Conditional stronger-group fallback**
+
+Only if the complete pair-only certificate fails the positive-transfer resource
+gate, run the existing multi-member greedy discovery on canonical
+representatives, bind a distinct algorithm identifier, and rerun the same
+primary/reference mutation gates.  Do not change theorem weights, orbit rules,
+baseline, or the preregistered Delta values after seeing the pair-only result.
+
 ### Task 6: Close the Finite-Step Bound and Same-Delta Baseline
 
 **Files:**

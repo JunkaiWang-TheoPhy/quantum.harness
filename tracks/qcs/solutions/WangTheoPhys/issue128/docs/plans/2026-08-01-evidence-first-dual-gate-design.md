@@ -137,6 +137,41 @@ proved.
   until a general XXZ bond-synthesis certificate exists.
 - Freeze all failures as well as successes.
 
+#### Production-ledger execution design
+
+The direct finite-torus theorem is unchanged, but its production witness uses
+an exact D4 orbit compression so that verification remains practical.  The
+raw theorem stream is enumerated in full and hashed canonically.  Every
+actual five-letter word retains its own exact positive theorem weight; weights
+are never inferred from an orbit representative and are never combined with a
+Pauli coefficient map.  Only the unweighted commutator polynomial is evaluated
+for the lexicographically canonical representative of each frozen 4 by 4 D4
+orbit.  The frozen site permutation transports Pauli masks and proves equality
+of coefficient magnitudes and commutation graphs for the other orbit members.
+
+Representative blocks use `deterministic_pair_only_bitset_v1`: terms are
+ordered by decreasing exact magnitude and mask, and each unmatched term is
+paired with the earliest unmatched anticommuting partner.  Groups are therefore
+singletons or pairs and can be independently replayed without trusting a graph
+heuristic.  The theorem constants are still evaluated as the literal sums
+
+```text
+K_grouped = sum_actual_words w_k U_rep(k) / 5!
+K_triangle = sum_actual_words w_k ||C_rep(k)||_1 / 5!.
+```
+
+This is the selected production path.  Evaluating pair-only groups for every
+actual block is a correct but slower fallback.  Multi-member greedy grouping is
+reserved for a second pass over the canonical representatives only when the
+pair-only adjacent-step result does not improve the same-Delta baseline enough
+to pass the preregistered pilot gate.
+
+A bounded prefix is profiling evidence only.  It cannot produce a certified
+finite-step result.  Production status requires full raw-stream coverage,
+complete actual-word-to-representative coverage, exact representative maps,
+deterministic group replay, strict accepted/previous-step inequalities, and an
+independent standard-library verifier.
+
 ### Lane B: PF4 BCH mapping
 
 - Implementation 1 expands the exact cubic-field Suzuki word through degree
