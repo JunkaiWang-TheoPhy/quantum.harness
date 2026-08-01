@@ -18,9 +18,12 @@ from trottercert.grouped_xxz import (
     fraction_pair,
 )
 from trottercert.grouped_xxz_artifact import (
+    build_merged_pilot_artifact,
     build_per_delta_artifact,
     source_closure,
+    verify_merged_pilot_artifact,
     verify_per_delta_artifact,
+    write_merged_pilot_artifact,
     write_per_delta_artifact,
 )
 from trottercert.grouped_xxz_compressed import (
@@ -63,10 +66,19 @@ def _parser() -> argparse.ArgumentParser:
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--profile-only", action="store_true")
     mode.add_argument("--build", action="store_true")
-    parser.add_argument("--delta", required=True, type=_exact_delta)
+    mode.add_argument(
+        "--merge-pilot",
+        nargs=4,
+        metavar=(
+            "LEFT_SUMMARY",
+            "LEFT_WITNESS",
+            "RIGHT_SUMMARY",
+            "RIGHT_WITNESS",
+        ),
+    )
+    parser.add_argument("--delta", type=_exact_delta)
     parser.add_argument(
         "--pipeline",
-        required=True,
         choices=("direct-theorem", "local-log"),
     )
     parser.add_argument("--max-records", type=_positive_integer)
@@ -78,6 +90,45 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = _parser()
     arguments = parser.parse_args(argv)
+    if arguments.merge_pilot is not None:
+        if arguments.delta is not None or arguments.pipeline is not None:
+            parser.error("--merge-pilot does not accept --delta or --pipeline")
+        if arguments.max_records is not None:
+            parser.error("--merge-pilot does not accept --max-records")
+        if arguments.summary is None or arguments.witness is None:
+            parser.error(
+                "--merge-pilot requires explicit --summary and --witness paths"
+            )
+        summary_path = Path(arguments.summary)
+        witness_path = Path(arguments.witness)
+        if summary_path.exists() or witness_path.exists():
+            parser.error("artifact output already exists; overwrite is forbidden")
+        input_paths = tuple(Path(path) for path in arguments.merge_pilot)
+        if any(not path.is_file() for path in input_paths):
+            parser.error("--merge-pilot input artifact is missing")
+        closure = source_closure(ROOT)
+        artifact = build_merged_pilot_artifact(
+            input_paths[0].read_bytes(),
+            input_paths[1].read_bytes(),
+            input_paths[2].read_bytes(),
+            input_paths[3].read_bytes(),
+            closure,
+        )
+        verify_merged_pilot_artifact(
+            artifact.summary_bytes,
+            artifact.witness_gzip_bytes,
+            expected_source_closure=closure,
+        )
+        write_merged_pilot_artifact(
+            artifact,
+            summary_path,
+            witness_path,
+        )
+        sys.stdout.buffer.write(artifact.summary_bytes)
+        return 0
+
+    if arguments.delta is None or arguments.pipeline is None:
+        parser.error("--profile-only and --build require --delta and --pipeline")
     if arguments.build:
         if arguments.max_records is not None:
             parser.error("--max-records is valid only with --profile-only")

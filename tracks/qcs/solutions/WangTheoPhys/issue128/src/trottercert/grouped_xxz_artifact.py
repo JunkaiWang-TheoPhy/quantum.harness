@@ -37,6 +37,9 @@ from .intervals import RationalInterval
 
 SUMMARY_SCHEMA = "grouped_xxz_per_delta_summary_v1"
 WITNESS_SCHEMA = "grouped_xxz_per_delta_witness_v1"
+MERGED_SUMMARY_SCHEMA = "grouped_xxz_two_point_pilot_summary_v1"
+MERGED_WITNESS_SCHEMA = "grouped_xxz_two_point_pilot_witness_v1"
+MERGED_METHOD = "two_point_compressed_grouped_xxz_pilot"
 SOURCE_ENTRYPOINTS = (
     "scripts/compile_grouped_xxz.py",
     "src/trottercert/grouped_xxz_artifact.py",
@@ -67,6 +70,15 @@ SOURCE_CLOSURE_PATHS = tuple(
 
 @dataclass(frozen=True, slots=True)
 class PerDeltaArtifact:
+    summary: dict[str, object]
+    witness: dict[str, object]
+    summary_bytes: bytes
+    witness_payload_bytes: bytes
+    witness_gzip_bytes: bytes
+
+
+@dataclass(frozen=True, slots=True)
+class MergedPilotArtifact:
     summary: dict[str, object]
     witness: dict[str, object]
     summary_bytes: bytes
@@ -1027,6 +1039,284 @@ def verify_per_delta_artifact(
     return ledger, certificate
 
 
+def _verified_per_delta_components(
+    summary_bytes: bytes,
+    witness_gzip_bytes: bytes,
+    closure: dict[str, object],
+) -> tuple[
+    dict[str, object],
+    dict[str, object],
+    CompressedXXZLedger,
+    CompressedXXZCertificate,
+]:
+    ledger, certificate = verify_per_delta_artifact(
+        summary_bytes,
+        witness_gzip_bytes,
+        expected_source_closure=closure,
+    )
+    summary = _canonical_json_load(summary_bytes, "per-Delta summary")
+    witness_payload = gzip.decompress(witness_gzip_bytes)
+    witness = _canonical_json_load(witness_payload, "per-Delta witness")
+    return summary, witness, ledger, certificate
+
+
+def _validate_two_point_certificates(
+    rows: list[
+        tuple[
+            dict[str, object],
+            dict[str, object],
+            CompressedXXZLedger,
+            CompressedXXZCertificate,
+        ]
+    ],
+) -> None:
+    deltas = tuple(row[3].spec.delta for row in rows)
+    if deltas != (Fraction(1, 2), Fraction(2)):
+        raise ValueError("two-point pilot requires unique canonical Delta rows {1/2,2}")
+    for _, _, _, certificate in rows:
+        if certificate.status != "certified":
+            raise ValueError("two-point pilot requires both rows to be certified")
+        if certificate.candidate_resources >= certificate.baseline_resources:
+            raise ValueError(
+                "two-point pilot requires positive same-Delta resource transfer"
+            )
+
+
+def _merged_witness_payload(
+    rows: list[
+        tuple[
+            dict[str, object],
+            dict[str, object],
+            CompressedXXZLedger,
+            CompressedXXZCertificate,
+        ]
+    ],
+    closure: dict[str, object],
+) -> dict[str, object]:
+    return _seal(
+        {
+            "payload_sha256": "",
+            "per_delta_artifacts": [
+                {
+                    "summary": summary,
+                    "witness_payload": witness,
+                }
+                for summary, witness, _, _ in rows
+            ],
+            "schema": MERGED_WITNESS_SCHEMA,
+            "source_closure": closure,
+        }
+    )
+
+
+def _merged_summary_payload(
+    rows: list[
+        tuple[
+            dict[str, object],
+            dict[str, object],
+            CompressedXXZLedger,
+            CompressedXXZCertificate,
+        ]
+    ],
+    closure: dict[str, object],
+    witness_payload_bytes: bytes,
+    witness_gzip_bytes: bytes,
+) -> dict[str, object]:
+    summary_rows = []
+    for per_summary, _, _, certificate in rows:
+        binding = per_summary["witness"]
+        assert isinstance(binding, dict)
+        per_summary_bytes = canonical_json_bytes(per_summary)
+        summary_rows.append(
+            {
+                "baseline": {
+                    "resources": certificate.baseline_resources,
+                    "steps": certificate.baseline_steps,
+                },
+                "candidate": {
+                    "resources": certificate.candidate_resources,
+                    "steps": certificate.candidate_steps,
+                },
+                "delta": fraction_pair(certificate.spec.delta),
+                "method": certificate.method,
+                "per_delta_bindings": {
+                    "summary_sha256": sha256(per_summary_bytes).hexdigest(),
+                    "witness_file_sha256": binding["file_sha256"],
+                    "witness_payload_sha256": binding["payload_sha256"],
+                },
+                "status": certificate.status,
+            }
+        )
+    return _seal(
+        {
+            "method": MERGED_METHOD,
+            "payload_sha256": "",
+            "rows": summary_rows,
+            "schema": MERGED_SUMMARY_SCHEMA,
+            "source_closure": closure,
+            "status": "certified",
+            "witness": {
+                "compression": "gzip-9-mtime0-empty-filename",
+                "file_sha256": sha256(witness_gzip_bytes).hexdigest(),
+                "payload_sha256": sha256(witness_payload_bytes).hexdigest(),
+            },
+        }
+    )
+
+
+def build_merged_pilot_artifact(
+    left_summary_bytes: bytes,
+    left_witness_gzip_bytes: bytes,
+    right_summary_bytes: bytes,
+    right_witness_gzip_bytes: bytes,
+    closure: dict[str, object],
+) -> MergedPilotArtifact:
+    """Verify and deterministically merge the easy-plane/easy-axis pilot pair."""
+
+    _validate_source_closure(closure)
+    rows = [
+        _verified_per_delta_components(
+            left_summary_bytes,
+            left_witness_gzip_bytes,
+            closure,
+        ),
+        _verified_per_delta_components(
+            right_summary_bytes,
+            right_witness_gzip_bytes,
+            closure,
+        ),
+    ]
+    rows.sort(key=lambda row: row[3].spec.delta)
+    _validate_two_point_certificates(rows)
+    witness = _merged_witness_payload(rows, closure)
+    witness_payload_bytes = canonical_json_bytes(witness)
+    witness_gzip_bytes = deterministic_gzip_bytes(witness_payload_bytes)
+    summary = _merged_summary_payload(
+        rows,
+        closure,
+        witness_payload_bytes,
+        witness_gzip_bytes,
+    )
+    return MergedPilotArtifact(
+        summary=summary,
+        witness=witness,
+        summary_bytes=canonical_json_bytes(summary),
+        witness_payload_bytes=witness_payload_bytes,
+        witness_gzip_bytes=witness_gzip_bytes,
+    )
+
+
+def verify_merged_pilot_artifact(
+    summary_bytes: bytes,
+    witness_gzip_bytes: bytes,
+    *,
+    expected_source_closure: dict[str, object],
+) -> tuple[
+    tuple[CompressedXXZLedger, CompressedXXZCertificate],
+    tuple[CompressedXXZLedger, CompressedXXZCertificate],
+]:
+    """Verify both embedded per-Delta artifacts and the canonical outer bundle."""
+
+    _validate_source_closure(expected_source_closure)
+    summary = _canonical_json_load(summary_bytes, "merged summary")
+    _expect_mapping_keys(
+        summary,
+        {
+            "method",
+            "payload_sha256",
+            "rows",
+            "schema",
+            "source_closure",
+            "status",
+            "witness",
+        },
+        "merged summary",
+    )
+    if (
+        summary["schema"] != MERGED_SUMMARY_SCHEMA
+        or summary["method"] != MERGED_METHOD
+        or summary["status"] != "certified"
+    ):
+        raise ValueError("merged summary identity is incorrect")
+    if summary["payload_sha256"] != payload_digest(summary):
+        raise ValueError("merged summary payload digest is incorrect")
+    if summary["source_closure"] != expected_source_closure:
+        raise ValueError("merged summary source closure differs from expected source")
+    _expect_mapping_keys(
+        summary["witness"],
+        {"compression", "file_sha256", "payload_sha256"},
+        "merged witness binding",
+    )
+    binding = summary["witness"]
+    assert isinstance(binding, dict)
+    if binding["compression"] != "gzip-9-mtime0-empty-filename":
+        raise ValueError("merged witness compression identifier is incorrect")
+    if _validate_sha(binding["file_sha256"], "merged witness file digest") != (
+        sha256(witness_gzip_bytes).hexdigest()
+    ):
+        raise ValueError("merged witness file digest is incorrect")
+    try:
+        witness_payload_bytes = gzip.decompress(witness_gzip_bytes)
+    except (gzip.BadGzipFile, EOFError, OSError) as error:
+        raise ValueError("merged witness is not a valid gzip member") from error
+    if deterministic_gzip_bytes(witness_payload_bytes) != witness_gzip_bytes:
+        raise ValueError("merged witness gzip is not deterministic")
+    if _validate_sha(binding["payload_sha256"], "merged witness payload digest") != (
+        sha256(witness_payload_bytes).hexdigest()
+    ):
+        raise ValueError("merged witness payload digest is incorrect")
+
+    witness = _canonical_json_load(witness_payload_bytes, "merged witness")
+    _expect_mapping_keys(
+        witness,
+        {"payload_sha256", "per_delta_artifacts", "schema", "source_closure"},
+        "merged witness",
+    )
+    if witness["schema"] != MERGED_WITNESS_SCHEMA:
+        raise ValueError("merged witness schema identity is incorrect")
+    if witness["payload_sha256"] != payload_digest(witness):
+        raise ValueError("merged witness self digest is incorrect")
+    if witness["source_closure"] != expected_source_closure:
+        raise ValueError("merged witness source closure differs from expected source")
+    embedded = witness["per_delta_artifacts"]
+    if not isinstance(embedded, list) or len(embedded) != 2:
+        raise ValueError("merged witness must contain exactly two per-Delta artifacts")
+    rows = []
+    for item in embedded:
+        _expect_mapping_keys(
+            item,
+            {"summary", "witness_payload"},
+            "merged per-Delta artifact",
+        )
+        assert isinstance(item, dict)
+        per_summary = item["summary"]
+        per_witness = item["witness_payload"]
+        if not isinstance(per_summary, dict) or not isinstance(per_witness, dict):
+            raise ValueError("embedded per-Delta payloads must be mappings")
+        per_summary_bytes = canonical_json_bytes(per_summary)
+        per_witness_bytes = canonical_json_bytes(per_witness)
+        per_witness_gzip = deterministic_gzip_bytes(per_witness_bytes)
+        ledger, certificate = verify_per_delta_artifact(
+            per_summary_bytes,
+            per_witness_gzip,
+            expected_source_closure=expected_source_closure,
+        )
+        rows.append((per_summary, per_witness, ledger, certificate))
+    _validate_two_point_certificates(rows)
+    expected_witness = _merged_witness_payload(rows, expected_source_closure)
+    if witness != expected_witness:
+        raise ValueError("merged witness differs from canonical reconstruction")
+    expected_summary = _merged_summary_payload(
+        rows,
+        expected_source_closure,
+        witness_payload_bytes,
+        witness_gzip_bytes,
+    )
+    if summary != expected_summary:
+        raise ValueError("merged summary differs from its verified witness")
+    return tuple((row[2], row[3]) for row in rows)  # type: ignore[return-value]
+
+
 def _write_temporary(path: Path, raw: bytes) -> Path:
     descriptor, temporary_name = tempfile.mkstemp(
         dir=path.parent,
@@ -1059,6 +1349,37 @@ def write_per_delta_artifact(
 
     if not isinstance(artifact, PerDeltaArtifact):
         raise TypeError("artifact must be a PerDeltaArtifact")
+    _write_artifact_bytes(
+        artifact.summary_bytes,
+        artifact.witness_gzip_bytes,
+        summary_path,
+        witness_path,
+    )
+
+
+def write_merged_pilot_artifact(
+    artifact: MergedPilotArtifact,
+    summary_path: str | Path,
+    witness_path: str | Path,
+) -> None:
+    """Publish one verified two-point bundle with the summary commit marker last."""
+
+    if not isinstance(artifact, MergedPilotArtifact):
+        raise TypeError("artifact must be a MergedPilotArtifact")
+    _write_artifact_bytes(
+        artifact.summary_bytes,
+        artifact.witness_gzip_bytes,
+        summary_path,
+        witness_path,
+    )
+
+
+def _write_artifact_bytes(
+    summary_bytes: bytes,
+    witness_gzip_bytes: bytes,
+    summary_path: str | Path,
+    witness_path: str | Path,
+) -> None:
     summary = Path(summary_path)
     witness = Path(witness_path)
     if summary.resolve() == witness.resolve():
@@ -1067,8 +1388,8 @@ def write_per_delta_artifact(
         raise FileExistsError("artifact output already exists")
     summary.parent.mkdir(parents=True, exist_ok=True)
     witness.parent.mkdir(parents=True, exist_ok=True)
-    summary_temp = _write_temporary(summary, artifact.summary_bytes)
-    witness_temp = _write_temporary(witness, artifact.witness_gzip_bytes)
+    summary_temp = _write_temporary(summary, summary_bytes)
+    witness_temp = _write_temporary(witness, witness_gzip_bytes)
     witness_published = False
     try:
         os.link(witness_temp, witness)

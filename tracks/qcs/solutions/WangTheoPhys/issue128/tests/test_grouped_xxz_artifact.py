@@ -20,12 +20,15 @@ from trottercert.grouped_xxz import XXZCompileSpec, canonical_json_bytes
 from trottercert.grouped_xxz_artifact import (
     FROZEN_LOCAL_SOURCE_ALLOWLIST,
     SOURCE_CLOSURE_PATHS,
+    build_merged_pilot_artifact,
     build_per_delta_artifact,
     derive_local_source_closure,
     deterministic_gzip_bytes,
     payload_digest,
     source_closure,
+    verify_merged_pilot_artifact,
     verify_per_delta_artifact,
+    write_merged_pilot_artifact,
     write_per_delta_artifact,
 )
 from trottercert.grouped_xxz_compressed import (
@@ -88,6 +91,15 @@ def _copy_source_closure(tmp_path: Path) -> None:
         target = tmp_path / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT / relative, target)
+
+
+def _two_point_artifacts(monkeypatch, *, source_commit="fixture-commit"):
+    closure = source_closure(ROOT, source_commit=source_commit)
+    artifacts = []
+    for delta in (Fraction(1, 2), Fraction(2)):
+        ledger, certificate = _two_record_certificate(monkeypatch, delta)
+        artifacts.append(build_per_delta_artifact(ledger, certificate, closure))
+    return tuple(artifacts), closure
 
 
 def test_recursive_ast_source_closure_matches_the_independent_allowlist(
@@ -350,3 +362,146 @@ def test_cli_two_record_build_self_verifies_and_rejects_unsafe_modes(
         cli.main(arguments)
     with pytest.raises(SystemExit):
         cli.main(arguments + ["--max-records", "2"])
+
+
+def test_merged_pilot_is_canonical_fresh_and_positive(monkeypatch) -> None:
+    artifacts, closure = _two_point_artifacts(monkeypatch)
+    left, right = artifacts
+    merged = build_merged_pilot_artifact(
+        left.summary_bytes,
+        left.witness_gzip_bytes,
+        right.summary_bytes,
+        right.witness_gzip_bytes,
+        closure,
+    )
+    reversed_inputs = build_merged_pilot_artifact(
+        right.summary_bytes,
+        right.witness_gzip_bytes,
+        left.summary_bytes,
+        left.witness_gzip_bytes,
+        closure,
+    )
+    assert merged == reversed_inputs
+    assert merged.summary_bytes == canonical_json_bytes(merged.summary)
+    assert gzip.decompress(merged.witness_gzip_bytes) == merged.witness_payload_bytes
+    assert [row["delta"] for row in merged.summary["rows"]] == [[1, 2], [2, 1]]
+    assert len(merged.witness["per_delta_artifacts"]) == 2
+    for row in merged.summary["rows"]:
+        assert row["candidate"]["resources"] < row["baseline"]["resources"]
+    verified = verify_merged_pilot_artifact(
+        merged.summary_bytes,
+        merged.witness_gzip_bytes,
+        expected_source_closure=closure,
+    )
+    assert tuple(certificate.spec.delta for _, certificate in verified) == (
+        Fraction(1, 2),
+        Fraction(2),
+    )
+    with pytest.raises(ValueError, match="duplicate|Delta|two-point"):
+        build_merged_pilot_artifact(
+            left.summary_bytes,
+            left.witness_gzip_bytes,
+            left.summary_bytes,
+            left.witness_gzip_bytes,
+            closure,
+        )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ["binding", "missing_row", "row_order", "embedded_summary", "source_closure"],
+)
+def test_merged_primary_verifier_rejects_resealed_mutations(
+    monkeypatch,
+    mutation: str,
+) -> None:
+    artifacts, closure = _two_point_artifacts(monkeypatch)
+    merged = build_merged_pilot_artifact(
+        artifacts[0].summary_bytes,
+        artifacts[0].witness_gzip_bytes,
+        artifacts[1].summary_bytes,
+        artifacts[1].witness_gzip_bytes,
+        closure,
+    )
+    summary = deepcopy(merged.summary)
+    witness = deepcopy(merged.witness)
+    if mutation == "binding":
+        summary["witness"]["file_sha256"] = "0" * 64
+        summary_bytes = canonical_json_bytes(_reseal(summary))
+        witness_gzip = merged.witness_gzip_bytes
+    elif mutation == "missing_row":
+        witness["per_delta_artifacts"].pop()
+        summary_bytes, witness_gzip = _rebind_summary(summary, witness)
+    elif mutation == "row_order":
+        witness["per_delta_artifacts"].reverse()
+        summary_bytes, witness_gzip = _rebind_summary(summary, witness)
+    elif mutation == "embedded_summary":
+        embedded = witness["per_delta_artifacts"][0]["summary"]
+        embedded["resources"]["candidate"] += 30
+        _reseal(embedded)
+        summary_bytes, witness_gzip = _rebind_summary(summary, witness)
+    elif mutation == "source_closure":
+        witness["source_closure"]["source_commit"] = "forged"
+        summary["source_closure"]["source_commit"] = "forged"
+        for submitted in (witness["source_closure"], summary["source_closure"]):
+            unsigned = {
+                "algorithm": submitted["algorithm"],
+                "files": submitted["files"],
+                "source_commit": submitted["source_commit"],
+            }
+            submitted["closure_sha256"] = sha256(
+                canonical_json_bytes(unsigned)
+            ).hexdigest()
+        summary_bytes, witness_gzip = _rebind_summary(summary, witness)
+    else:
+        raise AssertionError(mutation)
+    with pytest.raises(ValueError):
+        verify_merged_pilot_artifact(
+            summary_bytes,
+            witness_gzip,
+            expected_source_closure=closure,
+        )
+
+
+def test_merge_cli_verifies_inputs_and_atomically_refuses_overwrite(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    artifacts, closure = _two_point_artifacts(monkeypatch, source_commit=None)
+    inputs = []
+    for index, artifact in enumerate(artifacts):
+        summary = tmp_path / f"input-{index}.json"
+        witness = tmp_path / f"input-{index}.json.gz"
+        write_per_delta_artifact(artifact, summary, witness)
+        inputs.extend((str(summary), str(witness)))
+    output_summary = tmp_path / "pilot.json"
+    output_witness = tmp_path / "pilot-witness.json.gz"
+    arguments = [
+        "--merge-pilot",
+        *inputs,
+        "--summary",
+        str(output_summary),
+        "--witness",
+        str(output_witness),
+    ]
+    assert cli.main(arguments) == 0
+    verify_merged_pilot_artifact(
+        output_summary.read_bytes(),
+        output_witness.read_bytes(),
+        expected_source_closure=closure,
+    )
+    with pytest.raises(SystemExit):
+        cli.main(arguments)
+    with pytest.raises(SystemExit):
+        cli.main(arguments + ["--delta", "1/2"])
+
+    # The direct writer uses the same summary-last/no-overwrite primitive.
+    merged = build_merged_pilot_artifact(
+        artifacts[0].summary_bytes,
+        artifacts[0].witness_gzip_bytes,
+        artifacts[1].summary_bytes,
+        artifacts[1].witness_gzip_bytes,
+        closure,
+    )
+    with pytest.raises(FileExistsError):
+        write_merged_pilot_artifact(merged, output_summary, output_witness)
