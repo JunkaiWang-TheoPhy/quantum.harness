@@ -12,6 +12,10 @@ WITNESS = (
     ROOT
     / "docs/experiments/processor-obstruction/quadratic-commutant-witness.json"
 )
+EXTENSIVE = (
+    ROOT
+    / "docs/experiments/processor-obstruction/extensive-commutant-witness.json"
+)
 
 
 def test_current_obstruction_has_calibrated_leading_order_witness() -> None:
@@ -22,6 +26,11 @@ def test_current_obstruction_has_calibrated_leading_order_witness() -> None:
     assert calibrated["finite_step_status"] == "inconclusive"
     assert calibrated["witness"] == "H^2 - 54 I + H/2"
     assert calibrated["witness_artifact"]["sha256"]
+    assert calibrated["extensive_witness_artifact"]["sha256"]
+    assert calibrated["verified_lengths"] == [6, 8, 10, 12]
+    assert calibrated["rejected_alias_lengths"] == [4]
+    assert calibrated["finite_step_gate"] == "dual_pairing_remainder"
+    assert calibrated["squared_normalized_pairing_l12"]
     assert (
         payload["reference_examples"]["hamiltonian_parallel"][
             "calibrated_status"
@@ -57,6 +66,18 @@ def test_audit_rejects_mutated_or_missing_witness(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="witness"):
         build_payload(SOURCE, tmp_path / "missing-witness.json")
+
+
+def test_audit_rejects_mutated_or_missing_extensive_witness(tmp_path: Path) -> None:
+    extensive_payload = json.loads(EXTENSIVE.read_text())
+    extensive_payload["claim"]["finite_step_status"] = "proved"
+    forged = tmp_path / "forged-extensive.json"
+    forged.write_text(json.dumps(extensive_payload))
+    with pytest.raises(ValueError, match="extensive"):
+        build_payload(SOURCE, WITNESS, forged)
+
+    with pytest.raises(ValueError, match="extensive"):
+        build_payload(SOURCE, WITNESS, tmp_path / "missing-extensive.json")
 
 
 def test_payload_round_trips_through_canonical_json() -> None:

@@ -188,7 +188,7 @@ The fail-closed refinement is recorded in:
 quadratic-commutant-witness.json
 sha256: d0892b7320cb22a8be1701a1fdb185d2ce9dbfbc20d191fc21bf4359cea5d391
 gauge-aware-audit.json
-sha256: 50af032bb18a340b49a5ace184848ca5a58b9233889fa9ad93c7a4b9bac45a94
+sha256: 6c25e184ad5815b67a03e1eaad7c61b124d50803aa5c5f22da6c493821fe8368
 source exact-obstruction sha256:
 b993596dcacb714c20bbae7b3e38c254e639268e57ab529823079db732f61103
 ```
@@ -217,3 +217,52 @@ reference problems: an off-diagonal defect removed by a commutator, an
 `H`-parallel defect removed only after time calibration, and a genuine
 commutant witness that survives phase and time calibration.  Both artifacts
 explicitly record `hpc_authorized=false`.
+
+## Extensive family refinement
+
+The quadratic witness is not special to 12-by-12. For every even periodic
+square lattice with `L >= 6`, `N=L^2`,
+
+```text
+W_L = H_L^2 - (3N/8) I + H_L/2,
+tau(W_L^2) = 9N(2N-3)/64,
+tau(W_L E5_L) = (N/4) q,
+```
+
+where
+
+```text
+q = -7807/3600000
+    - (66043/57600000) alpha
+    - (6119/7200000) alpha^2 != 0.
+```
+
+The normalized squared obstruction tends to `2q^2/9`, approximately
+`8.35099162871e-6`, rather than disappearing with system size. Exact torus
+records at `L=6,8,10,12` reproduce the same per-cell cubic coordinates; `L=4`
+is rejected because periodic coordinate aliases invalidate the stable local
+geometry.
+
+The complete proof, including the fourth-moment graph count and the
+finite-step dual-pairing gate, is in
+`docs/report/extensive-commutant-witness-theorem.md`. The machine artifact is
+
+```text
+docs/experiments/processor-obstruction/extensive-commutant-witness.json
+sha256: 5e5ba831312109df42897c147a85dc4bb77e6670fec4fc6d5befae24bdd8416d
+```
+
+Reproduce it with
+
+```bash
+PYTHONPATH=src python -u -m scripts.certify_extensive_commutant_witness \
+  --lengths 4 6 8 10 12
+
+PYTHONPATH=src python -u -m scripts.certify_extensive_commutant_witness \
+  --lengths 4 6 8 10 12 --verify-full
+```
+
+The finite-step status remains `inconclusive`: a compatible logarithm branch
+and a Hilbert--Schmidt remainder satisfying
+`tau(R_r^2) < rho_L/r^8` are still required. This refinement does not
+authorize E7 or any shared HPC run.

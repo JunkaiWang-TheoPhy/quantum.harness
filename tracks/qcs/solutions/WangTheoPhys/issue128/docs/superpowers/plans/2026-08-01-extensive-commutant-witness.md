@@ -30,7 +30,7 @@
 - Consumes: `CoordinateRegistry`, canonical cubic density, `SquareLattice`, exact rational Pauli maps.
 - Produces: `density_aliases_on_torus`, `quadratic_witness_moments`, and `QuadraticWitnessMoments`.
 
-- [ ] **Step 1: Add failing support-geometry and moment tests**
+- [x] **Step 1: Add failing support-geometry and moment tests**
 
 Add tests that require:
 
@@ -47,7 +47,7 @@ assert moments.tau_w_e5 != Cubic.zero()
 assert moments.squared_normalized_pairing == moments.tau_w_e5**2 / moments.tau_w2
 ```
 
-- [ ] **Step 2: Run the focused tests and confirm missing-symbol failures**
+- [x] **Step 2: Run the focused tests and confirm missing-symbol failures**
 
 Run:
 
@@ -58,7 +58,7 @@ PYTHONPATH=src python -m pytest -q tests/test_commutant_witness.py \
 
 Expected: collection or assertion failure because the new interfaces do not exist.
 
-- [ ] **Step 3: Implement exact alias detection**
+- [x] **Step 3: Implement exact alias detection**
 
 Implement:
 
@@ -74,7 +74,7 @@ def density_aliases_on_torus(
 Validate even `length >= 4`.  For each term, map every occupied coordinate to
 `(x % length, y % length)` and return true if the number of images decreases.
 
-- [ ] **Step 4: Implement the exact moment dataclass**
+- [x] **Step 4: Implement the exact moment dataclass**
 
 Implement:
 
@@ -116,7 +116,7 @@ rho = tau_w_e5^2 / tau_w2
 
 Reject nonpositive `tau_h2` or `tau_w2`.
 
-- [ ] **Step 5: Run focused tests**
+- [x] **Step 5: Run focused tests**
 
 Run:
 
@@ -126,7 +126,7 @@ PYTHONPATH=src python -m pytest -q tests/test_commutant_witness.py
 
 Expected: all tests pass.
 
-- [ ] **Step 6: Commit Task 1**
+- [x] **Step 6: Commit Task 1**
 
 ```bash
 git add src/trottercert/commutant_witness.py tests/test_commutant_witness.py
@@ -146,7 +146,7 @@ git commit -m "feat(issue128): add exact extensive witness moments"
 - Consumes: Task 1 primitives and `exact_log_e5_density`.
 - Produces: `compute_size_record`, `build_extensive_payload`, `verify_extensive_payload`, and a canonical artifact for sizes `6,8,10,12` or the maximal alias-free subset.
 
-- [ ] **Step 1: Add failing payload tests**
+- [x] **Step 1: Add failing payload tests**
 
 Tests must require that the verifier:
 
@@ -161,7 +161,7 @@ assert payload["hpc_authorized"] is False
 Mutating a size, moment, alias decision, stable ratio, source hash, or claim
 must raise `ValueError`.
 
-- [ ] **Step 2: Confirm the tests fail before the script exists**
+- [x] **Step 2: Confirm the tests fail before the script exists**
 
 Run:
 
@@ -171,7 +171,7 @@ PYTHONPATH=src python -m pytest -q tests/test_extensive_commutant_witness.py
 
 Expected: import failure for `scripts.certify_extensive_commutant_witness`.
 
-- [ ] **Step 3: Implement one-pass E5 multi-size evaluation**
+- [x] **Step 3: Implement one-pass E5 multi-size evaluation**
 
 Generate E5 once.  For each requested even length:
 
@@ -187,7 +187,7 @@ record = quadratic_witness_moments(h, h2, tau_h_e5, tau_h2_e5)
 Reject aliased sizes before lifting.  Reconstruct `H` from all four matching
 densities for every accepted size.
 
-- [ ] **Step 4: Implement canonical payload and verifier**
+- [x] **Step 4: Implement canonical payload and verifier**
 
 Store every rational as `[numerator, denominator]` and every cubic as three
 rational pairs.  Include source hashes for `cubic_field.py`, `cubic_local.py`,
@@ -195,7 +195,7 @@ and `commutant_witness.py`.  Recompute all algebraic relationships and stable
 per-cell comparisons in the lightweight verifier.  `--verify-full` must rerun
 the expensive exact scan and compare the complete payload.
 
-- [ ] **Step 5: Generate and fully verify the artifact**
+- [x] **Step 5: Generate and fully verify the artifact**
 
 Run:
 
@@ -210,7 +210,7 @@ Expected: deterministic equality and a nonzero witness pairing for every
 accepted size.  If a requested size aliases, record the rejection and rerun
 with the alias-free subset; do not weaken alias validation.
 
-- [ ] **Step 6: Run focused tests and commit Task 2**
+- [x] **Step 6: Run focused tests and commit Task 2**
 
 ```bash
 PYTHONPATH=src python -m pytest -q \
@@ -236,7 +236,7 @@ git commit -m "feat(issue128): certify extensive spectral obstruction"
 - Consumes: the verified multi-size artifact and exact normalized obstruction.
 - Produces: a claim-level theorem note, a squared finite-step remainder threshold, and an audit bound to both witness artifacts.
 
-- [ ] **Step 1: Add failing audit tests for the extensive artifact**
+- [x] **Step 1: Add failing audit tests for the extensive artifact**
 
 Require the audit to include the extensive artifact SHA-256, accepted sizes,
 stable per-cell pairing status, exact squared normalized obstruction, and:
@@ -251,7 +251,7 @@ stable per-cell pairing status, exact squared normalized obstruction, and:
 
 Mutation or removal of the extensive artifact must fail.
 
-- [ ] **Step 2: Write the theorem note with explicit proof levels**
+- [x] **Step 2: Write the theorem note with explicit proof levels**
 
 The note must separate:
 
@@ -263,12 +263,12 @@ The note must separate:
 
 It must not call item 3 a theorem until its counting derivation is included.
 
-- [ ] **Step 3: Update and regenerate the fail-closed audit**
+- [x] **Step 3: Update and regenerate the fail-closed audit**
 
 Read and lightweight-verify both witness artifacts.  Bind their hashes and
 copy only recomputed statuses.  Preserve `hpc_authorized=false`.
 
-- [ ] **Step 4: Run all verification**
+- [x] **Step 4: Run all verification**
 
 ```bash
 PYTHONPATH=src python -m pytest -q \
@@ -281,7 +281,7 @@ PYTHONPATH=src python -m pytest -q -m 'not slow'
 
 Expected: all focused and non-slow tests pass.
 
-- [ ] **Step 5: Commit Task 3**
+- [x] **Step 5: Commit Task 3**
 
 ```bash
 git add docs/report/extensive-commutant-witness-theorem.md \

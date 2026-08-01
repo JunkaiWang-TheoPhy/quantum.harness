@@ -11,6 +11,7 @@ from typing import Any
 
 import sympy as sp
 
+from scripts.certify_extensive_commutant_witness import verify_extensive_payload
 from trottercert.commutant_witness import verify_quadratic_witness_payload
 from trottercert.spectral_gauge import decompose_matrix_spectral_gauge
 
@@ -22,6 +23,10 @@ DEFAULT_SOURCE = (
 DEFAULT_WITNESS = (
     ISSUE_ROOT
     / "docs/experiments/processor-obstruction/quadratic-commutant-witness.json"
+)
+DEFAULT_EXTENSIVE_WITNESS = (
+    ISSUE_ROOT
+    / "docs/experiments/processor-obstruction/extensive-commutant-witness.json"
 )
 
 
@@ -56,6 +61,21 @@ def _read_witness(path: Path) -> tuple[dict[str, Any], bytes]:
         verify_quadratic_witness_payload(payload)
     except ValueError as exc:
         raise ValueError(f"quadratic witness artifact is invalid: {exc}") from exc
+    return payload, encoded
+
+
+def _read_extensive_witness(path: Path) -> tuple[dict[str, Any], bytes]:
+    try:
+        encoded = path.read_bytes()
+        payload = json.loads(encoded)
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"cannot read extensive witness artifact: {path}") from exc
+    if not isinstance(payload, dict):
+        raise ValueError("extensive witness artifact must contain a JSON object")
+    try:
+        verify_extensive_payload(payload)
+    except ValueError as exc:
+        raise ValueError(f"extensive witness artifact is invalid: {exc}") from exc
     return payload, encoded
 
 
@@ -124,9 +144,13 @@ def _reference_examples() -> dict[str, Any]:
 def build_payload(
     source: Path,
     witness: Path = DEFAULT_WITNESS,
+    extensive_witness: Path = DEFAULT_EXTENSIVE_WITNESS,
 ) -> dict[str, Any]:
     source_payload, encoded = _read_source(source)
     witness_payload, witness_encoded = _read_witness(witness)
+    extensive_payload, extensive_encoded = _read_extensive_witness(
+        extensive_witness
+    )
     overlap = source_payload.get(
         "e5_hilbert_schmidt_overlap_with_h_per_cell"
     )
@@ -135,6 +159,13 @@ def build_payload(
     exact_cubic = overlap.get("exact_cubic")
     if not isinstance(exact_cubic, list) or not exact_cubic:
         raise ValueError("source nonzero overlap must include exact cubic coordinates")
+    l12_records = [
+        record
+        for record in extensive_payload["records"]
+        if record.get("length") == 12
+    ]
+    if len(l12_records) != 1:
+        raise ValueError("extensive witness must contain exactly one L=12 record")
 
     return {
         "schema_version": 1,
@@ -163,8 +194,23 @@ def build_payload(
                 "path": _source_label(witness),
                 "sha256": hashlib.sha256(witness_encoded).hexdigest(),
             },
+            "extensive_witness_artifact": {
+                "path": _source_label(extensive_witness),
+                "sha256": hashlib.sha256(extensive_encoded).hexdigest(),
+            },
+            "verified_lengths": extensive_payload["accepted_lengths"],
+            "rejected_alias_lengths": extensive_payload[
+                "rejected_alias_lengths"
+            ],
+            "stable_tau_w_e5_per_cell": extensive_payload[
+                "stable_relations"
+            ]["tau_w_e5_per_cell"],
+            "squared_normalized_pairing_l12": l12_records[0]["moments"][
+                "squared_normalized_pairing"
+            ],
             "exact_cubic_pairing": witness_payload["pairings"]["tau_w_e5"],
             "claim": "E5 is not in image(i ad_H) + span(I,H)",
+            "finite_step_gate": "dual_pairing_remainder",
             "finite_step_missing": (
                 "a certified local-log branch and all-order remainder small "
                 "enough to preserve the leading pairing"
@@ -191,8 +237,9 @@ def verify_payload(
     payload: dict[str, Any],
     source: Path,
     witness: Path = DEFAULT_WITNESS,
+    extensive_witness: Path = DEFAULT_EXTENSIVE_WITNESS,
 ) -> None:
-    expected = build_payload(source, witness)
+    expected = build_payload(source, witness, extensive_witness)
     submitted_source = payload.get("source")
     if not isinstance(submitted_source, dict):
         raise ValueError("source metadata is missing")
@@ -214,6 +261,11 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", type=Path, default=DEFAULT_SOURCE)
     parser.add_argument("--witness", type=Path, default=DEFAULT_WITNESS)
+    parser.add_argument(
+        "--extensive-witness",
+        type=Path,
+        default=DEFAULT_EXTENSIVE_WITNESS,
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--verify", action="store_true")
     args = parser.parse_args()
@@ -223,7 +275,12 @@ def main() -> None:
             payload = json.loads(args.output.read_text())
         except (OSError, json.JSONDecodeError) as exc:
             raise SystemExit(f"cannot read audit output: {args.output}") from exc
-        verify_payload(payload, args.source, args.witness)
+        verify_payload(
+            payload,
+            args.source,
+            args.witness,
+            args.extensive_witness,
+        )
         print(
             "gauge-aware audit valid: "
             f"source_sha256={payload['source']['sha256']}",
@@ -231,7 +288,7 @@ def main() -> None:
         )
         return
 
-    payload = build_payload(args.source, args.witness)
+    payload = build_payload(args.source, args.witness, args.extensive_witness)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(_encoded(payload))
     print(

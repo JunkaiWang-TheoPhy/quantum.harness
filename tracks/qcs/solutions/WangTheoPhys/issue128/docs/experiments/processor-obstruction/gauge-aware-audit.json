@@ -20,9 +20,51 @@
         200000
       ]
     ],
+    "extensive_witness_artifact": {
+      "path": "docs/experiments/processor-obstruction/extensive-commutant-witness.json",
+      "sha256": "5e5ba831312109df42897c147a85dc4bb77e6670fec4fc6d5befae24bdd8416d"
+    },
+    "finite_step_gate": "dual_pairing_remainder",
     "finite_step_missing": "a certified local-log branch and all-order remainder small enough to preserve the leading pairing",
     "finite_step_status": "inconclusive",
     "leading_order_status": "no_go",
+    "rejected_alias_lengths": [
+      4
+    ],
+    "squared_normalized_pairing_l12": [
+      [
+        23996819,
+        8550000000000
+      ],
+      [
+        271711663,
+        153900000000000
+      ],
+      [
+        5530354099,
+        4924800000000000
+      ]
+    ],
+    "stable_tau_w_e5_per_cell": [
+      [
+        -7807,
+        3600000
+      ],
+      [
+        -66043,
+        57600000
+      ],
+      [
+        -6119,
+        7200000
+      ]
+    ],
+    "verified_lengths": [
+      6,
+      8,
+      10,
+      12
+    ],
     "witness": "H^2 - 54 I + H/2",
     "witness_artifact": {
       "path": "docs/experiments/processor-obstruction/quadratic-commutant-witness.json",
