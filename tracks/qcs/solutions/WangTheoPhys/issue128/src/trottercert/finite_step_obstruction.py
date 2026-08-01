@@ -25,6 +25,10 @@ FINITE_STEP_STATUSES = (
     "certified_no_margin",
     "inconclusive",
 )
+AFFINE_SPECTRAL_STATUSES = (
+    "certified_affine_spectral_obstruction",
+    "inconclusive",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,6 +46,21 @@ class FiniteStepDecision:
     def __post_init__(self) -> None:
         if self.status not in FINITE_STEP_STATUSES:
             raise ValueError("unknown finite-step decision status")
+
+
+@dataclass(frozen=True, slots=True)
+class AffineSpectralDecision:
+    """A nonlinear centered-moment obstruction to the affine unitary orbit."""
+
+    centered_defect_cap: Fraction
+    linear_invariant_lower: Fraction
+    nonlinear_remainder_upper: Fraction
+    invariant_margin: Fraction
+    status: str
+
+    def __post_init__(self) -> None:
+        if self.status not in AFFINE_SPECTRAL_STATUSES:
+            raise ValueError("unknown affine-spectral decision status")
 
 
 def _validate_positive_fraction(value: Fraction, *, field: str) -> Fraction:
@@ -102,5 +121,88 @@ def decide_finite_step(
         absolute_leading_interval=absolute_leading,
         tail_interval=tail,
         signed_margin_interval=margin,
+        status=status,
+    )
+
+
+def decide_affine_spectral_obstruction(
+    *,
+    dual_margin_lower: Fraction,
+    cells: int,
+    m2: Fraction,
+    m3: Fraction,
+    h_hs_cap: Fraction,
+    effective_log_defect: Fraction,
+) -> AffineSpectralDecision:
+    """Bound a centered-moment invariant away from the affine unitary orbit.
+
+    The invariant is
+
+    ``m2(H)^3 m3(A)^2 - m3(H)^2 m2(A)^3``.
+
+    It vanishes whenever ``A = a I + b U H U^dagger``.  Its exact linear term
+    at ``A=H+D`` is ``6*m3*m2^3*tau(WD)`` for the Issue-128 witness convention.
+    The returned remainder uses only normalized Schatten inequalities and an
+    operator-norm cap on the effective logarithm defect.
+    """
+
+    if isinstance(cells, bool) or not isinstance(cells, int) or cells <= 0:
+        raise ValueError("cells must be a positive integer")
+    values = {
+        "dual margin": dual_margin_lower,
+        "m2": m2,
+        "m3": m3,
+        "Hamiltonian Hilbert--Schmidt cap": h_hs_cap,
+        "effective log defect": effective_log_defect,
+    }
+    exact: dict[str, Fraction] = {}
+    for field, value in values.items():
+        if isinstance(value, bool):
+            raise TypeError(f"{field} must be rational")
+        exact[field] = Fraction(value)
+    margin = exact["dual margin"]
+    moment2 = exact["m2"]
+    moment3 = exact["m3"]
+    hs_cap = exact["Hamiltonian Hilbert--Schmidt cap"]
+    log_defect = exact["effective log defect"]
+    if margin < 0:
+        raise ValueError("dual margin lower bound must be nonnegative")
+    if moment2 <= 0:
+        raise ValueError("m2 must be positive")
+    if moment3 == 0:
+        raise ValueError("m3 must be nonzero")
+    if hs_cap <= 0 or hs_cap**2 < moment2:
+        raise ValueError("Hamiltonian Hilbert--Schmidt cap is invalid")
+    if log_defect < 0:
+        raise ValueError("effective log defect must be nonnegative")
+
+    epsilon = 2 * log_defect
+    linear_d2 = 2 * hs_cap * epsilon
+    nonlinear_d2 = epsilon**2
+    absolute_d2 = linear_d2 + nonlinear_d2
+    linear_d3 = 3 * moment2 * epsilon
+    nonlinear_d3 = 3 * hs_cap * epsilon**2 + epsilon**3
+    absolute_d3 = linear_d3 + nonlinear_d3
+    remainder = moment2**3 * (
+        absolute_d3**2 + 2 * abs(moment3) * nonlinear_d3
+    ) + moment3**2 * (
+        3 * moment2**2 * nonlinear_d2
+        + 3 * moment2 * absolute_d2**2
+        + absolute_d2**3
+    )
+    linear_lower = (
+        6 * abs(moment3) * moment2**3 * cells * margin
+    )
+    invariant_margin = linear_lower - remainder
+    status = (
+        "certified_affine_spectral_obstruction"
+        if invariant_margin > 0
+        else "inconclusive"
+    )
+    return AffineSpectralDecision(
+        centered_defect_cap=epsilon,
+        linear_invariant_lower=linear_lower,
+        nonlinear_remainder_upper=remainder,
+        invariant_margin=invariant_margin,
         status=status,
     )
