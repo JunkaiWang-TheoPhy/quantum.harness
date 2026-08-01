@@ -1,0 +1,236 @@
+{
+  "bound_semantics": "global_operator_error_upper_at_fixed_reference_steps",
+  "monotonic_chain": [
+    "pauli_aggregation",
+    "translation_aggregation",
+    "d4_anticommuting",
+    "finite_ledger"
+  ],
+  "payload_sha256": "382e3422a2c5986094574bd9148af17a69f00e88d67375ed13990beb140e93c0",
+  "reference_steps": 95,
+  "schema_version": 1,
+  "sources": {
+    "algebra": {
+      "path": "src/trottercert/algebra.py",
+      "sha256": "c83c2bcc5ac99ba18d07ab29e58b8605547fbaa6fda4d34bd7571be409872eb0"
+    },
+    "certificate": {
+      "path": "certificates/issue128-d5-integrated-certificate.json",
+      "sha256": "ec60a7458f90fa2206cf1f58e05da3ea5c9b99062087c2e5bdd4ee06cff9811f"
+    },
+    "d4_sidecar": {
+      "path": "certificates/issue128-d4-groups.json",
+      "sha256": "a397414bb0229fb1ebdb38798aa781fb89dbb9d5cdbed94c7cd2e9120da62718"
+    },
+    "d5_sidecar": {
+      "path": "certificates/issue128-d5-groups.json.gz",
+      "sha256": "c5e8968a93b4497b41fe42c0e364324388272e183e1fcd20a536bc988f5361dd"
+    },
+    "generator": {
+      "path": "scripts/build_paper_a_ablation.py",
+      "sha256": "dac364f3aa6b3bec7a5c859dc9c5d1b4a38fdbe1c57902e5ba4ccd55e05b9400"
+    },
+    "higher_order": {
+      "path": "src/trottercert/higher_order.py",
+      "sha256": "ee0f9ba7bca01d60370a7923c339a0952639d4873a21ba22551aba87af068a81"
+    },
+    "intervals": {
+      "path": "src/trottercert/intervals.py",
+      "sha256": "7b81e9123f9643860962047fec9ffa0b38ec5773fb0b9c56a9a436bc370eeee8"
+    },
+    "local_commutators": {
+      "path": "src/trottercert/local_commutators.py",
+      "sha256": "092089493210b789833199374e515b3df7281218f52cb63b240c607c0d044fca"
+    },
+    "reference_verifier": {
+      "path": "scripts/reference_verify.py",
+      "sha256": "2367b985c1504c6f076f1e22eb6ae7f0a131c44301861440c3b00371f8640f1c"
+    },
+    "refined_error": {
+      "path": "src/trottercert/refined_error.py",
+      "sha256": "6fd62e1d045de4adfcc407463882fedf5fef30c34b6e793c052ddad62e8f4ebf"
+    },
+    "resources": {
+      "path": "src/trottercert/resources.py",
+      "sha256": "c774ce93ff876512352fcb748cc8bf8d94e392576742c049c6a07bfd54214a2a"
+    },
+    "rigorous_fourth": {
+      "path": "src/trottercert/rigorous_fourth.py",
+      "sha256": "e1b626c4464fd9d8a3d4aa1ef88844974abc80f04f14bc01feaf860b1582310b"
+    }
+  },
+  "stages": [
+    {
+      "bound": [
+        118782660205975613685242815954529452563711385735492673817109530201468831412585088654052707207571,
+        407253125000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+      ],
+      "groups": 11791,
+      "input_sources": [
+        "certificate",
+        "generator",
+        "resources"
+      ],
+      "leading_d4_site_bound": null,
+      "missing_evidence": null,
+      "recompute_functions": [
+        "trottercert.resources.required_steps",
+        "trottercert.resources.fourth_order_four_matching_resources"
+      ],
+      "stage": "published",
+      "status": "computed",
+      "steps": 393
+    },
+    {
+      "bound": null,
+      "groups": null,
+      "input_sources": [],
+      "leading_d4_site_bound": null,
+      "missing_evidence": "no frozen pre-Pauli complete-formula coefficient artifact or independent recomputation function exists",
+      "recompute_functions": [],
+      "stage": "complete_formula",
+      "status": "missing_evidence",
+      "steps": null
+    },
+    {
+      "bound": [
+        142079464238779513392631117311758942462300685165463171317739765953291063243677086535002600299465557966365247039653320850951414668156521037138908228891578458251180490675555015136827334679905393680331908307759211342715104452437440894128688561008520441212374624720244325646549035237261391395159847002212919388945634111217622311048948698701298318497613122693773247718346372547259618128257625385876583789617828489738301257465102111690051378335654366079336810842324673243703916000271548309030663835473,
+        60197819623985605585301843457808482312048634852394749385691087298422739390814346146346916361737216622746776485855189196582439428880685476527325514752099809200445380262264921696363857618143874029008757224485782540992671212661905661715229364869336910178869427882041446238109775707670237564930422012999926570400860503173565718375154324286374867455661114281628789790769852452535768213815310025112553590000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+      ],
+      "groups": 3481,
+      "input_sources": [
+        "certificate",
+        "generator",
+        "refined_error",
+        "resources",
+        "intervals",
+        "local_commutators",
+        "rigorous_fourth",
+        "higher_order",
+        "algebra"
+      ],
+      "leading_d4_site_bound": [
+        660026567741376164571,
+        128000000000000000000
+      ],
+      "missing_evidence": null,
+      "recompute_functions": [
+        "trottercert.refined_error.build_refined_fourth_order_constants",
+        "scripts.build_paper_a_ablation._minimum_steps",
+        "trottercert.refined_error.evaluate_refined_fourth_order_bound",
+        "trottercert.resources.fourth_order_four_matching_resources"
+      ],
+      "stage": "pauli_aggregation",
+      "status": "computed",
+      "steps": 116
+    },
+    {
+      "bound": [
+        139605788734733322584925029392157322197815953911368163785967131152500158938609607237632084155919858245416930083127500878068048839562179832524113546434159918097926910849192836903069298144940229580535992398925337090061601142448012546609126193323146199775512960180489722645529923666672845198654170881200296166928474121342611655876812934547116543904015341587367889844416920144320588356511643109016299544487388823089512057465102111690051378335654366079336810842324673243703916000271548309030663835473,
+        60197819623985605585301843457808482312048634852394749385691087298422739390814346146346916361737216622746776485855189196582439428880685476527325514752099809200445380262264921696363857618143874029008757224485782540992671212661905661715229364869336910178869427882041446238109775707670237564930422012999926570400860503173565718375154324286374867455661114281628789790769852452535768213815310025112553590000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+      ],
+      "groups": 3451,
+      "input_sources": [
+        "certificate",
+        "generator",
+        "refined_error",
+        "resources",
+        "intervals",
+        "local_commutators",
+        "rigorous_fourth",
+        "higher_order",
+        "algebra"
+      ],
+      "leading_d4_site_bound": [
+        80643873629340255891,
+        16000000000000000000
+      ],
+      "missing_evidence": null,
+      "recompute_functions": [
+        "trottercert.refined_error.build_refined_fourth_order_constants",
+        "trottercert.refined_error.certified_d4_cell_coefficients",
+        "scripts.build_paper_a_ablation._minimum_steps",
+        "trottercert.refined_error.evaluate_refined_fourth_order_bound",
+        "trottercert.resources.fourth_order_four_matching_resources"
+      ],
+      "stage": "translation_aggregation",
+      "status": "computed",
+      "steps": 115
+    },
+    {
+      "bound": [
+        66767428101568964297096807963817029454178063791827366177060885391314786558453218893698970359918683756537703436313436455531461265412435284687228362293320500091745582148199735078476135246887197073529384921759431219601621724643939794341359973484865584251813697161275446833885878497938156062715935973438285710120980767700913584363442164259713155854053551859505376663216440320681808581191920866449872708059448500458809681599239622090051378335654366079336810842324673243703916000271548309030663835473,
+        60197819623985605585301843457808482312048634852394749385691087298422739390814346146346916361737216622746776485855189196582439428880685476527325514752099809200445380262264921696363857618143874029008757224485782540992671212661905661715229364869336910178869427882041446238109775707670237564930422012999926570400860503173565718375154324286374867455661114281628789790769852452535768213815310025112553590000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+      ],
+      "groups": 2911,
+      "input_sources": [
+        "certificate",
+        "d4_sidecar",
+        "generator",
+        "reference_verifier",
+        "refined_error",
+        "resources",
+        "intervals",
+        "local_commutators",
+        "rigorous_fourth",
+        "higher_order",
+        "algebra"
+      ],
+      "leading_d4_site_bound": [
+        6472926505087887788180917647763,
+        4000000000000000000000000000000
+      ],
+      "missing_evidence": null,
+      "recompute_functions": [
+        "scripts.reference_verify.verify",
+        "trottercert.refined_error.build_refined_fourth_order_constants",
+        "scripts.build_paper_a_ablation._minimum_steps",
+        "trottercert.refined_error.evaluate_refined_fourth_order_bound",
+        "trottercert.resources.fourth_order_four_matching_resources"
+      ],
+      "stage": "d4_anticommuting",
+      "status": "computed",
+      "steps": 97
+    },
+    {
+      "bound": [
+        59622878693502401185013687269837104430662699259622844089422293987898747938036676302713073527654780034123130913387198003988984370769956075519720494935789341426975263843510092621184587607902760136626398991095531269631308748122875230088060736923242813802906014238615281235227394564461032528428647306931325369315124255613093104020215450032838881590253209694796171961855991088137180637451154860916567946761323217976502364065008703690051378335654366079336810842324673243703916000271548309030663835473,
+        60197819623985605585301843457808482312048634852394749385691087298422739390814346146346916361737216622746776485855189196582439428880685476527325514752099809200445380262264921696363857618143874029008757224485782540992671212661905661715229364869336910178869427882041446238109775707670237564930422012999926570400860503173565718375154324286374867455661114281628789790769852452535768213815310025112553590000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+      ],
+      "groups": 2851,
+      "input_sources": [
+        "certificate",
+        "d4_sidecar",
+        "d5_sidecar",
+        "generator",
+        "reference_verifier",
+        "refined_error",
+        "resources",
+        "intervals",
+        "local_commutators",
+        "rigorous_fourth",
+        "higher_order",
+        "algebra"
+      ],
+      "leading_d4_site_bound": [
+        6472926505087887788180917647763,
+        4000000000000000000000000000000
+      ],
+      "missing_evidence": null,
+      "recompute_functions": [
+        "scripts.reference_verify.verify",
+        "trottercert.refined_error.build_refined_fourth_order_constants",
+        "scripts.build_paper_a_ablation._minimum_steps",
+        "trottercert.refined_error.evaluate_refined_fourth_order_bound",
+        "trottercert.resources.fourth_order_four_matching_resources"
+      ],
+      "stage": "finite_ledger",
+      "status": "computed",
+      "steps": 95
+    }
+  ],
+  "tolerance": [
+    1,
+    1000000
+  ]
+}
