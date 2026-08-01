@@ -49,7 +49,7 @@ external HPC artifact not produced here and changes the theorem/audit claim.
 - Produces: `pointwise_stage_tail(stages, steps, first_omitted_degree) -> Fraction`.
 - Produces: `verify_analytic_caps(log_radius_cap: Fraction, dexp_cap: Fraction, multiplier_difference_cap: Fraction, even_series_cap: Fraction) -> None`.
 
-- [ ] **Step 1: Write failing scalar-tail tests**
+- [x] **Step 1: Write failing scalar-tail tests**
 
 Add imports and direct finite-sum reference functions to
 `tests/test_dual_log_tail.py`:
@@ -103,7 +103,7 @@ def test_stage_tail_rejects_invalid_convergence_region() -> None:
         pointwise_stage_tail(stages, 97, -1)
 ```
 
-- [ ] **Step 2: Run the focused tests and confirm the import failure**
+- [x] **Step 2: Run the focused tests and confirm the import failure**
 
 Run:
 
@@ -113,7 +113,7 @@ PYTHONPATH=src:. pytest -q tests/test_dual_log_tail.py
 
 Expected: collection fails because `trottercert.dual_log_tail` does not exist.
 
-- [ ] **Step 3: Implement the two exact stage sums**
+- [x] **Step 3: Implement the two exact stage sums**
 
 Create `src/trottercert/dual_log_tail.py` with:
 
@@ -182,7 +182,7 @@ def pointwise_stage_tail(
     return total
 ```
 
-- [ ] **Step 4: Add failing analytic-cap tests**
+- [x] **Step 4: Add failing analytic-cap tests**
 
 Append:
 
@@ -221,7 +221,7 @@ def test_analytic_caps_reject_unsafe_claims(
         verify_analytic_caps(**arguments)
 ```
 
-- [ ] **Step 5: Implement the exact analytic gates**
+- [x] **Step 5: Implement the exact analytic gates**
 
 Add:
 
@@ -257,7 +257,7 @@ def verify_analytic_caps(
         raise ValueError("even-series cap is below the ratio majorant")
 ```
 
-- [ ] **Step 6: Run Task-1 tests and static checks**
+- [x] **Step 6: Run Task-1 tests and static checks**
 
 Run:
 
@@ -270,7 +270,7 @@ git diff --check
 
 Expected: all commands exit zero.
 
-- [ ] **Step 7: Commit Task 1**
+- [x] **Step 7: Commit Task 1**
 
 Stage only the two Task-1 files and commit with subject:
 
@@ -296,7 +296,7 @@ co-author trailer.
 - Produces: `issue128_dual_tail_geometry() -> DualTailGeometry`.
 - Produces: `build_dual_tail_envelope(constants: RefinedFourthOrderConstants, geometry: DualTailGeometry) -> DualTailEnvelope`.
 
-- [ ] **Step 1: Write failing fixed-geometry and moment tests**
+- [x] **Step 1: Write failing fixed-geometry and moment tests**
 
 Append:
 
@@ -341,7 +341,7 @@ def test_fixed_envelope_regression_and_branch_gate() -> None:
     assert result.log_defect < Fraction(355, 10**10)
 ```
 
-- [ ] **Step 2: Run the new tests and confirm missing interfaces**
+- [x] **Step 2: Run the new tests and confirm missing interfaces**
 
 Run:
 
@@ -351,7 +351,7 @@ PYTHONPATH=src:. pytest -q tests/test_dual_log_tail.py -k 'geometry or envelope'
 
 Expected: import or attribute failure for the new records/functions.
 
-- [ ] **Step 3: Add immutable geometry and envelope records**
+- [x] **Step 3: Add immutable geometry and envelope records**
 
 Add:
 
@@ -409,7 +409,7 @@ def issue128_dual_tail_geometry() -> DualTailGeometry:
     )
 ```
 
-- [ ] **Step 4: Implement geometry validation and the full envelope**
+- [x] **Step 4: Implement geometry validation and the full envelope**
 
 Add private `_verify_geometry` checks for every exact fixed value and cap.
 Then implement:
@@ -481,7 +481,7 @@ def build_dual_tail_envelope(
     )
 ```
 
-- [ ] **Step 5: Add mutation-style geometry tests**
+- [x] **Step 5: Add mutation-style geometry tests**
 
 Use `dataclasses.replace` to lower each cap or change each fixed integer and
 assert `_verify_geometry` is reached through `build_dual_tail_envelope`:
@@ -514,7 +514,7 @@ def test_geometry_mutations_fail_closed(
         build_dual_tail_envelope(constants, forged)
 ```
 
-- [ ] **Step 6: Run Task-2 tests and static checks**
+- [x] **Step 6: Run Task-2 tests and static checks**
 
 Run:
 
@@ -527,7 +527,7 @@ git diff --check
 
 Expected: all commands exit zero.
 
-- [ ] **Step 7: Commit Task 2**
+- [x] **Step 7: Commit Task 2**
 
 Commit only the module and unit test with subject:
 
@@ -551,7 +551,7 @@ pointwise/average distinction, test commands, and claim constraint.
 - Produces: frozen `DualLogTailBound`.
 - Produces: `certify_issue128_dual_log_tail(constants: RefinedFourthOrderConstants | None = None) -> DualLogTailBound`.
 
-- [ ] **Step 1: Write the failing final-bound regression**
+- [x] **Step 1: Write the failing final-bound regression**
 
 Append:
 
@@ -574,7 +574,7 @@ def test_complete_e11_tail_is_compatible_and_below_preaudit_gate() -> None:
     assert result.claim_scope == "fixed_12x12_r97_dual_local_log"
 ```
 
-- [ ] **Step 2: Run the regression and confirm the missing interface**
+- [x] **Step 2: Run the regression and confirm the missing interface**
 
 Run:
 
@@ -584,7 +584,7 @@ PYTHONPATH=src:. pytest -q tests/test_dual_log_tail.py::test_complete_e11_tail_i
 
 Expected: import or attribute failure.
 
-- [ ] **Step 3: Implement the final immutable record and composition**
+- [x] **Step 3: Implement the final immutable record and composition**
 
 Add:
 
@@ -644,7 +644,7 @@ def certify_issue128_dual_log_tail(
     )
 ```
 
-- [ ] **Step 4: Add normalization and monotonicity tests**
+- [x] **Step 4: Add normalization and monotonicity tests**
 
 Append:
 
@@ -679,7 +679,7 @@ while `certify_issue128_dual_log_tail` invokes the fixed validator and still
 requires exactly `97`.  The JSON verifier in Task 4 also uses the fixed
 validator.
 
-- [ ] **Step 5: Run Task-3 tests and the existing refined-tail regressions**
+- [x] **Step 5: Run Task-3 tests and the existing refined-tail regressions**
 
 Run:
 
@@ -692,7 +692,7 @@ git diff --check
 
 Expected: all commands exit zero.
 
-- [ ] **Step 6: Commit Task 3**
+- [x] **Step 6: Commit Task 3**
 
 Commit only the two Task-3 files with subject:
 
@@ -720,7 +720,7 @@ normalization identity, fixed-scope constraint, tests, and confidence.
 - Produces: `build_payload() -> dict[str, object]` and `verify_payload(payload: Mapping[str, object]) -> None`.
 - Produces: canonical schema-v1 `issue128_dual_log_tail` JSON.
 
-- [ ] **Step 1: Write failing payload and mutation tests**
+- [x] **Step 1: Write failing payload and mutation tests**
 
 Create `tests/test_dual_log_tail_certificate.py`:
 
@@ -791,7 +791,7 @@ def test_payload_mutations_fail_closed(
         verify_payload(forged)
 ```
 
-- [ ] **Step 2: Run tests and confirm the missing script**
+- [x] **Step 2: Run tests and confirm the missing script**
 
 Run:
 
@@ -802,7 +802,7 @@ PYTHONPATH=src:. pytest -q tests/test_dual_log_tail_certificate.py
 Expected: collection fails because `scripts.certify_dual_log_tail` does not
 exist.
 
-- [ ] **Step 3: Implement canonical serialization and source binding**
+- [x] **Step 3: Implement canonical serialization and source binding**
 
 Create `scripts/certify_dual_log_tail.py` with:
 
@@ -879,7 +879,7 @@ writes to a sibling `.pending.<pid>` path, rereads and verifies it, then uses
 unless `--replace` is explicitly present; `--replace` is allowed only for the
 checked-in default artifact.
 
-- [ ] **Step 4: Run payload tests and generate the artifact**
+- [x] **Step 4: Run payload tests and generate the artifact**
 
 Run:
 
@@ -893,7 +893,7 @@ PYTHONPATH=src:. pytest -q tests/test_dual_log_tail_certificate.py
 Expected: the first focused subset passes, the generator and verifier print
 success, and the complete certificate test passes.
 
-- [ ] **Step 5: Write the evidence ledger from regenerated values**
+- [x] **Step 5: Write the evidence ledger from regenerated values**
 
 Create `docs/report/dual-log-tail-ledger.md` with these sections and exact
 content sources:
@@ -915,7 +915,7 @@ substituted: the direct scalar expression was rederived with the `1/4` Pauli
 coefficient and per-cell normalization, and the `dexp` difference was bounded
 separately.
 
-- [ ] **Step 6: Run focused and full verification**
+- [x] **Step 6: Run focused and full verification**
 
 Run:
 
@@ -942,7 +942,7 @@ git diff --check
 Expected: all commands exit zero.  Record exact test counts and elapsed time
 in the commit body and evidence ledger.
 
-- [ ] **Step 7: Commit Task 4**
+- [x] **Step 7: Commit Task 4**
 
 Stage only the four Task-4 files and any Task-3 files changed solely to repair
 a verifier-discovered bug.  Commit with subject:
