@@ -75,7 +75,16 @@ def test_certificate_builds_from_digest_bound_inputs(tmp_path: Path) -> None:
     assert payload["series"] == "h^4 q5 + h^6 q7 + h^8 q9 + R_{>=11}^{dual}"
     assert payload["step_size"] == [1, 97]
     assert payload["sources"]["e9"]["sha256"] == _sha(e9)
-    assert payload["claim"]["promotion_rule"] == "signed_margin.lower > 0"
+    assert payload["claim"]["promotion_rule"] == (
+        "signed_margin.lower > 0 and affine_invariant_margin > 0"
+    )
+    assert payload["claim"]["local_log_status"] == (
+        "certified_local_log_obstruction"
+    )
+    assert payload["claim"]["finite_step_spectral_status"] == (
+        "certified_affine_spectral_obstruction"
+    )
+    assert payload["claim"]["promoted"] is True
     verify_payload(payload, e9_path=e9)
 
 
@@ -92,7 +101,7 @@ def test_mutated_certificate_status_is_rejected(tmp_path: Path) -> None:
     _fake_e9(e9)
     payload = build_payload(e9_path=e9, index_path=None, require_full_e9=False)
     forged = copy.deepcopy(payload)
-    forged["claim"]["finite_step_status"] = "inconclusive"
+    forged["claim"]["finite_step_spectral_status"] = "inconclusive"
     forged["claim"]["promoted"] = False
 
     with pytest.raises(ValueError, match="regeneration mismatch"):
@@ -140,3 +149,39 @@ def test_tail_shrink_attack_fails_regeneration(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="payload regeneration mismatch"):
         verify_payload(payload, e9_path=e9, tail_path=tail)
+
+
+def test_certificate_scales_one_step_log_defect_by_97(tmp_path: Path) -> None:
+    e9 = tmp_path / "dual-e9.json"
+    _fake_e9(e9)
+
+    payload = build_payload(e9_path=e9, index_path=None, require_full_e9=False)
+    invariant = payload["affine_spectral_invariant"]
+    one_step = Fraction(*invariant["one_step_log_defect_bound"])
+    effective = Fraction(*invariant["effective_log_defect_bound"])
+
+    assert effective == 97 * one_step
+    assert Fraction(*invariant["centered_defect_cap"]) == 2 * effective
+
+
+@pytest.mark.parametrize(
+    ("field", "replacement"),
+    (
+        ("effective_log_defect_bound", [1, 10**30]),
+        ("centered_defect_cap", [1, 10**30]),
+        ("nonlinear_remainder_upper", [0, 1]),
+        ("invariant_margin", [1, 1]),
+        ("m3_h", [27, 1]),
+    ),
+)
+def test_affine_spectral_arithmetic_mutations_are_rejected(
+    tmp_path: Path, field: str, replacement: list[int]
+) -> None:
+    e9 = tmp_path / "dual-e9.json"
+    _fake_e9(e9)
+    payload = build_payload(e9_path=e9, index_path=None, require_full_e9=False)
+    forged = copy.deepcopy(payload)
+    forged["affine_spectral_invariant"][field] = replacement
+
+    with pytest.raises(ValueError, match="regeneration mismatch"):
+        verify_payload(forged, e9_path=e9)

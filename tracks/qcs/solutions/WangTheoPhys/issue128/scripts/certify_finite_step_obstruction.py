@@ -22,7 +22,10 @@ from trottercert.dual_word_manifest import (
     load_word_manifest,
     verify_manifest_index,
 )
-from trottercert.finite_step_obstruction import decide_finite_step
+from trottercert.finite_step_obstruction import (
+    decide_affine_spectral_obstruction,
+    decide_finite_step,
+)
 from trottercert.intervals import RationalInterval, cube_root_four_interval
 
 
@@ -234,11 +237,28 @@ def build_payload(
     )
     instance = tail.get("instance")
     bounds = tail.get("bounds")
-    if not isinstance(instance, Mapping) or not isinstance(bounds, Mapping):
-        raise ValueError("dual-log tail instance or bounds are missing")
+    moments = tail.get("moments")
+    envelope = tail.get("envelope")
+    if (
+        not isinstance(instance, Mapping)
+        or not isinstance(bounds, Mapping)
+        or not isinstance(moments, Mapping)
+        or not isinstance(envelope, Mapping)
+    ):
+        raise ValueError("dual-log tail instance, moments, envelope, or bounds are missing")
     steps = instance.get("steps")
     if not isinstance(steps, int) or isinstance(steps, bool) or steps != 97:
         raise ValueError("finite-step certificate requires exactly 97 steps")
+    cells = instance.get("cells")
+    if not isinstance(cells, int) or isinstance(cells, bool) or cells != 36:
+        raise ValueError("finite-step certificate requires exactly 36 cells")
+    h_hs_squared = _parse_rational(moments.get("h_hs_squared"), "H HS squared")
+    h_hs_cap = _parse_rational(moments.get("h_hs_cap"), "H HS cap")
+    if h_hs_squared != 54 or h_hs_cap != Fraction(15, 2):
+        raise ValueError("finite-step spectral moment geometry mismatch")
+    one_step_log_defect = _parse_rational(
+        envelope.get("log_defect"), "one-step log defect"
+    )
     tail_bound = _parse_rational(bounds.get("total_log_tail"), "total log tail")
     root = cube_root_four_interval(ROOT_DECIMAL_DIGITS)
     decision = decide_finite_step(
@@ -248,6 +268,20 @@ def build_payload(
         root,
         RationalInterval.point(tail_bound),
         Fraction(1, steps),
+    )
+    dual_margin_lower = (
+        decision.signed_margin_interval.lower
+        if decision.signed_margin_interval.lower > 0
+        else Fraction()
+    )
+    effective_log_defect = steps * one_step_log_defect
+    affine = decide_affine_spectral_obstruction(
+        dual_margin_lower=dual_margin_lower,
+        cells=cells,
+        m2=h_hs_squared,
+        m3=Fraction(-27),
+        h_hs_cap=h_hs_cap,
+        effective_log_defect=effective_log_defect,
     )
     payload: dict[str, Any] = {
         "schema_version": 1,
@@ -270,6 +304,24 @@ def build_payload(
             "tail_bound": _interval_json(decision.tail_interval),
             "signed_margin": _interval_json(decision.signed_margin_interval),
         },
+        "affine_spectral_invariant": {
+            "definition": "m2(H)^3*m3(A_centered)^2-m3(H)^2*m2(A_centered)^3",
+            "orbit": "A=a*I+b*U*H*U^dagger",
+            "m2_h": _rational_json(h_hs_squared),
+            "m3_h": _rational_json(Fraction(-27)),
+            "h_hs_cap": _rational_json(h_hs_cap),
+            "one_step_log_defect_bound": _rational_json(one_step_log_defect),
+            "effective_log_defect_bound": _rational_json(effective_log_defect),
+            "centered_defect_cap": _rational_json(affine.centered_defect_cap),
+            "linear_invariant_lower": _rational_json(
+                affine.linear_invariant_lower
+            ),
+            "nonlinear_remainder_upper": _rational_json(
+                affine.nonlinear_remainder_upper
+            ),
+            "invariant_margin": _rational_json(affine.invariant_margin),
+            "status": affine.status,
+        },
         "sources": {
             "e5": {"path": _source_label(e5_path), "sha256": e5_sha256},
             "e7": {"path": _source_label(e7_path), "sha256": e7_sha256},
@@ -285,9 +337,18 @@ def build_payload(
             _source_label(path): _sha(path) for path in SOURCE_PATHS
         },
         "claim": {
-            "finite_step_status": decision.status,
-            "promotion_rule": "signed_margin.lower > 0",
-            "promoted": decision.status == "certified_obstruction",
+            "local_log_status": (
+                "certified_local_log_obstruction"
+                if decision.status == "certified_obstruction"
+                else decision.status
+            ),
+            "finite_step_spectral_status": affine.status,
+            "promotion_rule": (
+                "signed_margin.lower > 0 and affine_invariant_margin > 0"
+            ),
+            "promoted": (
+                affine.status == "certified_affine_spectral_obstruction"
+            ),
         },
     }
     payload["mathematical_payload_sha256"] = _digest(
