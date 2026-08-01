@@ -69,9 +69,16 @@ result; the two-hour worker request leaves roughly a tenfold wall-time margin.
 
 | job | shape | memory | wall time |
 |---|---:|---:|---:|
-| manifest preparation | 1 CPU | 4 GiB | 00:30:00 |
-| contraction array | 64 tasks, 1 CPU each | 4 GiB/task | 02:00:00 |
-| reducer | 1 CPU | 8 GiB | 01:00:00 |
+| manifest preparation | 1 CPU | 3 GiB | 00:30:00 |
+| contraction array | 64 tasks, 1 CPU each | 3 GiB/task | 02:00:00 |
+| reducer | 1 CPU | 3 GiB | 01:00:00 |
+
+The initial site-neutral request used 4 GiB for preparation/workers and 8 GiB
+for reduction.  On 2026-08-01, `sbatch --test-only` on `xhacnormalb` rejected
+that shape because its memory-per-CPU exceeded `DefMemPerCPU`; no job was
+submitted.  The production scripts now request 3 GiB with one CPU.  This still
+exceeds the measured 0.94-GB preparation peak by more than threefold, while
+avoiding idle CPUs requested only to satisfy the scheduler ratio.
 
 Use a site concurrency cap if the shared filesystem or account policy requires
 one.  A starting cap of 16 simultaneous workers is conservative.

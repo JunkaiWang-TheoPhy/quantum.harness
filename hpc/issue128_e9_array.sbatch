@@ -2,7 +2,7 @@
 #SBATCH --job-name=issue128-e9-array
 #SBATCH --array=0-63
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=4G
+#SBATCH --mem=3G
 #SBATCH --time=02:00:00
 
 set -euo pipefail

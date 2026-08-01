@@ -254,10 +254,14 @@ reverse-support transition proof
 
 The initial production request is:
 
-- one manifest-prep job: 1 CPU, 4 GiB, 30 minutes;
-- 64 contraction array tasks: 1 CPU, 4 GiB, 2 hours each;
-- one reducer: 1 CPU, 8 GiB, 1 hour;
+- one manifest-prep job: 1 CPU, 3 GiB, 30 minutes;
+- 64 contraction array tasks: 1 CPU, 3 GiB, 2 hours each;
+- one reducer: 1 CPU, 3 GiB, 1 hour;
 - array concurrency capped according to shared-filesystem policy.
+
+The final 3-GiB shape incorporates the target site's `DefMemPerCPU` preflight
+gate.  It remains more than three times the measured 0.94-GB preparation peak;
+the rejected 4/8-GiB site-neutral shape never entered the queue.
 
 These are conservative envelopes derived from the measured E7 shard and E9
 word-map probe.  A local one-group and one-percent-shard calibration must be

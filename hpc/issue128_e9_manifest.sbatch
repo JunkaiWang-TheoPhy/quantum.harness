@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=issue128-e9-manifest
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=4G
+#SBATCH --mem=3G
 #SBATCH --time=00:30:00
 
 set -euo pipefail

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=issue128-e9-reduce
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=8G
+#SBATCH --mem=3G
 #SBATCH --time=01:00:00
 
 set -euo pipefail

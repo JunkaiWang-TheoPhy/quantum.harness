@@ -33,7 +33,7 @@ def test_array_has_exact_production_shape() -> None:
     text = (HPC_ROOT / "issue128_e9_array.sbatch").read_text()
     assert "#SBATCH --array=0-63" in text
     assert "#SBATCH --cpus-per-task=1" in text
-    assert "#SBATCH --mem=4G" in text
+    assert "#SBATCH --mem=3G" in text
     assert "#SBATCH --time=02:00:00" in text
     assert "SLURM_ARRAY_TASK_ID" in text
     assert "manifest-%03d.json" in text
@@ -43,8 +43,8 @@ def test_array_has_exact_production_shape() -> None:
 def test_manifest_and_reducer_resource_envelopes() -> None:
     manifest = (HPC_ROOT / "issue128_e9_manifest.sbatch").read_text()
     reducer = (HPC_ROOT / "issue128_e9_reduce.sbatch").read_text()
-    assert "#SBATCH --mem=4G" in manifest
+    assert "#SBATCH --mem=3G" in manifest
     assert "#SBATCH --time=00:30:00" in manifest
-    assert "#SBATCH --mem=8G" in reducer
+    assert "#SBATCH --mem=3G" in reducer
     assert "#SBATCH --time=01:00:00" in reducer
     assert '[[ "${#shards[@]}" -eq 64 ]]' in reducer
