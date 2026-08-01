@@ -231,7 +231,7 @@ def test_stage_record_rejects_nonexact_or_out_of_range_fields() -> None:
         StageRecord(4, (Fraction(1), Fraction(0), Fraction(0)))
 
 
-def test_profile_cli_validates_setup_without_building_artifacts() -> None:
+def test_profile_cli_runs_a_bounded_compressed_prefix_without_artifacts() -> None:
     completed = subprocess.run(
         [
             sys.executable,
@@ -242,7 +242,7 @@ def test_profile_cli_validates_setup_without_building_artifacts() -> None:
             "--pipeline",
             "direct-theorem",
             "--max-records",
-            "200",
+            "2",
         ],
         cwd=ROOT,
         check=False,
@@ -252,18 +252,40 @@ def test_profile_cli_validates_setup_without_building_artifacts() -> None:
     )
     assert completed.returncode == 0, completed.stderr
     payload = json.loads(completed.stdout)
-    assert payload == {
-        "delta": [1, 2],
-        "max_records": 200,
-        "mode": "profile-only",
-        "pipeline": "direct-theorem",
-        "setup": "validated",
-        "stage_count": 31,
-    }
+    assert payload["delta"] == [1, 2]
+    assert payload["max_records"] == 2
+    assert payload["mode"] == "profile-only"
+    assert payload["pipeline"] == "direct-theorem"
+    assert payload["raw_records"] == 2
+    assert payload["projected_raw_records"] == 61_677
+    assert payload["active_words"] == 2
+    assert payload["representative_blocks"] > 0
+    assert payload["representative_terms"] > 0
+    assert payload["complete"] is False
+    assert "summary" not in payload and "witness" not in payload
 
 
-def test_build_cli_fails_closed_until_task_8() -> None:
+def test_build_cli_requires_outputs_and_rejects_max_records() -> None:
     completed = subprocess.run(
+        [
+            sys.executable,
+            str(CLI),
+            "--build",
+            "--delta",
+            "1/2",
+            "--pipeline",
+            "direct-theorem",
+        ],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+        env={**os.environ, "PYTHONPATH": str(ROOT / "src")},
+    )
+    assert completed.returncode != 0
+    assert "--summary and --witness" in completed.stderr
+
+    bounded = subprocess.run(
         [
             sys.executable,
             str(CLI),
@@ -276,6 +298,8 @@ def test_build_cli_fails_closed_until_task_8() -> None:
             "unused.json",
             "--witness",
             "unused.json.gz",
+            "--max-records",
+            "2",
         ],
         cwd=ROOT,
         check=False,
@@ -283,8 +307,8 @@ def test_build_cli_fails_closed_until_task_8() -> None:
         text=True,
         env={**os.environ, "PYTHONPATH": str(ROOT / "src")},
     )
-    assert completed.returncode != 0
-    assert "Task 8" in completed.stderr
+    assert bounded.returncode != 0
+    assert "valid only with --profile-only" in bounded.stderr
 
 
 def _open_fragment_operators(
