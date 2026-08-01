@@ -25,14 +25,14 @@
 **Interfaces:**
 - Produces `DualPairingPartial` and `contract_log_degree_shard(stages, degree, shard_index, shard_count, length=6)`.
 
-- [ ] Add failing tests for shard validation, deterministic group assignment,
+- [x] Add failing tests for shard validation, deterministic group assignment,
   exact cubic addition, and degree-five agreement with the frozen E5 pairings.
-- [ ] Run `PYTHONPATH=src python -m pytest -q tests/test_dual_log_pairing.py`
+- [x] Run `PYTHONPATH=src python -m pytest -q tests/test_dual_log_pairing.py`
   and confirm missing-module failure.
-- [ ] Implement suffix grouping, one-translation target lookup, cache eviction,
+- [x] Implement suffix grouping, one-translation target lookup, cache eviction,
   exact denominator handling, and partial counters.
-- [ ] Run the focused test and require exact E5 equality.
-- [ ] Commit with `feat(issue128): add exact dual log contraction`.
+- [x] Run the focused test and require exact E5 equality.
+- [x] Commit with `feat(issue128): add exact dual log contraction`.
 
 ### Task 2: Shard artifacts and reducer
 
@@ -46,13 +46,13 @@
 - Shard mode consumes `--shard-index`, `--shard-count`, and `--output`.
 - Reduce mode consumes `--reduce`, four shard paths, and `--output`.
 
-- [ ] Add failing mutation tests for overlap, missing groups, configuration
+- [x] Add failing mutation tests for overlap, missing groups, configuration
   mismatch, source-digest mismatch, and forged cubic totals.
-- [ ] Implement canonical shard serialization and lightweight verification.
-- [ ] Implement reducer coverage checks and forward/reverse exact equality.
-- [ ] Run four local shards concurrently with `shard_count=4`, then reduce.
-- [ ] Independently rerun one shard and compare its SHA-256.
-- [ ] Commit with `feat(issue128): certify exact dual E7 pairing`.
+- [x] Implement canonical shard serialization and lightweight verification.
+- [x] Implement reducer coverage checks and forward/reverse exact equality.
+- [x] Run four local shards concurrently with `shard_count=4`, then reduce.
+- [x] Independently rerun one shard and compare its SHA-256.
+- [x] Commit with `feat(issue128): certify exact dual E7 pairing`.
 
 ### Task 3: Dual finite-step ledger
 
@@ -62,11 +62,11 @@
 - Modify: `tests/test_gauge_aware_obstruction_audit.py`
 - Modify: `docs/experiments/processor-obstruction/gauge-aware-audit.json`
 
-- [ ] Compute exact E5/r4 plus E7/r6 dual pairing at `r=95,96,97`, including
+- [x] Compute exact E5/r4 plus E7/r6 dual pairing at `r=95,96,97`, including
   interval-certified signs and margins.
-- [ ] Record the centered-stage path bounds showing which `r` values satisfy
+- [x] Record the centered-stage path bounds showing which `r` values satisfy
   the elementary `< pi` logarithm-branch criterion.
-- [ ] Bind the E7 artifact in the fail-closed audit while retaining
+- [x] Bind the E7 artifact in the fail-closed audit while retaining
   `finite_step_status=inconclusive` until the E9+ tail is supplied.
-- [ ] Run focused tests and the complete non-slow suite.
-- [ ] Commit with `docs(issue128): add dual E7 remainder ledger`.
+- [x] Run focused tests and the complete non-slow suite.
+- [x] Commit with `docs(issue128): add dual E7 remainder ledger`.

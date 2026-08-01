@@ -173,9 +173,9 @@ image(i ad_H) + span(I) + span(H),
 
 the leading defect still has a nonzero spectral component.  The calibrated
 **leading-order** status is now **NO-GO**.  This is not yet a finite-step
-eigenphase lower bound at total time one: that promotion still requires a
-certified local-log branch and an all-order remainder small enough to preserve
-the leading pairing.
+eigenphase lower bound at total time one.  The exact dual E7 refinement below
+certifies a local-log branch at `r=97`; promotion there now requires an
+E9-and-higher dual tail small enough to preserve the exact E5+E7 pairing.
 
 Likewise, the support-six result remains a rigorous no-go for the stated
 short-support processor class in operator space.  Support alone does not
@@ -188,7 +188,7 @@ The fail-closed refinement is recorded in:
 quadratic-commutant-witness.json
 sha256: d0892b7320cb22a8be1701a1fdb185d2ce9dbfbc20d191fc21bf4359cea5d391
 gauge-aware-audit.json
-sha256: 6c25e184ad5815b67a03e1eaad7c61b124d50803aa5c5f22da6c493821fe8368
+sha256: 565df344d324f410df8f8d27df5e0527f000486cda0a9ba47997c1d8cea3ad03
 source exact-obstruction sha256:
 b993596dcacb714c20bbae7b3e38c254e639268e57ab529823079db732f61103
 ```
@@ -266,3 +266,29 @@ The finite-step status remains `inconclusive`: a compatible logarithm branch
 and a Hilbert--Schmidt remainder satisfying
 `tau(R_r^2) < rho_L/r^8` are still required. This refinement does not
 authorize E7 or any shared HPC run.
+
+## Exact dual E7 refinement
+
+A four-shard local contraction has now computed `tau(W E7)` exactly without
+constructing the full E7 operator.  The per-cell result is
+
+```text
+18151321/8064000000
++ (1494729/1024000000) alpha
++ (96257773/110592000000) alpha^2
+~= 0.00676126758644310.
+```
+
+It opposes the E5 pairing, but after the extra `1/r^2` suppression it changes
+the calibrated signal by only `1.22e-4` at `r=95` and `1.17e-4` at `r=97`.
+The exact artifact is
+
+```text
+docs/experiments/processor-obstruction/dual-e7-pairing.json
+sha256: 9d68771af90096d0ad96bdf6a0861c10d8ec39a864b417d772e51e0c6a9d5d7b
+```
+
+The centered-stage path gives a simple principal-log certificate at `r=97`
+but not at 95 or 96.  At 97 the only remaining finite-step gap is the
+E9-and-higher dual tail.  See `docs/report/dual-e7-remainder-ledger.md` for the
+exact margins, branch proof, shard coverage, and independent rerun evidence.

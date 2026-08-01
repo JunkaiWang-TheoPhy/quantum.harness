@@ -16,6 +16,10 @@ EXTENSIVE = (
     ROOT
     / "docs/experiments/processor-obstruction/extensive-commutant-witness.json"
 )
+DUAL_E7 = (
+    ROOT
+    / "docs/experiments/processor-obstruction/dual-e7-pairing.json"
+)
 
 
 def test_current_obstruction_has_calibrated_leading_order_witness() -> None:
@@ -31,6 +35,13 @@ def test_current_obstruction_has_calibrated_leading_order_witness() -> None:
     assert calibrated["rejected_alias_lengths"] == [4]
     assert calibrated["finite_step_gate"] == "dual_pairing_remainder"
     assert calibrated["squared_normalized_pairing_l12"]
+    assert calibrated["dual_e7_artifact"]["sha256"]
+    assert calibrated["dual_e7_pairing_status"] == "exact"
+    assert calibrated["truncated_log_gate"]["95"]["sign"] == "negative"
+    assert calibrated["truncated_log_gate"]["97"]["branch_path_lt_pi"] is True
+    assert calibrated["truncated_log_gate"]["96"]["branch_path_lt_pi"] is False
+    assert "E9-and-higher dual tail" in calibrated["finite_step_missing"]
+    assert "running E7" not in payload["next_gate"]
     assert (
         payload["reference_examples"]["hamiltonian_parallel"][
             "calibrated_status"
@@ -78,6 +89,23 @@ def test_audit_rejects_mutated_or_missing_extensive_witness(tmp_path: Path) -> N
 
     with pytest.raises(ValueError, match="extensive"):
         build_payload(SOURCE, WITNESS, tmp_path / "missing-extensive.json")
+
+
+def test_audit_rejects_mutated_or_missing_dual_e7(tmp_path: Path) -> None:
+    dual_payload = json.loads(DUAL_E7.read_text())
+    dual_payload["claim"]["dual_e7_pairing"] = "forged"
+    forged = tmp_path / "forged-dual-e7.json"
+    forged.write_text(json.dumps(dual_payload))
+    with pytest.raises(ValueError, match="dual E7"):
+        build_payload(SOURCE, WITNESS, EXTENSIVE, forged)
+
+    with pytest.raises(ValueError, match="dual E7"):
+        build_payload(
+            SOURCE,
+            WITNESS,
+            EXTENSIVE,
+            tmp_path / "missing-dual-e7.json",
+        )
 
 
 def test_payload_round_trips_through_canonical_json() -> None:

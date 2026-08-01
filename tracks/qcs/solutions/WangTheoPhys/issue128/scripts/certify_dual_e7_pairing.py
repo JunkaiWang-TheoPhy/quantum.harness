@@ -278,6 +278,8 @@ def verify_reduced_payload(payload: Mapping[str, object]) -> None:
     claim = payload.get("claim")
     if not isinstance(claim, Mapping) or claim.get("full_e7_operator") != "not_computed":
         raise ValueError("reduced full-operator claim mismatch")
+    if claim.get("dual_e7_pairing") != "exact":
+        raise ValueError("reduced dual E7 pairing claim mismatch")
     if claim.get("finite_step_status") != "inconclusive":
         raise ValueError("reduced finite-step claim exceeds evidence")
     if payload.get("hpc_authorized") is not False:
