@@ -8,6 +8,7 @@ import pytest
 from trottercert.dual_log_tail import (
     average_stage_tail,
     build_dual_tail_envelope,
+    certify_issue128_dual_log_tail,
     issue128_dual_tail_geometry,
     pointwise_stage_tail,
     verify_analytic_caps,
@@ -158,3 +159,47 @@ def test_geometry_mutations_fail_closed(
     forged = replace(issue128_dual_tail_geometry(), **{field: value})
     with pytest.raises(ValueError, match=message):
         build_dual_tail_envelope(constants, forged)
+
+
+def test_complete_e11_tail_is_compatible_and_below_preaudit_gate() -> None:
+    result = certify_issue128_dual_log_tail()
+    assert Fraction(6448, 10**15) < result.direct_even_generator_tail
+    assert result.direct_even_generator_tail < Fraction(6450, 10**15)
+    assert Fraction(242, 10**15) < result.dexp_correction_tail
+    assert result.dexp_correction_tail < Fraction(244, 10**15)
+    assert result.total_log_tail == (
+        result.direct_even_generator_tail + result.dexp_correction_tail
+    )
+    assert Fraction(669, 10**14) < result.total_log_tail
+    assert result.total_log_tail < Fraction(670, 10**14)
+    assert result.first_omitted_log_degree == 11
+    assert result.claim_scope == "fixed_12x12_r97_dual_local_log"
+
+
+def test_direct_tail_has_the_exact_dual_normalization() -> None:
+    result = certify_issue128_dual_log_tail()
+    constants = build_refined_fourth_order_constants(
+        decimal_digits=30,
+        quantization_digits=24,
+    )
+    raw_cell = Fraction(3, 2) * average_stage_tail(
+        constants.stages,
+        97,
+        10,
+    )
+    assert result.direct_even_generator_tail == raw_cell * Fraction(1, 4)
+
+
+def test_envelope_decreases_at_larger_step_counts() -> None:
+    constants = build_refined_fourth_order_constants(
+        decimal_digits=30,
+        quantization_digits=24,
+    )
+    base = issue128_dual_tail_geometry()
+    at_97 = build_dual_tail_envelope(constants, base)
+    at_98 = build_dual_tail_envelope(
+        constants,
+        replace(base, steps=98),
+    )
+    assert at_98.average_generator_defect < at_97.average_generator_defect
+    assert at_98.log_defect < at_97.log_defect

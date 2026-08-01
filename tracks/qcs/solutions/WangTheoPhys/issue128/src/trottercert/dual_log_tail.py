@@ -43,6 +43,18 @@ class DualTailEnvelope:
     log_commutator_defect_hs: Fraction
 
 
+@dataclass(frozen=True, slots=True)
+class DualLogTailBound:
+    geometry: DualTailGeometry
+    envelope: DualTailEnvelope
+    first_omitted_generator_degree: int
+    first_omitted_log_degree: int
+    direct_even_generator_tail: Fraction
+    dexp_correction_tail: Fraction
+    total_log_tail: Fraction
+    claim_scope: str
+
+
 def issue128_dual_tail_geometry() -> DualTailGeometry:
     return DualTailGeometry(
         n_sites=144,
@@ -153,13 +165,13 @@ def verify_analytic_caps(
         raise ValueError("even-series cap is below the ratio majorant")
 
 
-def _verify_fixed_geometry(geometry: DualTailGeometry) -> None:
+def _verify_mathematical_geometry(geometry: DualTailGeometry) -> None:
     if geometry.n_sites != 144:
         raise ValueError("fixed-instance site count mismatch")
     if geometry.cells != 36:
         raise ValueError("fixed-instance cell count mismatch")
-    if geometry.steps != 97:
-        raise ValueError("fixed-instance step count mismatch")
+    if geometry.steps < 97:
+        raise ValueError("step count lies below the proved convergence range")
     if geometry.centered_h_op_cap != 144:
         raise ValueError("centered Hamiltonian cap mismatch")
     if geometry.h_hs_squared != 54:
@@ -189,13 +201,19 @@ def _verify_fixed_geometry(geometry: DualTailGeometry) -> None:
         raise ValueError("even-series cap mismatch")
 
 
+def _verify_fixed_geometry(geometry: DualTailGeometry) -> None:
+    _verify_mathematical_geometry(geometry)
+    if geometry.steps != 97:
+        raise ValueError("fixed-instance step count mismatch")
+
+
 def build_dual_tail_envelope(
     constants: RefinedFourthOrderConstants,
     geometry: DualTailGeometry,
 ) -> DualTailEnvelope:
     """Build the fixed-instance right-generator-to-log envelope."""
 
-    _verify_fixed_geometry(geometry)
+    _verify_mathematical_geometry(geometry)
     verify_analytic_caps(
         log_radius_cap=geometry.log_radius_cap,
         dexp_cap=geometry.dexp_cap,
@@ -254,4 +272,47 @@ def build_dual_tail_envelope(
         log_defect=log_defect,
         log_derivative_defect_hs=log_derivative_defect,
         log_commutator_defect_hs=commutator_defect,
+    )
+
+
+def certify_issue128_dual_log_tail(
+    constants: RefinedFourthOrderConstants | None = None,
+) -> DualLogTailBound:
+    """Certify the compatible E11-and-higher dual local-log tail."""
+
+    if constants is None:
+        from .refined_error import build_refined_fourth_order_constants
+
+        constants = build_refined_fourth_order_constants(
+            decimal_digits=30,
+            quantization_digits=24,
+        )
+    geometry = issue128_dual_tail_geometry()
+    _verify_fixed_geometry(geometry)
+    envelope = build_dual_tail_envelope(constants, geometry)
+    direct = Fraction(3, 8) * average_stage_tail(
+        constants.stages,
+        geometry.steps,
+        first_omitted_degree=10,
+    )
+    correction = (
+        geometry.w_hs_per_cell_cap
+        * 2
+        * envelope.log_defect
+        * envelope.log_commutator_defect_hs
+        * geometry.even_series_cap
+        / 11
+    )
+    total = direct + correction
+    if total <= 0:
+        raise ArithmeticError("dual local-log tail must be positive")
+    return DualLogTailBound(
+        geometry=geometry,
+        envelope=envelope,
+        first_omitted_generator_degree=10,
+        first_omitted_log_degree=11,
+        direct_even_generator_tail=direct,
+        dexp_correction_tail=correction,
+        total_log_tail=total,
+        claim_scope="fixed_12x12_r97_dual_local_log",
     )
