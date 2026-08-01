@@ -1,10 +1,4 @@
-"""Exact trace obstructions for symmetric product formulas.
-
-The PF2 identity in this module is an exact free-trace identity.  The PF4
-quadratic form is deliberately narrower: it evaluates the coefficients stated
-in the research plan exactly, but does not certify an as-yet absent derivation
-connecting those moments to a particular fourth-order BCH defect.
-"""
+"""Exact trace obstructions for symmetric product formulas."""
 
 from __future__ import annotations
 
@@ -17,6 +11,12 @@ from numbers import Integral
 from typing import Any
 
 import numpy as np
+
+from .cubic_field import Cubic
+from .pf4_bch_mapping import (
+    pf4_suzuki_gamma,
+    verify_pf4_suzuki_trace_identity,
+)
 
 
 class ObstructionException(str, Enum):
@@ -137,21 +137,28 @@ def pf4_trace_quadratic_form(
     trace_d2: Fraction | int,
     gamma: Fraction | int,
 ) -> Fraction:
-    """Evaluate the plan-stated PF4 moment form with exact coefficients.
-
-    This function is an exact algebraic evaluator.  It intentionally makes no
-    claim that ``C`` and ``D`` have been connected to a fourth-order BCH defect;
-    that missing derivation is recorded by :func:`pf4_trace_identity_record`.
-    """
+    """Evaluate the exact derived PF4 trace core with a rational scale."""
 
     c2 = _exact_fraction(trace_c2, "trace_c2")
     cd = _exact_fraction(trace_cd, "trace_cd")
     d2 = _exact_fraction(trace_d2, "trace_d2")
     scale = _exact_fraction(gamma, "gamma")
-    return scale * (
-        Fraction(1, 2) * c2
-        + Fraction(14, 3) * cd
-        + Fraction(4, 3) * d2
+    return scale * (c2 - 4 * cd + Fraction(8, 3) * d2)
+
+
+def pf4_suzuki_trace_pairing(
+    trace_c2: Fraction | int,
+    trace_cd: Fraction | int,
+    trace_d2: Fraction | int,
+) -> Cubic:
+    """Return ``Tr((A+B) E5)`` in the exact Suzuki cubic field."""
+
+    verify_pf4_suzuki_trace_identity()
+    return pf4_suzuki_gamma() * pf4_trace_quadratic_form(
+        trace_c2,
+        trace_cd,
+        trace_d2,
+        1,
     )
 
 
@@ -283,25 +290,38 @@ def pf2_trace_identity_record() -> TraceIdentityRecord:
 
 
 def pf4_trace_identity_record() -> TraceIdentityRecord:
-    """Return a record that explicitly limits the status of the PF4 form."""
+    """Return the digest-bound exact Suzuki PF4 free-trace identity."""
+
+    verify_pf4_suzuki_trace_identity()
 
     return _build_record(
         identity_kind="pf4",
         formula=(
-            "gamma*((1/2)Tr(C^2) + (14/3)Tr(CD) "
-            "+ (4/3)Tr(D^2))"
+            "Tr((A+B)E5) = gamma*(Tr(C^2) - 4*Tr(CD) "
+            "+ (8/3)*Tr(D^2))"
         ),
         assumptions=(
-            "trace moments are supplied independently as exact rationals",
-            "the plan-stated coefficients were not independently derived from a BCH mapping",
-            "no PF4 impossibility conclusion follows from this algebraic record alone",
+            "A and B are finite-dimensional Hermitian matrices",
+            (
+                "E5 is the degree-five logarithm term of the exact five-copy "
+                "Suzuki PF4 formula"
+            ),
+            "C=[A,[A,B]] and D=[B,[B,A]]",
+            "trace is cyclic",
+            (
+                "the identity is verified in the exact cubic coefficient "
+                "field alpha^3=4"
+            ),
         ),
         exact_coefficients=(
-            ("trace_c2", Fraction(1, 2)),
-            ("trace_cd", Fraction(14, 3)),
-            ("trace_d2", Fraction(4, 3)),
+            ("trace_c2", Fraction(1)),
+            ("trace_cd", Fraction(-4)),
+            ("trace_d2", Fraction(8, 3)),
+            ("gamma_a0", Fraction(37, 900000)),
+            ("gamma_a1", Fraction(313, 14400000)),
+            ("gamma_a2", Fraction(29, 1800000)),
         ),
-        identity_status="algebraic_form_only_unverified_bch_mapping",
+        identity_status="proved_exact_suzuki_pf4_free_trace_identity",
     )
 
 

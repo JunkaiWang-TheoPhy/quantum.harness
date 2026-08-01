@@ -15,6 +15,12 @@ from trottercert.pf4_bch_mapping import (
     pf4_suzuki_trace_polynomials,
     verify_pf4_suzuki_trace_identity,
 )
+from trottercert.trace_obstruction import (
+    pf4_suzuki_trace_pairing,
+    pf4_trace_identity_record,
+    pf4_trace_quadratic_form,
+    verify_identity_record,
+)
 
 
 def _add(
@@ -157,3 +163,27 @@ def test_pf4_trace_identity_on_exact_symmetric_matrices(dimension: int) -> None:
     left, right = pf4_suzuki_trace_polynomials()
 
     assert _evaluate_trace(left, a, b) == _evaluate_trace(right, a, b)
+
+
+def test_pf4_trace_record_binds_corrected_core_and_gamma() -> None:
+    core = pf4_trace_quadratic_form(6, 5, 3, Fraction(7, 11))
+    expected = Fraction(7, 11) * (
+        Fraction(6) - 4 * 5 + Fraction(8, 3) * 3
+    )
+    record = pf4_trace_identity_record()
+
+    assert core == expected
+    assert pf4_suzuki_trace_pairing(6, 0, 3) == (
+        pf4_suzuki_gamma()
+        * pf4_trace_quadratic_form(6, 0, 3, Fraction(1))
+    )
+    assert record.identity_status == "proved_exact_suzuki_pf4_free_trace_identity"
+    assert record.exact_coefficients == (
+        ("trace_c2", Fraction(1)),
+        ("trace_cd", Fraction(-4)),
+        ("trace_d2", Fraction(8, 3)),
+        ("gamma_a0", Fraction(37, 900000)),
+        ("gamma_a1", Fraction(313, 14400000)),
+        ("gamma_a2", Fraction(29, 1800000)),
+    )
+    assert verify_identity_record(record, "pf4")

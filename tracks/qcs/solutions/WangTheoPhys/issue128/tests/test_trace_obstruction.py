@@ -7,7 +7,6 @@ from hashlib import sha256
 
 import numpy as np
 import pytest
-
 from trottercert.processed_kernels import RationalStage
 from trottercert.rational_words import (
     commutator_polynomial,
@@ -15,11 +14,14 @@ from trottercert.rational_words import (
     rational_formula_log_series,
     scale_polynomial,
 )
+
+from trottercert.pf4_bch_mapping import pf4_suzuki_gamma
 from trottercert.trace_obstruction import (
     ObstructionException,
     classify_pf4_exception,
     pf2_trace_identity_record,
     pf2_trace_obstruction,
+    pf4_suzuki_trace_pairing,
     pf4_trace_identity_record,
     pf4_trace_quadratic_form,
     verify_identity_digest,
@@ -137,19 +139,23 @@ def test_pf2_rejects_any_boolean_matrix_entry(a: np.ndarray) -> None:
         pf2_trace_obstruction(a, np.eye(2, dtype=int))
 
 
-def test_pf4_quadratic_form_preserves_exact_mixed_coefficient() -> None:
+def test_pf4_quadratic_form_preserves_exact_derived_coefficients() -> None:
     value = pf4_trace_quadratic_form(
         trace_c2=Fraction(6),
         trace_cd=Fraction(5),
         trace_d2=Fraction(3),
         gamma=Fraction(7, 11),
     )
-    expected = Fraction(7, 11) * (
-        Fraction(6, 2) + Fraction(14, 3) * 5 + Fraction(4, 3) * 3
-    )
+    expected = Fraction(7, 11) * (Fraction(6) - 4 * 5 + Fraction(8, 3) * 3)
 
     assert value == expected
     assert isinstance(value, Fraction)
+
+
+def test_pf4_exact_suzuki_pairing_includes_cubic_gamma() -> None:
+    core = pf4_trace_quadratic_form(6, 0, 3, 1)
+
+    assert pf4_suzuki_trace_pairing(6, 0, 3) == pf4_suzuki_gamma() * core
 
 
 def test_pf4_quadratic_form_refuses_inexact_inputs() -> None:
@@ -241,8 +247,15 @@ def test_trace_identity_records_are_digest_bound_and_auditable() -> None:
     assert verify_identity_record(pf4, "pf4")
     assert not verify_identity_record(pf2, "pf4")
     assert pf2.identity_status == "proved_exact_free_trace_identity"
-    assert pf4.identity_status == "algebraic_form_only_unverified_bch_mapping"
-    assert "not independently derived" in " ".join(pf4.assumptions)
+    assert pf4.identity_status == "proved_exact_suzuki_pf4_free_trace_identity"
+    assert pf4.exact_coefficients == (
+        ("trace_c2", Fraction(1)),
+        ("trace_cd", Fraction(-4)),
+        ("trace_d2", Fraction(8, 3)),
+        ("gamma_a0", Fraction(37, 900000)),
+        ("gamma_a1", Fraction(313, 14400000)),
+        ("gamma_a2", Fraction(29, 1800000)),
+    )
     assert not verify_identity_digest(replace(pf2, formula="tampered"))
 
 
@@ -250,8 +263,8 @@ def test_pf4_cannot_be_forged_as_proved_by_recomputing_digest() -> None:
     original = pf4_trace_identity_record()
     altered = replace(
         original,
-        formula="Tr((A+B)L5) = positive quadratic form",
-        identity_status="proved_exact_free_trace_identity",
+        formula="gamma*((1/2)Tr(C^2) + (14/3)Tr(CD) + (4/3)Tr(D^2))",
+        identity_status="algebraic_form_only_unverified_bch_mapping",
         identity_digest="",
     )
     forged = replace(altered, identity_digest=_attacker_digest(altered))
