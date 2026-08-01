@@ -403,8 +403,8 @@ file sha256:    13805e2d560efce6051f142ef9b69ae53b1f718d37426fb6fbaa10bd3072a909
 payload sha256: f972e5b31e8dfe459aa2250ef7d6bf19c57e93d75bbf4f7bd6578b908656e24e
 
 dual-e9-provenance.json
-file sha256:    5b9aa4c71b29fe5435596bf4e719711f0de9136fc7c3ff1ded112b9cd4c32c7e
-payload sha256: 2c801713c0771f98ee1b1c2d045a1f6e8a34a291dfb25a18beb1c7786406fe2f
+file sha256:    4f9e10686ba2daad8a9b9ee855e12f60851848d16764f33a21681889a9267603
+payload sha256: 9676ff11e366509957cbb02b2a6e6548c5ea322c8873cbdfc8943944df223935
 ```
 
 The compact HPC and independent-rerun hash chain is recorded in

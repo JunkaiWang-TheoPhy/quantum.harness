@@ -183,9 +183,15 @@ with these Slurm jobs:
 | role | job | required terminal state |
 |---|---:|---|
 | smoke shard 2 | `23065469_2` | `COMPLETED`, `0:0` |
-| production array | `23065497` | all 64 shards `COMPLETED`, `0:0` |
+| production array | `23065497` | remaining 63 shards `COMPLETED`, `0:0` |
 | reducer | `23065498` | `COMPLETED`, `0:0` |
 | independent reruns 18 and 36 | `23065746` | both `COMPLETED`, `0:0` |
+
+The production array intentionally excluded index 2 because the independently
+verified smoke artifact for that same immutable manifest and deployment was
+already present.  Thus `1` smoke shard plus `63` array shards gives the complete
+canonical set of `64`; the reducer and post-run audit verify the complete set
+without distinguishing how each valid worker was scheduled.
 
 The independent records are
 
