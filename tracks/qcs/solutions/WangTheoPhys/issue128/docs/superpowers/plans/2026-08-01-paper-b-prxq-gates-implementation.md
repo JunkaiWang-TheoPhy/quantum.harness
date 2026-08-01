@@ -494,7 +494,8 @@ Run: `python -m pytest -q tests/test_finite_step_obstruction.py`
 
 - [ ] **Step 3: Implement outward interval arithmetic**
 
-Compute `h^5*q5 + h^7*q7 + h^9*q9` exactly in the cubic enclosure, take a
+Compute `h^4*q5 + h^6*q7 + h^8*q9` exactly in the cubic enclosure for the
+effective local-log generator (the one-step logarithm divided by `h`), take a
 sound absolute-value lower bound, subtract the tail upper bound, and promote
 only when the margin lower endpoint is strictly positive.
 

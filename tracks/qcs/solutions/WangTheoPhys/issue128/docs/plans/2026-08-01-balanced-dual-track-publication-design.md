@@ -227,12 +227,16 @@ finite-size counting identities must be exact and independently checkable.
 #### B6. Finite-step spectral lower bound
 
 Combine exact E5, E7, and E9 witness contractions with an independently
-verifiable E11-and-higher envelope.  Promotion requires a strictly positive
-signed margin:
+verifiable E11-and-higher envelope.  For the effective local-log generator,
+obtained by dividing the one-step logarithm by \(h\), promotion requires the
+strictly positive signed margin
 
 \[
-|h^5q_5+h^7q_7+h^9q_9|-|R_{\ge11}^{\rm dual}|>0.
+|h^4q_5+h^6q_7+h^8q_9|-|R_{\ge11}^{\rm dual}|>0.
 \]
+
+The un-divided one-step logarithm has the corresponding odd powers; the two
+normalizations must not be mixed in either the certificate or the paper.
 
 An exact E9 result alone never promotes the finite-step claim.
 
