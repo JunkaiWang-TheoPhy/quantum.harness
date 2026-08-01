@@ -218,6 +218,36 @@ Derive and verify the exact trace quadratic form, and prove a strict obstruction
 for an appropriate symmetry-protected family rather than only at the isotropic
 Heisenberg point.
 
+The exact five-copy Suzuki derivation now fixes this gate.  With
+
+\[
+C=[A,[A,B]],\qquad D=[B,[B,A]],
+\]
+
+the cyclic free-trace identity is
+
+\[
+\operatorname{Tr}((A+B)E_5)
+=\gamma\operatorname{Tr}\!\left(C^2-4CD+\frac83D^2\right),
+\]
+
+where
+
+\[
+\gamma=\frac{37}{900000}
++\frac{313}{14400000}\alpha
++\frac{29}{1800000}\alpha^2>0,
+\qquad \alpha^3=4.
+\]
+
+For the periodic even-length TFIM family the mixed trace vanishes and the
+remaining diagonal terms are strictly positive when both couplings are
+nonzero.  This proves a leading-order endpoint-conjugation obstruction at
+fixed time and fixed normalization.  It does not quotient the `a I + b H`
+directions and is not a finite-step or total-time eigenphase theorem.  The
+former plan-stated coefficients `1/2, 14/3, 4/3` were never BCH-certified and
+are superseded by the exact cyclic identity above.
+
 #### B5. TFIM scaling optimality
 
 Prove for a TFIM parameter family that pure symplectic endpoint correctors

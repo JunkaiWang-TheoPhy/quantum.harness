@@ -262,10 +262,62 @@ PYTHONPATH=src python -u -m scripts.certify_extensive_commutant_witness \
   --lengths 4 6 8 10 12 --verify-full
 ```
 
-The finite-step status remains `inconclusive`: a compatible logarithm branch
-and a Hilbert--Schmidt remainder satisfying
-`tau(R_r^2) < rho_L/r^8` are still required. This refinement does not
-authorize E7 or any shared HPC run.
+The statement above records the historical gate at the time of that artifact.
+The separate E9 finite-step production chain now addresses it; no conclusion
+from that later chain is back-propagated into this leading-order artifact.
+
+## Exact PF4--TFIM family theorem
+
+The actual two-fragment five-copy Suzuki formula has the exact cyclic
+free-trace identity
+
+```text
+Tr((A+B) E5) = gamma Tr(C^2 - 4 C D + (8/3) D^2),
+C = [A,[A,B]],  D = [B,[B,A]],
+gamma = 37/900000
+      + (313/14400000) alpha
+      + (29/1800000) alpha^2 > 0,
+alpha^3 = 4, alpha > 0.
+```
+
+The verifier compares all ten cyclic degree-six word classes over the exact
+cubic field.  Exact rational Hermitian matrix checks in dimensions two and
+three are independent cross-checks, not substitutes for that free-word proof.
+
+For the even periodic TFIM family
+
+```text
+A = h sum_i X_i,  B = j sum_i Z_i Z_{i+1},
+Tr(C^2)/d = 128 L h^4 j^2,
+Tr(CD)/d = 0,
+Tr(D^2)/d = 128 L h^2 j^4,
+Tr(H E5)/d = 128 L gamma h^2 j^2 (h^2 + 8 j^2/3).
+```
+
+Thus both nonzero couplings give a strict leading-order obstruction to
+`E5=-i[Q,H]` for every endpoint-conjugation generator `Q`.  The exact
+normalized-trace dual bound is also stored in the artifact.  Its scope is
+fixed time and fixed Hamiltonian normalization.  Affine `a I + b H` gauge,
+finite-step TFIM behavior, and total-time eigenphases modulo `2 pi` remain
+explicitly unclaimed.
+
+```text
+artifact: tfim-family-obstruction.json
+file sha256: a1f628104f816ea2cd35c7846b64c1205df76fae73eecf2b82cc69a1e9f789e4
+payload sha256: ffd5bf98bf40138f221dde86b990eb43e97e4e101332bd898465bcbae53c09d3
+```
+
+Reproduce and verify from the Issue-128 directory:
+
+```bash
+PYTHONPATH=src:. python scripts/certify_tfim_obstruction.py \
+  --verify docs/experiments/processor-obstruction/tfim-family-obstruction.json
+PYTHONPATH=src:. python -m pytest -q \
+  tests/test_pf4_bch_mapping.py tests/test_tfim_obstruction.py
+```
+
+The earlier research-plan coefficients `1/2, 14/3, 4/3` were not a proved BCH
+mapping and are superseded by this exact identity.
 
 ## Exact dual E7 refinement
 
