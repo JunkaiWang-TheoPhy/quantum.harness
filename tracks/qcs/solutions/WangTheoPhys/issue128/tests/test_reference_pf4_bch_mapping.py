@@ -92,7 +92,9 @@ def test_reference_uses_the_frozen_literal_eleven_stages(reference: ModuleType) 
     )
 
 
-def test_recursive_bch_has_the_universal_low_degree_terms(reference: ModuleType) -> None:
+def test_recursive_bch_has_the_universal_low_degree_terms(
+    reference: ModuleType,
+) -> None:
     a = {(0,): reference.ONE}
     b = {(1,): reference.ONE}
     logarithm = reference._bch(a, b)
@@ -122,8 +124,9 @@ def test_reference_derives_order_conditions_and_general_cyclic_solution(
     assert log_terms[4]["terms"] == []
     assert len(log_terms[5]["terms"]) == 30
     assert len(canonical_payload["cyclic_map"]["target_h_l5"]) == 10
-    assert canonical_payload["cyclic_map"]["target_h_l5"] == (
-        canonical_payload["cyclic_map"]["reconstructed"]
+    assert (
+        canonical_payload["cyclic_map"]["target_h_l5"]
+        == (canonical_payload["cyclic_map"]["reconstructed"])
     )
     assert canonical_payload["residual"] == []
     assert solved == {
@@ -132,13 +135,12 @@ def test_reference_derives_order_conditions_and_general_cyclic_solution(
         "g_d2": [[37, 337500], [313, 5400000], [29, 675000]],
     }
     assert projective["historical_candidate"]["status"] == "proportional"
-    assert projective["historical_candidate"]["residual"] == [
-        [[0, 1], [0, 1], [0, 1]]
-    ] * 3
+    assert (
+        projective["historical_candidate"]["residual"] == [[[0, 1], [0, 1], [0, 1]]] * 3
+    )
     assert projective["legacy"]["status"] == "not_proportional"
     assert any(
-        value != [[0, 1], [0, 1], [0, 1]]
-        for value in projective["legacy"]["residual"]
+        value != [[0, 1], [0, 1], [0, 1]] for value in projective["legacy"]["residual"]
     )
     assert canonical_payload["physical_bridge"]["relation"] == "E5=L5"
     assert canonical_payload["conventions"]["convention_digest"] == (
@@ -249,7 +251,9 @@ def test_reference_cli_rejects_noncanonical_json(
     canonical_payload: dict[str, object], tmp_path: Path
 ) -> None:
     artifact = tmp_path / "pretty.json"
-    artifact.write_text(json.dumps(canonical_payload, indent=2) + "\n", encoding="ascii")
+    artifact.write_text(
+        json.dumps(canonical_payload, indent=2) + "\n", encoding="ascii"
+    )
 
     completed = _run(artifact)
 

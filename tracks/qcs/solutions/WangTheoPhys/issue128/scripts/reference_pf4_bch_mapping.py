@@ -8,6 +8,7 @@ final cyclic-trace comparison.  It does not import the primary implementation.
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import json
 from collections.abc import Mapping, Sequence
@@ -22,6 +23,27 @@ MAX_DEGREE = 5
 SCHEMA_VERSION = 1
 ARTIFACT_KIND = "pf4_two_fragment_exact_cyclic_mapping"
 IDENTITY_STATUS = "proved_exact_suzuki_pf4_free_trace_identity"
+ISSUE_ROOT = Path(__file__).resolve().parents[1]
+WRAPPER_SCHEMA_VERSION = 2
+WRAPPER_KIND = "pf4_bch_mapping_source_closed_artifact"
+REFERENCE_ALGORITHM = "recursive_bch_hall_lyndon_v1"
+SOURCE_ROOTS = (
+    "src/trottercert/pf4_bch_mapping.py",
+    "src/trottercert/cubic_field.py",
+    "src/trottercert/intervals.py",
+    "scripts/derive_pf4_bch_mapping.py",
+    "scripts/reference_pf4_bch_mapping.py",
+    "pyproject.toml",
+    "requirements-reproducibility.txt",
+)
+WRAPPER_FIELDS = {
+    "schema_version",
+    "kind",
+    "mapping",
+    "implementation_sources",
+    "reference_algorithm",
+    "payload_sha256",
+}
 
 Word = tuple[int, ...]
 RationalWordPolynomial = dict[Word, Fraction]
@@ -67,11 +89,8 @@ class Cubic:
     def __mul__(self, other: Cubic | int | Fraction) -> Cubic:
         rhs = self.coerce(other)
         return Cubic(
-            self.a0 * rhs.a0
-            + 4 * (self.a1 * rhs.a2 + self.a2 * rhs.a1),
-            self.a0 * rhs.a1
-            + self.a1 * rhs.a0
-            + 4 * self.a2 * rhs.a2,
+            self.a0 * rhs.a0 + 4 * (self.a1 * rhs.a2 + self.a2 * rhs.a1),
+            self.a0 * rhs.a1 + self.a1 * rhs.a0 + 4 * self.a2 * rhs.a2,
             self.a0 * rhs.a2 + self.a1 * rhs.a1 + self.a2 * rhs.a0,
         )
 
@@ -116,11 +135,7 @@ def _is_lyndon(word: Word) -> bool:
 
 @cache
 def _lyndon_words(degree: int) -> tuple[Word, ...]:
-    return tuple(
-        word
-        for word in product((0, 1), repeat=degree)
-        if _is_lyndon(word)
-    )
+    return tuple(word for word in product((0, 1), repeat=degree) if _is_lyndon(word))
 
 
 @cache
@@ -375,7 +390,9 @@ def derive_log_hall() -> LiePolynomial:
     for fragment, coefficient in _literal_stages():
         logarithm = _bch(logarithm, {(fragment,): coefficient})
     expected_linear = {(0,): ONE, (1,): ONE}
-    if {word: value for word, value in logarithm.items() if len(word) == 1} != expected_linear:
+    if {
+        word: value for word, value in logarithm.items() if len(word) == 1
+    } != expected_linear:
         raise ArithmeticError("PF4 linear order condition failed")
     for degree in (2, 3, 4):
         if any(len(word) == degree for word in logarithm):
@@ -474,10 +491,13 @@ def _projective_comparison(
         raise ValueError("projective candidate is zero")
     scale = solved[pivot] / candidate[pivot]
     residual = tuple(
-        value - scale * coefficient
-        for value, coefficient in zip(solved, candidate)
+        value - scale * coefficient for value, coefficient in zip(solved, candidate)
     )
-    status = "proportional" if all(value.is_zero() for value in residual) else "not_proportional"
+    status = (
+        "proportional"
+        if all(value.is_zero() for value in residual)
+        else "not_proportional"
+    )
     return ProjectiveComparison(
         hypothesis=(candidate[0], candidate[1], candidate[2]),
         status=status,
@@ -515,10 +535,7 @@ def derive_mapping() -> DerivedMapping:
         _cyclic_classes(_word_multiply(_expand_lie(d), _expand_lie(d))),
     )
     words = sorted(set(target).union(*(set(polynomial) for polynomial in basis)))
-    matrix = [
-        [polynomial.get(word, ZERO).a0 for polynomial in basis]
-        for word in words
-    ]
+    matrix = [[polynomial.get(word, ZERO).a0 for polynomial in basis] for word in words]
     coordinate_solutions = []
     for coordinate in range(3):
         rhs = [target.get(word, ZERO).coordinates()[coordinate] for word in words]
@@ -638,11 +655,7 @@ def _log_word_maps(logarithm: Mapping[Word, Cubic]) -> list[dict[str, object]]:
         {
             "degree": degree,
             "terms": _word_records(
-                {
-                    word: value
-                    for word, value in expanded.items()
-                    if len(word) == degree
-                }
+                {word: value for word, value in expanded.items() if len(word) == degree}
             ),
         }
         for degree in range(MAX_DEGREE + 1)
@@ -743,6 +756,102 @@ def _payload_digest(payload: Mapping[str, object]) -> str:
     return hashlib.sha256(_canonical_json_bytes(unsigned)).hexdigest()
 
 
+def _checked_source_path(relative: str) -> Path:
+    if not relative or Path(relative).is_absolute():
+        raise ValueError(f"source path is not a relative path: {relative!r}")
+    candidate = ISSUE_ROOT / relative
+    if candidate.is_symlink():
+        raise ValueError(f"source path must not be a symlink: {relative}")
+    resolved = candidate.resolve(strict=True)
+    try:
+        resolved.relative_to(ISSUE_ROOT.resolve(strict=True))
+    except ValueError as error:
+        raise ValueError(f"source path escapes issue root: {relative}") from error
+    if not resolved.is_file():
+        raise ValueError(f"source path is not a file: {relative}")
+    return resolved
+
+
+def _module_source(module: str) -> str | None:
+    if not module or module.startswith("."):
+        return None
+    parts = module.split(".")
+    for base in (ISSUE_ROOT / "src", ISSUE_ROOT):
+        module_file = base.joinpath(*parts).with_suffix(".py")
+        package_file = base.joinpath(*parts, "__init__.py")
+        for candidate in (module_file, package_file):
+            if candidate.is_file():
+                return candidate.relative_to(ISSUE_ROOT).as_posix()
+    return None
+
+
+def _relative_import_module(source: str, node: ast.ImportFrom) -> str:
+    source_path = Path(source)
+    if source_path.parts[:1] != ("src",):
+        raise ValueError(f"relative import outside src package: {source}")
+    module_parts = list(source_path.with_suffix("").parts[1:-1])
+    ascend = node.level - 1
+    if ascend > len(module_parts):
+        raise ValueError(f"relative import escapes package: {source}")
+    if ascend:
+        module_parts = module_parts[:-ascend]
+    if node.module:
+        module_parts.extend(node.module.split("."))
+    return ".".join(module_parts)
+
+
+def _local_source_imports(source: str) -> set[str]:
+    path = _checked_source_path(source)
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=source)
+    except (SyntaxError, UnicodeDecodeError) as error:
+        raise ValueError(f"cannot parse source dependency {source}") from error
+    imports: set[str] = set()
+    for node in ast.walk(tree):
+        modules: list[str] = []
+        if isinstance(node, ast.Import):
+            modules.extend(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            module = (
+                _relative_import_module(source, node)
+                if node.level
+                else (node.module or "")
+            )
+            modules.append(module)
+        for module in modules:
+            local = _module_source(module)
+            if local is not None:
+                imports.add(local)
+            elif module.split(".", 1)[0] in {"trottercert", "scripts"}:
+                raise ValueError(
+                    f"unresolved local import {module!r} from source {source}"
+                )
+    return imports
+
+
+def _source_closure() -> tuple[str, ...]:
+    pending = list(SOURCE_ROOTS)
+    closure: set[str] = set()
+    while pending:
+        relative = Path(pending.pop()).as_posix()
+        _checked_source_path(relative)
+        if relative in closure:
+            continue
+        closure.add(relative)
+        if relative.endswith(".py"):
+            pending.extend(sorted(_local_source_imports(relative) - closure))
+    return tuple(sorted(closure))
+
+
+def _implementation_sources() -> dict[str, str]:
+    return {
+        relative: hashlib.sha256(
+            _checked_source_path(relative).read_bytes()
+        ).hexdigest()
+        for relative in _source_closure()
+    }
+
+
 def build_reference_artifact() -> dict[str, object]:
     mapping = derive_mapping()
     g_c2, g_cd, g_d2 = mapping.coefficients
@@ -797,6 +906,21 @@ def build_reference_artifact() -> dict[str, object]:
     return payload
 
 
+def build_reference_wrapper() -> dict[str, object]:
+    """Build v2 independently from the mathematical replay and source closure."""
+
+    payload: dict[str, object] = {
+        "schema_version": WRAPPER_SCHEMA_VERSION,
+        "kind": WRAPPER_KIND,
+        "mapping": build_reference_artifact(),
+        "implementation_sources": _implementation_sources(),
+        "reference_algorithm": REFERENCE_ALGORITHM,
+        "payload_sha256": "",
+    }
+    payload["payload_sha256"] = _payload_digest(payload)
+    return payload
+
+
 def _unique_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
     result: dict[str, object] = {}
     for key, value in pairs:
@@ -832,31 +956,72 @@ def _reject_json_numeric_aliases(value: object, path: str = "artifact") -> None:
             _reject_json_numeric_aliases(item, f"{path}.{key}")
 
 
+def _verify_digest(payload: Mapping[str, object], label: str) -> None:
+    digest = payload.get("payload_sha256")
+    if (
+        not isinstance(digest, str)
+        or len(digest) != 64
+        or any(character not in "0123456789abcdef" for character in digest)
+    ):
+        raise ValueError(f"{label} payload_sha256 must be a 64-hex string")
+    if digest != _payload_digest(payload):
+        raise ValueError(f"{label} payload digest mismatch")
+
+
+def _verify_v1_mapping(payload: Mapping[str, object]) -> None:
+    expected = build_reference_artifact()
+    if set(payload) != set(expected):
+        missing = sorted(set(expected) - set(payload))
+        extra = sorted(set(payload) - set(expected))
+        raise ValueError(f"top-level schema mismatch missing={missing} extra={extra}")
+    _verify_digest(payload, "mapping")
+    if dict(payload) != expected:
+        for key in expected:
+            if payload.get(key) != expected[key]:
+                raise ValueError(f"semantic mismatch in {key}")
+        raise ValueError("artifact differs from independent derivation")
+
+
+def _verify_v2_wrapper(payload: Mapping[str, object]) -> None:
+    if set(payload) != WRAPPER_FIELDS:
+        raise ValueError("PF4 wrapper field set mismatch")
+    if payload.get("schema_version") != WRAPPER_SCHEMA_VERSION:
+        raise ValueError("PF4 wrapper schema version mismatch")
+    if payload.get("kind") != WRAPPER_KIND:
+        raise ValueError("PF4 wrapper kind mismatch")
+    if payload.get("reference_algorithm") != REFERENCE_ALGORITHM:
+        raise ValueError("PF4 reference algorithm mismatch")
+    _verify_digest(payload, "wrapper")
+    mapping = payload.get("mapping")
+    if not isinstance(mapping, Mapping):
+        raise TypeError("PF4 mathematical mapping is missing")
+    _verify_v1_mapping(mapping)
+    sources = payload.get("implementation_sources")
+    if not isinstance(sources, Mapping) or any(
+        not isinstance(path, str)
+        or not isinstance(source_digest, str)
+        or len(source_digest) != 64
+        or any(character not in "0123456789abcdef" for character in source_digest)
+        for path, source_digest in sources.items()
+    ):
+        raise ValueError("PF4 implementation source manifest is malformed")
+    if dict(sources) != _implementation_sources():
+        raise ValueError("PF4 implementation source closure mismatch")
+    expected = build_reference_wrapper()
+    if dict(payload) != expected:
+        raise ValueError("PF4 wrapper differs from independent rebuild")
+
+
 def verify_artifact_payload(payload: object) -> list[str]:
     try:
         if not isinstance(payload, dict):
             raise TypeError("artifact must be an object")
         _reject_json_numeric_aliases(payload)
-        expected = build_reference_artifact()
-        if set(payload) != set(expected):
-            missing = sorted(set(expected) - set(payload))
-            extra = sorted(set(payload) - set(expected))
-            raise ValueError(f"top-level schema mismatch missing={missing} extra={extra}")
-        digest = payload.get("payload_sha256")
-        if not isinstance(digest, str) or len(digest) != 64:
-            raise ValueError("payload_sha256 must be a 64-hex string")
-        try:
-            int(digest, 16)
-        except ValueError as error:
-            raise ValueError("payload_sha256 must be a 64-hex string") from error
-        if digest != _payload_digest(payload):
-            raise ValueError("payload digest mismatch")
-        if payload != expected:
-            for key in expected:
-                if payload.get(key) != expected[key]:
-                    raise ValueError(f"semantic mismatch in {key}")
-            raise ValueError("artifact differs from independent derivation")
-    except (ArithmeticError, TypeError, ValueError) as error:
+        if payload.get("schema_version") == WRAPPER_SCHEMA_VERSION:
+            _verify_v2_wrapper(payload)
+        else:
+            _verify_v1_mapping(payload)
+    except (ArithmeticError, OSError, TypeError, ValueError) as error:
         return [str(error)]
     return []
 
@@ -877,14 +1042,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     if errors:
         print("\n".join(errors))
         return 1
-    result = build_reference_artifact()
+    submitted = _load_artifact(arguments.verify)
+    mapping = (
+        submitted["mapping"]
+        if submitted.get("schema_version") == WRAPPER_SCHEMA_VERSION
+        else submitted
+    )
     print(
         json.dumps(
             {
                 "valid": True,
-                "algorithm": "recursive_bch_hall_lyndon_v1",
-                "identity_status": result["identity_status"],
-                "payload_sha256": result["payload_sha256"],
+                "algorithm": REFERENCE_ALGORITHM,
+                "identity_status": mapping["identity_status"],
+                "payload_sha256": submitted["payload_sha256"],
             },
             sort_keys=True,
             separators=(",", ":"),

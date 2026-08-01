@@ -1,0 +1,7 @@
+# Exact environment used for the 2026-07-31 local verification transcript.
+# The pyproject.toml ranges remain the supported installation contract.
+numpy==2.3.5
+scipy==1.16.3
+sympy==1.14.0
+pytest==9.0.2
+setuptools==80.9.0
