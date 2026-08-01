@@ -13,6 +13,11 @@
 
 set -euo pipefail
 
+# The system default is Git 1.8.3, which does not support the `git -C`
+# invocation used by the frozen source-closure implementation.
+source /etc/profile.d/modules.sh
+module load git/2.30.2-gcc-7.3.1
+
 : "${ISSUE128_RUN_ID:?ISSUE128_RUN_ID must identify this immutable run}"
 : "${ISSUE128_GROUPED_SOURCE_COMMIT:?missing frozen generator commit}"
 : "${ISSUE128_SUBMISSION_COMMIT:?missing submission artifact commit}"
@@ -33,6 +38,22 @@ BUILD_ROOT="$ISSUE128_BUILD_SOURCE_ROOT"
 BUILD_ISSUE="$BUILD_ROOT/tracks/qcs/solutions/WangTheoPhys/issue128"
 FRESH="$OUT/fresh"
 PYTHON_BIN="${ISSUE128_PYTHON:-python3}"
+
+"$PYTHON_BIN" - <<'PY'
+from importlib.metadata import version
+
+expected = {
+    "numpy": "2.3.5",
+    "scipy": "1.16.3",
+    "sympy": "1.14.0",
+    "pytest": "9.0.2",
+    "setuptools": "80.9.0",
+}
+observed = {package: version(package) for package in expected}
+if observed != expected:
+    raise SystemExit(f"reproducibility environment mismatch: {observed!r}")
+print(f"reproducibility_environment={observed!r}", flush=True)
+PY
 
 test "$(tr -d '\n' < "$SUBMISSION_ROOT/.issue128-commit")" = \
   "$ISSUE128_SUBMISSION_COMMIT"
