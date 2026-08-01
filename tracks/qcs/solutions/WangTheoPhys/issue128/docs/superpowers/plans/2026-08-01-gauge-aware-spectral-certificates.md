@@ -29,7 +29,7 @@
 - Consumes: exact coordinate vectors and optional diagonal Hilbert--Schmidt metric weights.
 - Produces: `GaugeScope`, `GaugeDecomposition`, `decompose_gauge`, `verify_gauge_decomposition`, and `primitive_integer_vector`.
 
-- [ ] **Step 1: Write failing tests for primal, dual, metric, and scope behavior**
+- [x] **Step 1: Write failing tests for primal, dual, metric, and scope behavior**
 
 ```python
 from fractions import Fraction
@@ -102,7 +102,7 @@ def test_exact_and_scope_inputs_fail_closed() -> None:
         )
 ```
 
-- [ ] **Step 2: Run the tests and confirm the missing-module failure**
+- [x] **Step 2: Run the tests and confirm the missing-module failure**
 
 Run:
 
@@ -112,7 +112,7 @@ python -m pytest -q tests/test_spectral_gauge.py
 
 Expected: collection fails with `ModuleNotFoundError: trottercert.spectral_gauge`.
 
-- [ ] **Step 3: Implement exact vector validation and primitive normalization**
+- [x] **Step 3: Implement exact vector validation and primitive normalization**
 
 Implement these public definitions:
 
@@ -158,7 +158,7 @@ Validation must reject booleans, Python floats, non-real expressions,
 mismatches.  `FULL_COMMUTATOR_IMAGE` must require a nonempty
 `completeness_id`.
 
-- [ ] **Step 4: Implement exact weighted projection and verification**
+- [x] **Step 4: Implement exact weighted projection and verification**
 
 Use an exact generator matrix `G`, obtain independent columns from RREF pivot
 indices, and compute
@@ -192,7 +192,7 @@ def verify_gauge_decomposition(result: GaugeDecomposition) -> None:
 The verifier must require `witness_target_pairing != 0` for either obstruction
 status and exact weighted orthogonality to every independent generator.
 
-- [ ] **Step 5: Run focused tests**
+- [x] **Step 5: Run focused tests**
 
 Run:
 
@@ -202,7 +202,7 @@ python -m pytest -q tests/test_spectral_gauge.py
 
 Expected: all tests pass.
 
-- [ ] **Step 6: Commit Task 1**
+- [x] **Step 6: Commit Task 1**
 
 ```bash
 git add \
@@ -223,7 +223,7 @@ git commit -m "feat(issue128): add exact spectral gauge quotient"
 - Consumes: exact square Hermitian SymPy matrices `H` and `E`.
 - Produces: `MatrixGaugeDecomposition`, `hermitian_basis`, `hermitian_coordinates`, `matrix_from_hermitian_coordinates`, and `decompose_matrix_spectral_gauge`.
 
-- [ ] **Step 1: Add failing matrix reference tests**
+- [x] **Step 1: Add failing matrix reference tests**
 
 ```python
 import sympy as sp
@@ -276,7 +276,7 @@ def test_matrix_inputs_reject_floats_and_nonhermitian_values() -> None:
         )
 ```
 
-- [ ] **Step 2: Run the matrix tests and confirm missing-interface failures**
+- [x] **Step 2: Run the matrix tests and confirm missing-interface failures**
 
 Run:
 
@@ -286,7 +286,7 @@ python -m pytest -q tests/test_spectral_gauge.py -k 'matrix or diagonal or calib
 
 Expected: import or attribute failure for `decompose_matrix_spectral_gauge`.
 
-- [ ] **Step 3: Implement the exact Hermitian basis and coordinate map**
+- [x] **Step 3: Implement the exact Hermitian basis and coordinate map**
 
 Use this ordered real basis for dimension `d`:
 
@@ -322,7 +322,7 @@ coordinate function reads `matrix[j,j]`, `re(matrix[j,k])`, and
 combination of those coordinates and basis matrices and must round-trip to the
 input under `sp.simplify`.
 
-- [ ] **Step 4: Implement automatic full-image decomposition**
+- [x] **Step 4: Implement automatic full-image decomposition**
 
 Add:
 
@@ -360,7 +360,7 @@ metric=(1,) * d + (2,) * (d * (d - 1)),
 Reconstruct the projection, residual, and primitive witness matrices.  Verify
 the witness commutes with `H` whenever the result is a spectral obstruction.
 
-- [ ] **Step 5: Run all Task 1--2 tests**
+- [x] **Step 5: Run all Task 1--2 tests**
 
 Run:
 
@@ -370,7 +370,7 @@ python -m pytest -q tests/test_spectral_gauge.py
 
 Expected: all tests pass.
 
-- [ ] **Step 6: Commit Task 2**
+- [x] **Step 6: Commit Task 2**
 
 ```bash
 git add \
@@ -393,7 +393,7 @@ git commit -m "feat(issue128): construct complete matrix gauge image"
 - Consumes: `docs/experiments/processor-obstruction/exact-obstruction.json` and Task 2's exact matrix examples.
 - Produces: `build_payload(source: Path) -> dict[str, object]`, `verify_payload(payload, source) -> None`, and CLI options `--source`, `--output`, `--verify`.
 
-- [ ] **Step 1: Write failing artifact and mutation tests**
+- [x] **Step 1: Write failing artifact and mutation tests**
 
 ```python
 import copy
@@ -430,7 +430,7 @@ def test_audit_rejects_forged_status_and_digest() -> None:
         verify_payload(forged, SOURCE)
 ```
 
-- [ ] **Step 2: Run the test and confirm missing-module failure**
+- [x] **Step 2: Run the test and confirm missing-module failure**
 
 Run:
 
@@ -440,7 +440,7 @@ python -m pytest -q tests/test_gauge_aware_obstruction_audit.py
 
 Expected: collection fails for the missing audit module.
 
-- [ ] **Step 3: Implement canonical payload construction and verification**
+- [x] **Step 3: Implement canonical payload construction and verification**
 
 The payload must contain these top-level fields:
 
@@ -483,7 +483,7 @@ The payload must contain these top-level fields:
 `nonzero` flag.  `verify_payload` must rebuild the entire payload and compare
 canonical JSON bytes; it must never trust submitted status strings.
 
-- [ ] **Step 4: Generate and verify the canonical artifact**
+- [x] **Step 4: Generate and verify the canonical artifact**
 
 Run:
 
@@ -501,7 +501,7 @@ PYTHONPATH=src python -u -m scripts.audit_gauge_aware_obstruction \
 Expected: the first command writes sorted canonical JSON; the second prints a
 single success line containing the source digest and exits zero.
 
-- [ ] **Step 5: Document the calibrated claim boundary**
+- [x] **Step 5: Document the calibrated claim boundary**
 
 Append a `## Calibration-aware refinement` section to the existing README.
 State explicitly:
@@ -516,7 +516,7 @@ operator no-go and is not promoted to an eigenphase lower bound.
 
 Link the new JSON digest and give both reproduction commands.
 
-- [ ] **Step 6: Run focused tests**
+- [x] **Step 6: Run focused tests**
 
 Run:
 
@@ -528,7 +528,7 @@ python -m pytest -q \
 
 Expected: all tests pass.
 
-- [ ] **Step 7: Commit Task 3**
+- [x] **Step 7: Commit Task 3**
 
 ```bash
 git add \
@@ -550,7 +550,7 @@ git commit -m "feat(issue128): audit calibrated spectral obstruction"
 - Consumes: all Task 1--3 code and the existing Issue-128 non-slow suite.
 - Produces: a clean focused result, a clean full non-slow result, and a final no-HPC decision.
 
-- [ ] **Step 1: Run source-level static checks**
+- [x] **Step 1: Run source-level static checks**
 
 Run:
 
@@ -561,7 +561,7 @@ python -m compileall -q src/trottercert/spectral_gauge.py \
 
 Expected: exit zero with no output.
 
-- [ ] **Step 2: Run the focused scientific suite**
+- [x] **Step 2: Run the focused scientific suite**
 
 Run:
 
@@ -576,7 +576,7 @@ python -m pytest -q \
 Expected: all tests pass and no test labels a restricted span as a spectral
 obstruction.
 
-- [ ] **Step 3: Run the complete non-slow Issue-128 suite**
+- [x] **Step 3: Run the complete non-slow Issue-128 suite**
 
 Run:
 
@@ -587,7 +587,7 @@ python -m pytest -q
 Expected: all selected tests pass; slow tests remain deselected by project
 configuration.
 
-- [ ] **Step 4: Audit changed-file scope and artifact reproducibility**
+- [x] **Step 4: Audit changed-file scope and artifact reproducibility**
 
 Run:
 
@@ -603,7 +603,7 @@ PYTHONPATH=src python -u -m scripts.audit_gauge_aware_obstruction \
 Expected: no whitespace errors; the audit verifies; unrelated pre-existing
 dirty files remain unstaged and untouched.
 
-- [ ] **Step 5: Record the promotion decision**
+- [x] **Step 5: Record the promotion decision**
 
 Do not request HPC.  Record in the handoff that the next gate is either:
 
