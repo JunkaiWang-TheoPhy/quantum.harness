@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "sha256_manifest": "artifacts/publication/paper-a-claim-SHA256SUMS",
+  "excluded_pending_claims": [
+    {
+      "name": "strengthened_control_ratio",
+      "reason": "Excluded from the Paper A release until an independent hash-bound source and semantic checker exist."
+    }
+  ],
+  "claims": {
+    "benchmark_model": {
+      "value": "periodic_square_spin_half_isotropic_heisenberg",
+      "source": "certificates/issue128-d5-integrated-certificate.json",
+      "checker": "scripts/reference_verify.py",
+      "manuscript_locations": ["docs/manuscript/sections/abstract.tex"]
+    },
+    "benchmark_normalization": {
+      "value": "(XX+YY+ZZ)/4",
+      "source": "certificates/issue128-d5-integrated-certificate.json",
+      "checker": "scripts/reference_verify.py",
+      "manuscript_locations": ["docs/manuscript/sections/problem.tex"]
+    },
+    "lattice_size": {
+      "value": [12, 12],
+      "source": "certificates/issue128-d5-integrated-certificate.json",
+      "checker": "scripts/reference_verify.py",
+      "manuscript_locations": ["docs/manuscript/sections/abstract.tex"]
+    },
+    "simulation_time": {
+      "value": [1, 1],
+      "source": "certificates/issue128-d5-integrated-certificate.json",
+      "checker": "scripts/reference_verify.py",
+      "manuscript_locations": ["docs/manuscript/sections/abstract.tex"]
+    },
+    "tolerance": {
+      "value": [1, 1000000],
+      "source": "certificates/issue128-d5-integrated-certificate.json",
+      "checker": "scripts/reference_verify.py",
+      "manuscript_locations": ["docs/manuscript/sections/abstract.tex"]
+    },
+    "accepted_steps": {
+      "value": 95,
+      "source": "certificates/issue128-d5-integrated-certificate.json",
+      "checker": "scripts/reference_verify.py",
+      "manuscript_locations": ["docs/manuscript/sections/abstract.tex"]
+    },
+    "adjacent_rejected_steps": {
+      "value": 94,
+      "source": "certificates/issue128-d5-integrated-certificate.json",
+      "checker": "scripts/reference_verify.py",
+      "manuscript_locations": ["docs/manuscript/sections/abstract.tex"]
+    },
+    "published_steps": {
+      "value": 393,
+      "source": "certificates/issue128-d5-integrated-certificate.json",
+      "checker": "scripts/reference_verify.py",
+      "manuscript_locations": ["docs/manuscript/sections/introduction.tex"]
+    },
+    "published_groups": {
+      "value": 11791,
+      "source": "certificates/issue128-d5-integrated-certificate.json",
+      "checker": "scripts/reference_verify.py",
+      "manuscript_locations": ["docs/manuscript/sections/results.tex"]
+    },
+    "candidate_groups": {
+      "value": 2851,
+      "source": "certificates/issue128-d5-integrated-certificate.json",
+      "checker": "scripts/reference_verify.py",
+      "manuscript_locations": ["docs/manuscript/sections/results.tex"]
+    },
+    "published_ratio": {
+      "value": [11791, 2851],
+      "source": "certificates/issue128-d5-integrated-certificate.json",
+      "checker": "scripts/reference_verify.py",
+      "manuscript_locations": ["docs/manuscript/sections/abstract.tex"]
+    },
+    "d4_term_count": {
+      "value": 75324,
+      "source": "certificates/issue128-d5-integrated-certificate.json",
+      "checker": "scripts/reference_verify.py",
+      "manuscript_locations": ["docs/manuscript/sections/abstract.tex"]
+    },
+    "d4_group_count": {
+      "value": 7576,
+      "source": "certificates/issue128-d5-integrated-certificate.json",
+      "checker": "scripts/reference_verify.py",
+      "manuscript_locations": ["docs/manuscript/sections/abstract.tex"]
+    },
+    "d5_term_count": {
+      "value": 605832,
+      "source": "certificates/issue128-d5-integrated-certificate.json",
+      "checker": "scripts/reference_verify.py",
+      "manuscript_locations": ["docs/manuscript/sections/abstract.tex"]
+    },
+    "d5_group_count": {
+      "value": 123106,
+      "source": "certificates/issue128-d5-integrated-certificate.json",
+      "checker": "scripts/reference_verify.py",
+      "manuscript_locations": ["docs/manuscript/sections/abstract.tex"]
+    },
+    "test_evidence": {
+      "value": {
+        "normal_passed": 146,
+        "normal_deselected": 12,
+        "mutation_passed": 18
+      },
+      "source": "artifacts/d5-integrated/verification-transcript.txt",
+      "checker": "tests/test_certificate_mutations.py",
+      "manuscript_locations": ["docs/manuscript/sections/reproducibility.tex"]
+    },
+    "trusted_computing_base": {
+      "value": {
+        "discovery_trusted": false,
+        "reference_verifier_imports_trottercert": false
+      },
+      "source": "docs/manuscript/sections/verification.tex",
+      "checker": "scripts/reference_verify.py",
+      "manuscript_locations": ["docs/manuscript/sections/verification.tex"]
+    }
+  }
+}
