@@ -51,6 +51,14 @@
     "ownership": "obsolete",
     "release_included": false
   },
+  "benchmarks/paper-a/ed-calibration.json": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "benchmarks/paper-a/xxz-transfer.json": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
   "certificates/issue128-certificate.json": {
     "ownership": "paper-a",
     "release_included": true
@@ -603,6 +611,14 @@
     "ownership": "exploratory",
     "release_included": false
   },
+  "scripts/run_ed_calibration.py": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
+  "scripts/run_xxz_transfer.py": {
+    "ownership": "paper-a",
+    "release_included": true
+  },
   "scripts/screen_matching_order.py": {
     "ownership": "exploratory",
     "release_included": false
@@ -799,6 +815,10 @@
     "ownership": "shared",
     "release_included": true
   },
+  "src/trottercert/trace_obstruction.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
   "src/trottercert/verify.py": {
     "ownership": "shared",
     "release_included": true
@@ -902,6 +922,10 @@
   "tests/test_dual_word_manifest.py": {
     "ownership": "shared",
     "release_included": false
+  },
+  "tests/test_ed_calibration.py": {
+    "ownership": "paper-a",
+    "release_included": true
   },
   "tests/test_e7_tree_reducer.py": {
     "ownership": "shared",
@@ -1067,6 +1091,10 @@
     "ownership": "shared",
     "release_included": false
   },
+  "tests/test_trace_obstruction.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
   "tests/test_su2clusters.py": {
     "ownership": "shared",
     "release_included": false
@@ -1074,5 +1102,9 @@
   "tests/test_support_groups.py": {
     "ownership": "shared",
     "release_included": false
+  },
+  "tests/test_xxz_transfer.py": {
+    "ownership": "paper-a",
+    "release_included": true
   }
 }

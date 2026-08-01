@@ -35,6 +35,8 @@ _PAPER_A_RELEASE_PATHS = {
     "artifacts/publication/paper-a-claim-SHA256SUMS",
     "artifacts/publication/paper-a-claim-matrix.json",
     "artifacts/publication/paper-a-file-ownership.json",
+    "benchmarks/paper-a/ed-calibration.json",
+    "benchmarks/paper-a/xxz-transfer.json",
     "certificates/issue128-certificate.json",
     "certificates/issue128-d4-groups.json",
     "certificates/issue128-d5-groups.json.gz",
@@ -42,11 +44,15 @@ _PAPER_A_RELEASE_PATHS = {
     "scripts/audit_paper_a_claims.py",
     "scripts/audit_publication_scope.py",
     "scripts/reference_verify.py",
+    "scripts/run_ed_calibration.py",
+    "scripts/run_xxz_transfer.py",
     "scripts/verify.py",
     "tests/test_certificate_mutations.py",
+    "tests/test_ed_calibration.py",
     "tests/test_paper_a_claims.py",
     "tests/test_publication_scope.py",
     "tests/test_reference_verify.py",
+    "tests/test_xxz_transfer.py",
 }
 _PAPER_A_RELEASE_PREFIX = "docs/manuscript/"
 _SELECTED_SHARED_RELEASE_PATHS = {
