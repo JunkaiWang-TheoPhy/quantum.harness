@@ -6,6 +6,18 @@ from .algebra import PauliString, PauliSum
 from .lattice import SquareLattice
 
 
+def xxz_bond(delta: Fraction) -> dict[str, Fraction]:
+    """Return exact coefficients for ``(XX + YY + delta ZZ) / 4``."""
+
+    if not isinstance(delta, Fraction):
+        raise TypeError("delta must be a Fraction")
+    return {
+        "XX": Fraction(1, 4),
+        "YY": Fraction(1, 4),
+        "ZZ": delta / 4,
+    }
+
+
 def heisenberg_bond(u: int, v: int) -> PauliSum:
     result = PauliSum.zero()
     for op in ("X", "Y", "Z"):
