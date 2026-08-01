@@ -52,9 +52,24 @@ PYTHON_CMD=(
 test "$(sha256sum "$ISSUE128_APPTAINER_IMAGE" | awk '{print $1}')" = \
   "$ISSUE128_APPTAINER_IMAGE_SHA256"
 
-"${PYTHON_CMD[@]}" - <<'PY'
-from importlib.metadata import version
+test "$(tr -d '\n' < "$SUBMISSION_ROOT/.issue128-commit")" = \
+  "$ISSUE128_SUBMISSION_COMMIT"
+test "$(tr -d '\n' < "$BUILD_ROOT/.issue128-commit")" = \
+  "$ISSUE128_GROUPED_SOURCE_COMMIT"
+test -f "$SUBMISSION_ISSUE/benchmarks/paper-a/grouped-xxz-pilot.json"
+test -f "$SUBMISSION_ISSUE/benchmarks/paper-a/grouped-xxz-pilot-witness.json.gz"
+test ! -e "$OUT"
+mkdir -p "$OUT" "$FRESH"
 
+"${PYTHON_CMD[@]}" - "$OUT/environment.json" \
+  "$ISSUE128_APPTAINER_IMAGE" "$ISSUE128_APPTAINER_IMAGE_SHA256" \
+  "$(git --version)" "$(apptainer version)" <<'PY'
+from importlib.metadata import version
+import json
+from pathlib import Path
+import sys
+
+output = Path(sys.argv[1])
 expected = {
     "numpy": "2.3.5",
     "scipy": "1.16.3",
@@ -65,17 +80,22 @@ expected = {
 observed = {package: version(package) for package in expected}
 if observed != expected:
     raise SystemExit(f"reproducibility environment mismatch: {observed!r}")
-print(f"reproducibility_environment={observed!r}", flush=True)
+payload = {
+    "schema": "issue128_grouped_xxz_hpc_environment_v1",
+    "apptainer_image": sys.argv[2],
+    "apptainer_image_sha256": sys.argv[3],
+    "apptainer_version": sys.argv[5],
+    "git_version": sys.argv[4],
+    "packages": observed,
+    "python_executable": sys.executable,
+    "python_version": sys.version.split()[0],
+}
+raw = (json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n").encode()
+temporary = output.with_suffix(".json.tmp")
+temporary.write_bytes(raw)
+temporary.replace(output)
+print(raw.decode(), end="", flush=True)
 PY
-
-test "$(tr -d '\n' < "$SUBMISSION_ROOT/.issue128-commit")" = \
-  "$ISSUE128_SUBMISSION_COMMIT"
-test "$(tr -d '\n' < "$BUILD_ROOT/.issue128-commit")" = \
-  "$ISSUE128_GROUPED_SOURCE_COMMIT"
-test -f "$SUBMISSION_ISSUE/benchmarks/paper-a/grouped-xxz-pilot.json"
-test -f "$SUBMISSION_ISSUE/benchmarks/paper-a/grouped-xxz-pilot-witness.json.gz"
-test ! -e "$OUT"
-mkdir -p "$OUT" "$FRESH"
 
 set +e
 /usr/bin/time -v "${PYTHON_CMD[@]}" -u \
