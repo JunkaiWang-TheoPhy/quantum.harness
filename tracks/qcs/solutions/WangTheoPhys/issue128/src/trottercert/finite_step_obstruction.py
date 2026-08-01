@@ -26,7 +26,7 @@ FINITE_STEP_STATUSES = (
     "inconclusive",
 )
 AFFINE_SPECTRAL_STATUSES = (
-    "certified_affine_spectral_obstruction",
+    "certified_affine_effective_spectral_obstruction",
     "inconclusive",
 )
 
@@ -195,7 +195,7 @@ def decide_affine_spectral_obstruction(
     )
     invariant_margin = linear_lower - remainder
     status = (
-        "certified_affine_spectral_obstruction"
+        "certified_affine_effective_spectral_obstruction"
         if invariant_margin > 0
         else "inconclusive"
     )

@@ -81,8 +81,8 @@ def test_certificate_builds_from_digest_bound_inputs(tmp_path: Path) -> None:
     assert payload["claim"]["local_log_status"] == (
         "certified_local_log_obstruction"
     )
-    assert payload["claim"]["finite_step_spectral_status"] == (
-        "certified_affine_spectral_obstruction"
+    assert payload["claim"]["finite_step_effective_spectrum_status"] == (
+        "certified_affine_effective_spectral_obstruction"
     )
     assert payload["claim"]["promoted"] is True
     verify_payload(payload, e9_path=e9)
@@ -101,7 +101,7 @@ def test_mutated_certificate_status_is_rejected(tmp_path: Path) -> None:
     _fake_e9(e9)
     payload = build_payload(e9_path=e9, index_path=None, require_full_e9=False)
     forged = copy.deepcopy(payload)
-    forged["claim"]["finite_step_spectral_status"] = "inconclusive"
+    forged["claim"]["finite_step_effective_spectrum_status"] = "inconclusive"
     forged["claim"]["promoted"] = False
 
     with pytest.raises(ValueError, match="regeneration mismatch"):

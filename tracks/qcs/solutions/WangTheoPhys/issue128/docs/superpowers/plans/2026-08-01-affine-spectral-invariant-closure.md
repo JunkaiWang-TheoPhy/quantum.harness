@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Upgrade the exact finite-step dual local-log margin into a rigorous obstruction to the complete affine unitary orbit of the frozen Hamiltonian.
+**Goal:** Upgrade the exact finite-step dual local-log margin into a rigorous obstruction to the complete affine unitary orbit of the frozen principal effective Hamiltonian.
 
 **Architecture:** Keep the dual signed-margin calculation as the first gate.  Add an exact rational centered-moment invariant whose linear term is the existing quadratic-witness pairing, bound every nonlinear term with the committed principal-log norm envelope, and expose a separate affine-spectral margin and status.  The production certificate regenerates all arithmetic from hash-bound E5, E7, E9, manifest, and tail inputs.
 
@@ -14,7 +14,8 @@
 - Use normalized trace moments `m2=54` and `m3=-27` for the frozen `12 x 12` instance.
 - Convert the one-step log-defect cap to the effective-Hamiltonian cap by multiplying by exactly 97.
 - Centering costs a factor of two: `epsilon=2*97*log_defect`.
-- Promote only when both the dual signed-margin lower endpoint and the affine-invariant margin are strictly positive.
+- Promote the effective-spectrum claim only when both the dual signed-margin lower endpoint and the affine-invariant margin are strictly positive.
+- Do not turn the effective-spectrum status into a total-time eigenphase claim without a separate no-wrap/no-relabeling certificate.
 - Preserve exact rational endpoints in JSON; decimals are non-normative report text only.
 - Any missing E9 manifest replay, source drift, lowered norm cap, or edited status fails closed.
 
@@ -85,7 +86,7 @@ linear = 6 * abs(m3) * m2**3 * cells * dual_margin_lower
 margin = linear - remainder
 ```
 
-Reject booleans, nonpositive cell counts, `m2<=0`, `m3=0`, a Hilbert--Schmidt cap below `sqrt(m2)` (check by squaring), negative margins, and negative defect caps.  Use status `certified_affine_spectral_obstruction` only when `margin>0`; otherwise use `inconclusive`.
+Reject booleans, nonpositive cell counts, `m2<=0`, `m3=0`, a Hilbert--Schmidt cap below `sqrt(m2)` (check by squaring), negative margins, and negative defect caps.  Use status `certified_affine_effective_spectral_obstruction` only when `margin>0`; otherwise use `inconclusive`.
 
 - [ ] **Step 4: Add exact affine-orbit regression fixtures**
 
@@ -112,7 +113,7 @@ git commit -m "feat(issue128): bound nonlinear spectral invariant"
 **Interfaces:**
 - Consumes: verified `envelope.log_defect`, `instance.steps`, `moments.h_hs_cap`, `moments.h_hs_squared`, and the positive dual margin.
 - Produces: JSON sections `affine_spectral_invariant`, `effective_log_defect_bound`, `centered_defect_cap`, `linear_invariant_lower`, `nonlinear_remainder_upper`, and `invariant_margin`.
-- Produces claim fields `local_log_status`, `finite_step_spectral_status`, and `promoted`.
+- Produces claim fields `local_log_status`, `finite_step_effective_spectrum_status`, and `promoted`.
 
 - [ ] **Step 1: Write failing factor-97 and claim-forgery tests**
 
@@ -126,8 +127,8 @@ def test_certificate_multiplies_one_step_log_defect_by_steps() -> None:
 
 def test_spectral_status_cannot_follow_local_log_status_without_margin() -> None:
     forged = build_fixture()
-    forged["claim"]["finite_step_spectral_status"] = (
-        "certified_affine_spectral_obstruction"
+    forged["claim"]["finite_step_effective_spectrum_status"] = (
+        "certified_affine_effective_spectral_obstruction"
     )
     with pytest.raises(ValueError, match="regeneration mismatch"):
         verify_fixture(forged)
@@ -218,6 +219,8 @@ State the affine-orbit invariant and remainder inequality before reporting the
 two exact margins.  If the affine margin is not strictly positive, retain
 `inconclusive` and describe only the local-log result.  Do not copy a decimal
 margin into a claim-bearing file; the report cites JSON pointers and hashes.
+State explicitly that this closes the principal effective-Hamiltonian affine
+orbit; it does not yet certify a total-time unitary phase gap modulo `2*pi`.
 
 - [ ] **Step 5: Run clean-checkout verification and commit**
 
@@ -249,3 +252,4 @@ git commit -m "cert(issue128): close finite-step affine spectrum"
 - [ ] The spectral claim has its own strictly positive margin.
 - [ ] E9 is verified against all manifests and two independent reruns.
 - [ ] Local-log and affine-spectral statuses remain distinct in code, JSON, and prose.
+- [ ] No total-time eigenphase claim appears without a separate phase-wrap gate.

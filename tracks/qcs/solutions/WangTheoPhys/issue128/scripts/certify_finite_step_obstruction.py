@@ -342,12 +342,13 @@ def build_payload(
                 if decision.status == "certified_obstruction"
                 else decision.status
             ),
-            "finite_step_spectral_status": affine.status,
+            "finite_step_effective_spectrum_status": affine.status,
             "promotion_rule": (
                 "signed_margin.lower > 0 and affine_invariant_margin > 0"
             ),
             "promoted": (
-                affine.status == "certified_affine_spectral_obstruction"
+                affine.status
+                == "certified_affine_effective_spectral_obstruction"
             ),
         },
     }

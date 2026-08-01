@@ -194,7 +194,7 @@ def test_issue128_scale_fixture_has_positive_affine_margin() -> None:
         effective_log_defect=Fraction(3, 2_000_000),
     )
 
-    assert result.status == "certified_affine_spectral_obstruction"
+    assert result.status == "certified_affine_effective_spectral_obstruction"
     assert result.invariant_margin > 0
 
 

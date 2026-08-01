@@ -17,7 +17,7 @@ This excludes the tangent gauge
 `image(i ad_H) + span(I,H)`.  By itself it does not exclude the entire
 nonlinear affine unitary orbit `a I + b U H U^dagger`: a finite conjugation can
 have nonzero pairing with a witness that annihilates the tangent space.  A
-publication-level finite-step eigenphase claim therefore needs one more
+publication-level finite-step effective-spectrum claim therefore needs one more
 nonlinear remainder gate.
 
 ## Considered routes
@@ -57,6 +57,11 @@ m_3(A)=b^3 m_3(H),
 and hence `Phi_H(A)=0` exactly, for either sign of `b`.  Thus a certified
 nonzero value of `Phi_H(log(S(h))/h)` excludes endpoint conjugation, global
 phase, and global time/energy calibration at the actual finite step.
+
+This statement concerns the affine spectrum of the principal effective
+Hamiltonian.  It is not, by itself, a lower bound for the spectrum of the
+total-time unitary modulo `2*pi`; such an eigenphase claim additionally needs a
+no-wrap/no-relabeling gate.
 
 ## Linear term and nonlinear remainder
 
@@ -115,7 +120,8 @@ without this factor is a verifier error.
 
 The existing signed dual margin remains a separately reported field.  It may
 establish `certified_local_log_obstruction`.  The public finite-step spectral
-status changes to `certified_affine_spectral_obstruction` only when the exact
+effective-spectrum status changes to
+`certified_affine_effective_spectral_obstruction` only when the exact
 lower endpoint of the affine-invariant margin is strictly positive.  A zero or
 negative endpoint leaves the spectral claim `inconclusive`, even if the dual
 pairing is nonzero.
