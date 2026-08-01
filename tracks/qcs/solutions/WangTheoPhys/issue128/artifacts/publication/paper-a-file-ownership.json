@@ -59,6 +59,14 @@
     "ownership": "paper-a",
     "release_included": true
   },
+  "benchmarks/paper-a/grouped-xxz-pilot-witness.json.gz": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "benchmarks/paper-a/grouped-xxz-pilot.json": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
   "benchmarks/paper-a/heldout-tfim.json": {
     "ownership": "paper-a",
     "release_included": true
@@ -151,6 +159,14 @@
     "ownership": "paper-b",
     "release_included": false
   },
+  "docs/experiments/processor-obstruction/dual-e9-pairing.json": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/experiments/processor-obstruction/dual-e9-provenance.json": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
   "docs/experiments/processor-obstruction/dual-log-tail.json": {
     "ownership": "paper-b",
     "release_included": false
@@ -163,7 +179,15 @@
     "ownership": "paper-b",
     "release_included": false
   },
+  "docs/experiments/processor-obstruction/finite-step-obstruction.json": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
   "docs/experiments/processor-obstruction/gauge-aware-audit.json": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/experiments/processor-obstruction/pf4-bch-mapping.json": {
     "ownership": "paper-b",
     "release_included": false
   },
@@ -172,6 +196,10 @@
     "release_included": false
   },
   "docs/experiments/processor-obstruction/tfim-family-obstruction.json": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/experiments/processor-obstruction/tfim-gauge-witness.json": {
     "ownership": "paper-b",
     "release_included": false
   },
@@ -327,6 +355,10 @@
     "ownership": "paper-b",
     "release_included": false
   },
+  "docs/plans/2026-08-01-evidence-first-dual-gate-design.md": {
+    "ownership": "shared",
+    "release_included": false
+  },
   "docs/plans/2026-08-01-extensive-commutant-witness-design.md": {
     "ownership": "paper-b",
     "release_included": false
@@ -376,6 +408,10 @@
     "release_included": false
   },
   "docs/report/extensive-commutant-witness-theorem.md": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/report/finite-step-affine-spectral-ledger.md": {
     "ownership": "paper-b",
     "release_included": false
   },
@@ -479,11 +515,19 @@
     "ownership": "paper-b",
     "release_included": false
   },
+  "docs/superpowers/plans/2026-08-01-grouped-xxz-compiler.md": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
   "docs/superpowers/plans/2026-08-01-paper-a-quantum-implementation.md": {
     "ownership": "paper-a",
     "release_included": false
   },
   "docs/superpowers/plans/2026-08-01-paper-b-prxq-gates-implementation.md": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/superpowers/plans/2026-08-01-pf4-bch-mapping.md": {
     "ownership": "paper-b",
     "release_included": false
   },
@@ -493,6 +537,10 @@
   },
   "docs/superpowers/plans/2026-08-01-quadratic-commutant-witness.md": {
     "ownership": "paper-b",
+    "release_included": false
+  },
+  "docs/superpowers/plans/2026-08-01-strengthened-control-certificate.md": {
+    "ownership": "paper-a",
     "release_included": false
   },
   "pyproject.toml": {
@@ -587,6 +635,10 @@
     "ownership": "paper-b",
     "release_included": false
   },
+  "scripts/certify_tfim_gauge_witness.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
   "scripts/certify_tfim_obstruction.py": {
     "ownership": "paper-b",
     "release_included": false
@@ -599,8 +651,16 @@
     "ownership": "exploratory",
     "release_included": false
   },
+  "scripts/compile_grouped_xxz.py": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
   "scripts/crosscheck_small.py": {
     "ownership": "paper-a",
+    "release_included": false
+  },
+  "scripts/derive_pf4_bch_mapping.py": {
+    "ownership": "paper-b",
     "release_included": false
   },
   "scripts/experimental_full_phase_4x4.py": {
@@ -643,9 +703,25 @@
     "ownership": "exploratory",
     "release_included": false
   },
+  "scripts/reference_grouped_xxz_theorem.py": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "scripts/reference_pf4_bch_mapping.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "scripts/reference_tfim_gauge_witness.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
   "scripts/reference_verify.py": {
     "ownership": "paper-a",
     "release_included": true
+  },
+  "scripts/reference_verify_grouped_xxz.py": {
+    "ownership": "paper-a",
+    "release_included": false
   },
   "scripts/report_processed_local_budget.py": {
     "ownership": "exploratory",
@@ -759,6 +835,22 @@
     "ownership": "shared",
     "release_included": true
   },
+  "src/trottercert/grouped_xxz.py": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "src/trottercert/grouped_xxz_artifact.py": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "src/trottercert/grouped_xxz_compressed.py": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "src/trottercert/grouped_xxz_orbits.py": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
   "src/trottercert/hamiltonian.py": {
     "ownership": "shared",
     "release_included": true
@@ -866,6 +958,10 @@
   "src/trottercert/support_groups.py": {
     "ownership": "shared",
     "release_included": true
+  },
+  "src/trottercert/tfim_gauge_witness.py": {
+    "ownership": "paper-b",
+    "release_included": false
   },
   "src/trottercert/tfim_obstruction.py": {
     "ownership": "paper-b",
@@ -1019,6 +1115,22 @@
     "ownership": "paper-b",
     "release_included": false
   },
+  "tests/test_grouped_xxz.py": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "tests/test_grouped_xxz_artifact.py": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "tests/test_grouped_xxz_compressed.py": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "tests/test_grouped_xxz_orbits.py": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
   "tests/test_heldout_model.py": {
     "ownership": "paper-a",
     "release_included": true
@@ -1065,6 +1177,10 @@
   },
   "tests/test_pareto.py": {
     "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_pf4_bch_artifact.py": {
+    "ownership": "paper-b",
     "release_included": false
   },
   "tests/test_pf4_bch_mapping.py": {
@@ -1117,6 +1233,22 @@
   },
   "tests/test_reduce_d8_shards.py": {
     "ownership": "exploratory",
+    "release_included": false
+  },
+  "tests/test_reference_grouped_xxz.py": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "tests/test_reference_grouped_xxz_theorem.py": {
+    "ownership": "paper-a",
+    "release_included": false
+  },
+  "tests/test_reference_pf4_bch_mapping.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "tests/test_reference_tfim_gauge_witness.py": {
+    "ownership": "paper-b",
     "release_included": false
   },
   "tests/test_reference_verify.py": {
@@ -1173,6 +1305,10 @@
   },
   "tests/test_support_groups.py": {
     "ownership": "shared",
+    "release_included": false
+  },
+  "tests/test_tfim_gauge_witness.py": {
+    "ownership": "paper-b",
     "release_included": false
   },
   "tests/test_tfim_obstruction.py": {

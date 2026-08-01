@@ -344,3 +344,82 @@ The centered-stage path gives a simple principal-log certificate at `r=97`
 but not at 95 or 96.  At 97 the only remaining finite-step gap is the
 E9-and-higher dual tail.  See `docs/report/dual-e7-remainder-ledger.md` for the
 exact margins, branch proof, shard coverage, and independent rerun evidence.
+
+## Finite-step affine effective-spectrum closure
+
+The E9 gap is now closed for the frozen periodic `12 x 12` isotropic
+Heisenberg instance at `r=97`.  The manifest-bound 64-shard contraction covers
+all 65,536 suffix groups and 262,140 degree-nine words.  The exact per-cell E9
+pairing is
+
+```text
+-66319553467/248832000000000
+- (1446202237/10368000000000) alpha
+- (12151491869/82944000000000) alpha^2,
+alpha^3 = 4,
+```
+
+approximately `-8.57108196229659e-4`.  Combining E5, E7, E9, and the compatible
+E11-and-higher tail gives
+
+```text
+|q5/97^4 + q7/97^6 + q9/97^8| >= 6.92368710129858e-11,
+dual tail                              <= 6.49509254599244e-12,
+signed margin                          >= 6.27417784669934e-11 > 0.
+```
+
+All inequalities in the certificate use exact rational endpoints.  The
+displayed decimals are summaries only.
+
+The nonlinear promotion gate evaluates the centered-moment invariant
+
+```text
+Phi_H(A) = m2(H)^3 m3(A)^2 - m3(H)^2 m2(A)^3,
+m2(H)=54, m3(H)=-27.
+```
+
+It certifies a linear lower bound `0.0576176604311994`, a nonlinear remainder
+upper bound `0.0352548202513958`, and hence a strictly positive invariant
+margin `0.0223628401798036`.  The resulting machine status is
+
+```text
+certified_affine_effective_spectral_obstruction
+```
+
+for the principal effective Hamiltonian at one `1/97` step.  Precisely, it
+excludes the affine unitary orbit `A = a I + b U H U^dagger`.  It does **not**
+claim a lower bound on total-time unitary eigenphases modulo `2 pi`; that would
+require a separate no-wrap and no-relabeling theorem.
+
+The tracked artifacts are
+
+```text
+dual-e9-pairing.json
+file sha256:    796db9b2f2a3635176ea5f100abc5da6d07fac68c6b3f7cd5191f0d927e9e7b1
+payload sha256: ea17c2504462d19a102590f5de5046ea24bbc7fb132bebc8e90322aa6b92e144
+
+finite-step-obstruction.json
+file sha256:    13805e2d560efce6051f142ef9b69ae53b1f718d37426fb6fbaa10bd3072a909
+payload sha256: f972e5b31e8dfe459aa2250ef7d6bf19c57e93d75bbf4f7bd6578b908656e24e
+
+dual-e9-provenance.json
+file sha256:    5b9aa4c71b29fe5435596bf4e719711f0de9136fc7c3ff1ded112b9cd4c32c7e
+payload sha256: 2c801713c0771f98ee1b1c2d045a1f6e8a34a291dfb25a18beb1c7786406fe2f
+```
+
+The compact HPC and independent-rerun hash chain is recorded in
+`dual-e9-provenance.json`; the proof and claim boundary are in
+`docs/report/finite-step-affine-spectral-ledger.md`.  With the archived
+manifest index available as `$E9_RUN_ROOT/manifests/index.json`, reproduce the
+full gate from the Issue-128 directory with
+
+```bash
+PYTHONPATH=src:. python scripts/certify_dual_e9_pairing.py \
+  --index "$E9_RUN_ROOT/manifests/index.json" \
+  --verify docs/experiments/processor-obstruction/dual-e9-pairing.json
+
+PYTHONPATH=src:. python scripts/certify_finite_step_obstruction.py \
+  --verify docs/experiments/processor-obstruction/finite-step-obstruction.json \
+  --e9 docs/experiments/processor-obstruction/dual-e9-pairing.json \
+  --index "$E9_RUN_ROOT/manifests/index.json"
+```
