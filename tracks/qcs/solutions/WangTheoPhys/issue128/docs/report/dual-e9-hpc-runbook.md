@@ -16,6 +16,12 @@ successful reduction therefore retains
 finite_step_status = inconclusive.
 ```
 
+The contraction torus is the target periodic `12 x 12` benchmark.  The earlier
+`6 x 6` E5/E7 reference torus is not admissible at degree nine because distinct
+local coordinates can collide modulo six.  Every E9 worker and verifier rejects
+any contraction payload whose `length` is not exactly 12; the per-cell reducer
+therefore divides the extensive pairing by 36.
+
 No cluster hostname, account, partition, username, password, private key, or
 other site credential is stored in these scripts.  No HPC job was submitted
 while preparing this runbook.
@@ -37,6 +43,23 @@ The production-shape manifest preparation and verifier were run locally on
 | preparation peak footprint | 933,577,904 bytes |
 | groups per balanced shard | 961--1,086 |
 | words per balanced shard | 3,844--4,344 |
+
+## Alias incident and corrected production boundary
+
+The first site run (`manifest=23065285`, `array=23065286`,
+`reducer=23065287`) correctly failed closed on 2026-08-01.  Manifest
+preparation completed, but multiple workers rejected their first retained
+degree-nine densities with `local Pauli coordinates alias on contraction
+torus` because the original worker used `L=6`.  The array and dependent
+reducer were cancelled; no worker or reduced artifact from that run is an E9
+parent.
+
+The first failing shard was reproduced locally.  Its first group, ordinal 84,
+aliases at `L=6` and contracts exactly at `L=12`.  Production therefore uses
+the target `12 x 12` torus and 36-cell normalization.  The successful manifest
+set may be copied byte-for-byte into a new run root because its implementation
+sources exclude the contraction code and remain unchanged; the copied index
+and all 64 manifest hashes must be reverified before submission.
 
 The SplitMix64 assignment gives every shard all 64 possible innermost
 three-letter suffix patterns.  Direct lexical modulo assignment was rejected
@@ -189,45 +212,63 @@ reusing a partially published directory.  A failed worker may leave a file
 whose name contains `.pending.`; it is not a parent artifact and the reducer's
 `shard-*.json` glob ignores it.
 
-## Independent worker rerun
+## Independent worker reruns
 
-Rerun one selected manifest into a new output directory without changing the
-production shard:
+After reduction, use `recommended_rerun_shards()` from
+`scripts/reduce_dual_e9_run.py` to select one median-word-count shard and one
+maximum-word-count shard.  Rerun both manifests into a new output directory
+without changing either production shard.  For each selected index:
 
 ```bash
 rerun_root="$ISSUE128_E9_RUN_ROOT/independent-rerun"
 mkdir -p "$rerun_root"
-selected=17
-manifest_path=$(printf \
-  '%s/manifests/manifest-%03d.json' \
-  "$ISSUE128_E9_RUN_ROOT" \
-  "$selected")
-rerun_output=$(printf '%s/shard-%03d.json' "$rerun_root" "$selected")
-
 cd "$ISSUE128_ROOT"
 export PYTHONPATH="src:."
-python scripts/certify_dual_e9_pairing.py \
-  --index "$ISSUE128_E9_RUN_ROOT/manifests/index.json" \
-  --manifest "$manifest_path" \
-  --output "$rerun_output"
-python scripts/certify_dual_e9_pairing.py \
-  --index "$ISSUE128_E9_RUN_ROOT/manifests/index.json" \
-  --verify "$rerun_output"
+read -r median heavy < <(
+  PYTHONPATH=src:. python -c \
+    'from pathlib import Path; from scripts.reduce_dual_e9_run import recommended_rerun_shards; from trottercert.dual_word_manifest import load_manifest_index; import os; root=Path(os.environ["ISSUE128_E9_RUN_ROOT"]); print(*recommended_rerun_shards(load_manifest_index(root / "manifests/index.json")))'
+)
+for selected in "$median" "$heavy"; do
+  manifest_path=$(printf \
+    '%s/manifests/manifest-%03d.json' \
+    "$ISSUE128_E9_RUN_ROOT" \
+    "$selected")
+  rerun_output=$(printf '%s/shard-%03d.json' "$rerun_root" "$selected")
+  python scripts/certify_dual_e9_pairing.py \
+    --index "$ISSUE128_E9_RUN_ROOT/manifests/index.json" \
+    --manifest "$manifest_path" \
+    --output "$rerun_output"
+  python scripts/certify_dual_e9_pairing.py \
+    --index "$ISSUE128_E9_RUN_ROOT/manifests/index.json" \
+    --verify "$rerun_output"
+done
 ```
 
 Runtime and scheduler metadata are intentionally outside the mathematical
 digest.  Compare the mathematical payload digest, not the full-file SHA:
 
 ```bash
-production_output=$(printf \
-  '%s/shards/shard-%03d.json' \
-  "$ISSUE128_E9_RUN_ROOT" \
-  "$selected")
-jq -r '.mathematical_payload_sha256' \
-  "$production_output" "$rerun_output"
+for selected in "$median" "$heavy"; do
+  production_output=$(printf \
+    '%s/shards/shard-%03d.json' \
+    "$ISSUE128_E9_RUN_ROOT" \
+    "$selected")
+  rerun_output=$(printf '%s/shard-%03d.json' "$rerun_root" "$selected")
+  jq -r '.mathematical_payload_sha256' \
+    "$production_output" "$rerun_output"
+done
 ```
 
-The two printed values must be identical.
+Each production/rerun pair must print identical mathematical digests.  The
+final audit command requires both reruns:
+
+```bash
+python scripts/reduce_dual_e9_run.py \
+  --run-root "$ISSUE128_E9_RUN_ROOT" \
+  --rerun "$(printf '%s/shard-%03d.json' "$rerun_root" "$median")" \
+  --rerun "$(printf '%s/shard-%03d.json' "$rerun_root" "$heavy")" \
+  --output "$ISSUE128_E9_RUN_ROOT/e9-run-audit.json"
+```
 
 ## Reduction and local verification
 

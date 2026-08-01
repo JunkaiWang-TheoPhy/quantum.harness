@@ -123,7 +123,7 @@ def _verify_reduced_e9_digest(
         payload.get("schema_version") != 1
         or payload.get("kind") != "issue128_dual_e9_pairing"
         or payload.get("degree") != 9
-        or payload.get("length") != 6
+        or payload.get("length") != 12
         or payload.get("shard_count") != 64
     ):
         raise ValueError("reduced E9 configuration mismatch")

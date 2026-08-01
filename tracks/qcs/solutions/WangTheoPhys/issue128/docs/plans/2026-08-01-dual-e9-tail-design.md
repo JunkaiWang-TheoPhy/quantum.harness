@@ -120,7 +120,7 @@ or an iterable of manifest groups.  The scientific evaluator is unchanged:
 
 1. evaluate one shared suffix tail once through the existing cache;
 2. retain only final Pauli strings of support at most four;
-3. lift one alias-free `L=6` density to nine two-by-two cells;
+3. lift one alias-free `L=12` density to thirty-six two-by-two cells;
 4. contract exactly with `H`, `H^2`, and
    `W=H^2-(3N/8)I+H/2`; and
 5. clear the evaluator cache at group boundaries.

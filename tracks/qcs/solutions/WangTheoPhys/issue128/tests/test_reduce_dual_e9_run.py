@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from scripts.certify_dual_e9_pairing import (
+    E9_CONTRACTION_LENGTH,
     build_worker_payload,
     reduce_worker_payloads,
 )
@@ -114,7 +115,7 @@ def _build_run(root: Path) -> tuple[Path, ...]:
         tau_h2 = Cubic(shard_index + 4, shard_index + 5, shard_index + 6)
         partial = ManifestPairingPartial(
             degree=9,
-            length=6,
+            length=E9_CONTRACTION_LENGTH,
             shard_index=shard_index,
             shard_count=2,
             total_groups=4,

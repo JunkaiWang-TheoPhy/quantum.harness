@@ -527,6 +527,10 @@
     "ownership": "paper-b",
     "release_included": false
   },
+  "scripts/certify_finite_step_obstruction.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
   "scripts/certify_dual_log_tail.py": {
     "ownership": "paper-b",
     "release_included": false
@@ -577,6 +581,10 @@
   },
   "scripts/reduce_d8_shards.py": {
     "ownership": "exploratory",
+    "release_included": false
+  },
+  "scripts/reduce_dual_e9_run.py": {
+    "ownership": "paper-b",
     "release_included": false
   },
   "scripts/reduce_e7_word_range.py": {
@@ -678,6 +686,10 @@
   "src/trottercert/exact_series_certificate.py": {
     "ownership": "shared",
     "release_included": true
+  },
+  "src/trottercert/finite_step_obstruction.py": {
+    "ownership": "paper-b",
+    "release_included": false
   },
   "src/trottercert/formulas.py": {
     "ownership": "shared",
@@ -907,6 +919,14 @@
     "ownership": "paper-b",
     "release_included": false
   },
+  "tests/test_finite_step_obstruction.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
+  "tests/test_finite_step_obstruction_certificate.py": {
+    "ownership": "paper-b",
+    "release_included": false
+  },
   "tests/test_extract_exact_degree.py": {
     "ownership": "exploratory",
     "release_included": false
@@ -977,6 +997,10 @@
   },
   "tests/test_processed_spectral_screen.py": {
     "ownership": "exploratory",
+    "release_included": false
+  },
+  "tests/test_reduce_dual_e9_run.py": {
+    "ownership": "paper-b",
     "release_included": false
   },
   "tests/test_processors.py": {

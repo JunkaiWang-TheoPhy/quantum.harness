@@ -9,6 +9,8 @@ from pathlib import Path
 import pytest
 
 from scripts.certify_dual_e9_pairing import (
+    E9_CONTRACTION_CELLS,
+    E9_CONTRACTION_LENGTH,
     build_worker_payload,
     reduce_worker_payloads,
     verify_reduced_payload,
@@ -98,7 +100,7 @@ def _partial(index: int) -> ManifestPairingPartial:
     tau_h2 = Cubic(index + 4, index + 5, index + 6)
     return ManifestPairingPartial(
         degree=9,
-        length=6,
+        length=E9_CONTRACTION_LENGTH,
         shard_index=index,
         shard_count=2,
         total_groups=4,
@@ -215,6 +217,67 @@ def test_e9_reducer_requires_complete_manifest_bound_coverage() -> None:
         verify_reduced_payload(forged, index=index, manifests=manifests)
 
 
+def test_e9_worker_rejects_aliased_six_by_six_configuration() -> None:
+    with pytest.raises(ValueError, match="alias-free 12x12"):
+        build_worker_payload(
+            replace(_partial(0), length=6),
+            _index(),
+            _manifest(0),
+            _index().shards[0].sha256,
+            implementation_sources=SOURCES,
+            runtime=_runtime(),
+        )
+
+
+def test_e9_per_cell_normalization_uses_target_torus_cells() -> None:
+    assert E9_CONTRACTION_LENGTH == 12
+    assert E9_CONTRACTION_CELLS == 36
+
+
+def test_production_alias_counterexample_contracts_on_target_torus() -> None:
+    suffix = (0, 0, 0, 0, 1, 1, 1, 0)
+    first = Cubic(
+        Fraction(97210657, 19440000000000),
+        Fraction(15162241, 6480000000000),
+        Fraction(52637263, 77760000000000),
+    )
+    repeated = Cubic(
+        Fraction(9654311, 1944000000000),
+        Fraction(18044341, 7776000000000),
+        Fraction(1355431, 1944000000000),
+    )
+    group = WordGroup(
+        ordinal=84,
+        suffix=suffix,
+        records=tuple(
+            WordRecord((prefix,) + suffix, first if prefix == 0 else repeated)
+            for prefix in range(4)
+        ),
+    )
+    manifest = WordManifest(
+        degree=9,
+        shard_index=manifest_shard_index(group.ordinal, 64),
+        shard_count=64,
+        total_groups=65536,
+        total_words=262140,
+        word_set_digest="b" * 64,
+        formula=FORMULA_NAME,
+        groups=(group,),
+        implementation_sources=tuple(SOURCES.items()),
+    )
+
+    with pytest.raises(ValueError, match="alias"):
+        contract_word_manifest(manifest, length=6)
+    result = contract_word_manifest(manifest, length=E9_CONTRACTION_LENGTH)
+
+    assert result.retained_term_count == 3618
+    assert result.tau_w == Cubic(
+        Fraction(200931647, 103680000000000),
+        Fraction(226274041, 207360000000000),
+        Fraction(-52841453, 46080000000000),
+    )
+
+
 @pytest.mark.slow
 def test_actual_degree_nine_one_group_worker_smoke() -> None:
     production = build_word_manifests(
@@ -252,7 +315,7 @@ def test_actual_degree_nine_one_group_worker_smoke() -> None:
             ),
         ),
     )
-    partial = contract_word_manifest(manifest, length=6)
+    partial = contract_word_manifest(manifest, length=E9_CONTRACTION_LENGTH)
     payload = build_worker_payload(
         partial,
         index,
@@ -266,7 +329,7 @@ def test_actual_degree_nine_one_group_worker_smoke() -> None:
     assert payload["word_count"] == 4
     assert payload["group_indices"] == [0]
     assert partial.retained_term_count == 112299
-    assert partial.tau_w == Cubic(
+    assert partial.tau_w == 4 * Cubic(
         Fraction(-8181997, 4608000000000),
         Fraction(-64514921, 55296000000000),
         Fraction(-39898969, 55296000000000),

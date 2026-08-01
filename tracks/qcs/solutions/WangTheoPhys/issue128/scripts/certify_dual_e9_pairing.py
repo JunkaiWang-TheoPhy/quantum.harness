@@ -51,6 +51,8 @@ SOURCE_PATHS = (
     ISSUE_ROOT / "src/trottercert/dual_manifest_pairing.py",
     ISSUE_ROOT / "scripts/certify_dual_e9_pairing.py",
 )
+E9_CONTRACTION_LENGTH = 12
+E9_CONTRACTION_CELLS = E9_CONTRACTION_LENGTH**2 // 4
 
 
 def _canonical_bytes(payload: object) -> bytes:
@@ -235,6 +237,8 @@ def build_worker_payload(
 ) -> dict[str, object]:
     if partial.degree != 9 or index.degree != 9 or manifest.degree != 9:
         raise ValueError("dual E9 worker requires degree nine")
+    if partial.length != E9_CONTRACTION_LENGTH:
+        raise ValueError("dual E9 worker requires the alias-free 12x12 torus")
     if (
         partial.shard_index != manifest.shard_index
         or partial.shard_index >= index.shard_count
@@ -307,7 +311,7 @@ def verify_worker_payload(
         raise ValueError("worker shard index is invalid")
     record = _index_record(index, shard_index)
     if (
-        payload.get("length") != 6
+        payload.get("length") != E9_CONTRACTION_LENGTH
         or payload.get("shard_count") != index.shard_count
         or payload.get("total_groups") != index.total_groups
         or manifest.shard_index != shard_index
@@ -467,7 +471,7 @@ def reduce_worker_payloads(
         dual_e7["pairings"]["tau_w_per_cell"],
         "q7 per-cell pairing",
     )
-    q9 = forward["tau_w"] / 9
+    q9 = forward["tau_w"] / E9_CONTRACTION_CELLS
     q9_scaled = q9 / 97**8
     combined = q5 / 97**4 + q7 / 97**6 + q9_scaled
     sources = ordered_workers[0]["implementation_sources"]
@@ -486,7 +490,7 @@ def reduce_worker_payloads(
         "schema_version": 1,
         "kind": "issue128_dual_e9_pairing",
         "degree": 9,
-        "length": 6,
+        "length": E9_CONTRACTION_LENGTH,
         "shard_count": index.shard_count,
         "manifest_index_sha256": _index_digest(index),
         "word_set_digest": index.word_set_digest,
@@ -547,7 +551,7 @@ def verify_reduced_payload(
         raise ValueError("unexpected reduced dual E9 artifact kind")
     if (
         payload.get("degree") != 9
-        or payload.get("length") != 6
+        or payload.get("length") != E9_CONTRACTION_LENGTH
         or payload.get("shard_count") != index.shard_count
         or index.degree != 9
     ):
@@ -624,7 +628,7 @@ def verify_reduced_payload(
     tau_w = _parse_cubic(pairings.get("tau_w"), "reduced tau_w")
     if tau_w != tau_h2 + tau_h / 2:
         raise ValueError("reduced witness pairing mismatch")
-    q9 = tau_w / 9
+    q9 = tau_w / E9_CONTRACTION_CELLS
     if _parse_cubic(pairings.get("tau_w_per_cell"), "reduced q9") != q9:
         raise ValueError("reduced per-cell E9 pairing mismatch")
     if _parse_cubic(pairings.get("q9_over_97_pow_8"), "scaled q9") != q9 / 97**8:
@@ -740,7 +744,11 @@ def main() -> None:
                     flush=True,
                 )
 
-        partial = contract_word_manifest(manifest, length=6, progress=progress)
+        partial = contract_word_manifest(
+            manifest,
+            length=E9_CONTRACTION_LENGTH,
+            progress=progress,
+        )
         payload = build_worker_payload(
             partial,
             index,

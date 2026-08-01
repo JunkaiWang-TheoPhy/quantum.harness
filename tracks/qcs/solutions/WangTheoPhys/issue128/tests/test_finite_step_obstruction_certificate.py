@@ -39,7 +39,7 @@ def _fake_e9(path: Path, *, q9: Cubic = Cubic.zero()) -> None:
         "schema_version": 1,
         "kind": "issue128_dual_e9_pairing",
         "degree": 9,
-        "length": 6,
+        "length": 12,
         "shard_count": 64,
         "manifest_index_sha256": "1" * 64,
         "inputs": {
