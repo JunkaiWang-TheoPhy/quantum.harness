@@ -16,6 +16,8 @@ set -euo pipefail
 : "${ISSUE128_RUN_ID:?ISSUE128_RUN_ID must identify this immutable run}"
 : "${ISSUE128_GROUPED_SOURCE_COMMIT:?missing frozen generator commit}"
 : "${ISSUE128_SUBMISSION_COMMIT:?missing submission artifact commit}"
+: "${ISSUE128_BUILD_SOURCE_ROOT:?missing staged frozen generator tree}"
+: "${ISSUE128_SUBMISSION_SOURCE_ROOT:?missing staged submission tree}"
 
 export PYTHONHASHSEED=0
 export OMP_NUM_THREADS=1
@@ -23,23 +25,23 @@ export OPENBLAS_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export NUMEXPR_NUM_THREADS=1
 
-SUBMISSION_ROOT="${SLURM_SUBMIT_DIR:?}"
+REMOTE_REPOSITORY_ROOT="${SLURM_SUBMIT_DIR:?}"
+SUBMISSION_ROOT="$ISSUE128_SUBMISSION_SOURCE_ROOT"
 SUBMISSION_ISSUE="$SUBMISSION_ROOT/tracks/qcs/solutions/WangTheoPhys/issue128"
-OUT="$SUBMISSION_ROOT/results/$ISSUE128_RUN_ID/grouped-xxz"
-BUILD_ROOT="$SUBMISSION_ROOT/results/$ISSUE128_RUN_ID/build-source"
+OUT="$REMOTE_REPOSITORY_ROOT/results/$ISSUE128_RUN_ID/grouped-xxz"
+BUILD_ROOT="$ISSUE128_BUILD_SOURCE_ROOT"
 BUILD_ISSUE="$BUILD_ROOT/tracks/qcs/solutions/WangTheoPhys/issue128"
 FRESH="$OUT/fresh"
 PYTHON_BIN="${ISSUE128_PYTHON:-python3}"
 
-test "$(git -C "$SUBMISSION_ROOT" rev-parse HEAD)" = "$ISSUE128_SUBMISSION_COMMIT"
+test "$(tr -d '\n' < "$SUBMISSION_ROOT/.issue128-commit")" = \
+  "$ISSUE128_SUBMISSION_COMMIT"
+test "$(tr -d '\n' < "$BUILD_ROOT/.issue128-commit")" = \
+  "$ISSUE128_GROUPED_SOURCE_COMMIT"
 test -f "$SUBMISSION_ISSUE/benchmarks/paper-a/grouped-xxz-pilot.json"
 test -f "$SUBMISSION_ISSUE/benchmarks/paper-a/grouped-xxz-pilot-witness.json.gz"
-test ! -e "$BUILD_ROOT"
+test ! -e "$OUT"
 mkdir -p "$OUT" "$FRESH"
-git -C "$SUBMISSION_ROOT" worktree add --detach "$BUILD_ROOT" \
-  "$ISSUE128_GROUPED_SOURCE_COMMIT" >"$OUT/worktree.stdout" \
-  2>"$OUT/worktree.stderr"
-test "$(git -C "$BUILD_ROOT" rev-parse HEAD)" = "$ISSUE128_GROUPED_SOURCE_COMMIT"
 
 set +e
 /usr/bin/time -v "$PYTHON_BIN" -u \
