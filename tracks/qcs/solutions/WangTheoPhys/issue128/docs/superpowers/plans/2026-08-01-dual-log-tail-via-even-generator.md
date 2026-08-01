@@ -973,3 +973,14 @@ boundary, no-HPC constraint for this local phase, and confidence.
   Task-3 public function and serializes those named fields.
 - Claim safety: no task can set `finite_step_status` to anything other than
   `inconclusive`; the future E9 promotion requires a separate reviewed change.
+
+## Executed-plan provenance refinement
+
+During final artifact review, whole-file hashes exposed unrelated uncommitted
+cache and center-scan additions in two legacy generator modules.  The executed
+implementation was tightened after the four planned tasks: it now consumes
+the committed, verified schema-v3 D5-integrated main certificate, recovers its
+D4--D7 density caps exactly from the recorded contributions, and independently
+rebuilds the 31 interval stages inside `dual_log_tail.py`.  The final bound is
+`6.495092545992439e-12`, tighter than the plan's generic-source pre-audit, and
+the canonical verifier no longer depends on either dirty legacy file.

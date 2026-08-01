@@ -4,20 +4,16 @@ import argparse
 import hashlib
 import json
 import os
-import sys
 from collections.abc import Mapping
 from fractions import Fraction
 from pathlib import Path
 from typing import Any
 
-from trottercert.dual_log_tail import certify_issue128_dual_log_tail
-from trottercert.refined_error import build_refined_fourth_order_constants
-
-if hasattr(sys, "set_int_max_str_digits"):
-    # The exact interval-derived rational denominators legitimately exceed
-    # Python's generic 4,300-digit text-conversion guard.  This process reads
-    # and writes only the bounded-size, source-regenerated certificate schema.
-    sys.set_int_max_str_digits(0)
+from trottercert.dual_log_tail import (
+    REFERENCE_CERTIFICATE,
+    certify_issue128_dual_log_tail,
+    issue128_generator_constants,
+)
 
 ISSUE_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = (
@@ -34,8 +30,7 @@ E7_PATH = (
 )
 SOURCE_PATHS = (
     ISSUE_ROOT / "src/trottercert/dual_log_tail.py",
-    ISSUE_ROOT / "src/trottercert/refined_error.py",
-    ISSUE_ROOT / "src/trottercert/rigorous_fourth.py",
+    ISSUE_ROOT / "src/trottercert/intervals.py",
     Path(__file__).resolve(),
 )
 
@@ -60,10 +55,7 @@ def _source_label(path: Path) -> str:
 
 
 def build_payload() -> dict[str, Any]:
-    constants = build_refined_fourth_order_constants(
-        decimal_digits=30,
-        quantization_digits=24,
-    )
+    constants = issue128_generator_constants()
     result = certify_issue128_dual_log_tail(constants)
     geometry = result.geometry
     envelope = result.envelope
@@ -103,8 +95,10 @@ def build_payload() -> dict[str, Any]:
             "even_series": _pair(geometry.even_series_cap),
         },
         "right_generator_inputs": {
-            "coefficient_interval_decimal_digits": 30,
-            "density_quantization_digits": 24,
+            "source_certificate_steps": constants.source_steps,
+            "coefficient_interval_decimal_digits": (
+                constants.coefficient_interval_decimal_digits
+            ),
             "stage_count": len(constants.stages),
             "d4_site": _pair(constants.d4_site),
             "d5_site": _pair(constants.d5_site),
@@ -152,6 +146,10 @@ def build_payload() -> dict[str, Any]:
             "total_log_tail": _pair(result.total_log_tail),
         },
         "inputs": {
+            "right_generator_certificate": {
+                "path": _source_label(REFERENCE_CERTIFICATE),
+                "sha256": _sha(REFERENCE_CERTIFICATE),
+            },
             "e5_extensive_witness": {
                 "path": _source_label(E5_PATH),
                 "sha256": _sha(E5_PATH),

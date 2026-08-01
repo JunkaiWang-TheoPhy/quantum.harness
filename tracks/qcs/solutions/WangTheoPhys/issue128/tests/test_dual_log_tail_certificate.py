@@ -47,7 +47,9 @@ def test_payload_round_trip_is_source_regenerated() -> None:
     assert payload["bounds"]["total_log_tail"] == build_payload()[
         "bounds"
     ]["total_log_tail"]
-    assert max(_integer_text_lengths(payload)) > 4300
+    maximum_digits = max(_integer_text_lengths(payload))
+    assert 1000 < maximum_digits < 4300
+    assert "right_generator_certificate" in payload["inputs"]
 
 
 def test_checked_in_artifact_is_canonical_and_current() -> None:

@@ -1,16 +1,45 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
+import json
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from fractions import Fraction
+from functools import lru_cache
+from pathlib import Path
+from typing import Any
 
-from .refined_error import RefinedFourthOrderConstants
-from .rigorous_fourth import IntervalStage
+from .intervals import (
+    RationalInterval,
+    cube_root_four_interval,
+    outward_quantize,
+)
 
 LOG_RADIUS_CAP = Fraction(3, 2)
 DEXP_CAP = Fraction(8, 5)
 MULTIPLIER_DIFFERENCE_CAP = Fraction(1)
 EVEN_SERIES_CAP = Fraction(10, 33)
+REFERENCE_CERTIFICATE = (
+    Path(__file__).resolve().parents[2]
+    / "certificates/issue128-d5-integrated-certificate.json"
+)
+
+
+@dataclass(frozen=True, slots=True)
+class DualIntervalStage:
+    fragment_index: int
+    coefficient: RationalInterval
+
+
+@dataclass(frozen=True, slots=True)
+class DualGeneratorConstants:
+    stages: tuple[DualIntervalStage, ...]
+    d4_site: Fraction
+    d5_site: Fraction
+    d6_site: Fraction
+    d7_site: Fraction
+    source_steps: int
+    coefficient_interval_decimal_digits: int
+    source_certificate: Path
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,6 +102,135 @@ def issue128_dual_tail_geometry() -> DualTailGeometry:
     )
 
 
+def _second_order_interval_stages(
+    scale: RationalInterval,
+) -> list[DualIntervalStage]:
+    half = scale / 2
+    stages = [DualIntervalStage(index, half) for index in range(3)]
+    stages.append(DualIntervalStage(3, scale))
+    stages.extend(
+        DualIntervalStage(index, half) for index in reversed(range(3))
+    )
+    return stages
+
+
+def _merge_interval_stages(
+    stages: Sequence[DualIntervalStage],
+) -> tuple[DualIntervalStage, ...]:
+    merged: list[DualIntervalStage] = []
+    for stage in stages:
+        if merged and merged[-1].fragment_index == stage.fragment_index:
+            previous = merged.pop()
+            merged.append(
+                DualIntervalStage(
+                    stage.fragment_index,
+                    previous.coefficient + stage.coefficient,
+                )
+            )
+        else:
+            merged.append(stage)
+    return tuple(merged)
+
+
+def issue128_interval_stages(
+    decimal_digits: int,
+) -> tuple[DualIntervalStage, ...]:
+    """Independently rebuild the frozen four-fragment Suzuki stages."""
+
+    if (
+        not isinstance(decimal_digits, int)
+        or isinstance(decimal_digits, bool)
+        or decimal_digits < 1
+    ):
+        raise ValueError("stage decimal digits must be a positive integer")
+    root = cube_root_four_interval(decimal_digits)
+    grid = 10**decimal_digits
+    u = outward_quantize(RationalInterval.point(1) / (4 - root), grid)
+    scales = (u, u, 1 - 4 * u, u, u)
+    stages: list[DualIntervalStage] = []
+    for scale in scales:
+        stages.extend(_second_order_interval_stages(scale))
+    result = _merge_interval_stages(stages)
+    if len(result) != 31:
+        raise ArithmeticError("unexpected merged Suzuki stage count")
+    return result
+
+
+def _parse_pair(value: object, field: str) -> Fraction:
+    if (
+        not isinstance(value, list)
+        or len(value) != 2
+        or any(
+            not isinstance(entry, int) or isinstance(entry, bool)
+            for entry in value
+        )
+        or value[1] <= 0
+    ):
+        raise ValueError(f"{field} must be a canonical rational pair")
+    result = Fraction(value[0], value[1])
+    if [result.numerator, result.denominator] != value:
+        raise ValueError(f"{field} must be a canonical rational pair")
+    return result
+
+
+def generator_constants_from_certificate(
+    payload: Mapping[str, Any],
+    *,
+    source_certificate: Path,
+) -> DualGeneratorConstants:
+    """Recover valid D4--D7 density caps from a verified main certificate."""
+
+    if payload.get("schema_version") != 3:
+        raise ValueError("reference certificate schema mismatch")
+    candidate = payload.get("candidate")
+    if not isinstance(candidate, Mapping):
+        raise ValueError("reference certificate candidate is missing")
+    steps = candidate.get("steps")
+    decimal_digits = candidate.get("coefficient_interval_decimal_digits")
+    if steps != 95:
+        raise ValueError("reference certificate step count mismatch")
+    if decimal_digits != 12:
+        raise ValueError("reference coefficient precision mismatch")
+    contributions = candidate.get("contributions")
+    if not isinstance(contributions, Mapping):
+        raise ValueError("reference contributions are missing")
+    densities: dict[int, Fraction] = {}
+    for degree in range(4, 8):
+        contribution = _parse_pair(
+            contributions.get(f"degree{degree}"),
+            f"degree-{degree} contribution",
+        )
+        if contribution <= 0:
+            raise ValueError("reference contribution must be positive")
+        densities[degree] = (
+            contribution * (degree + 1) * steps**degree / 144
+        )
+    return DualGeneratorConstants(
+        stages=issue128_interval_stages(decimal_digits),
+        d4_site=densities[4],
+        d5_site=densities[5],
+        d6_site=densities[6],
+        d7_site=densities[7],
+        source_steps=steps,
+        coefficient_interval_decimal_digits=decimal_digits,
+        source_certificate=source_certificate,
+    )
+
+
+@lru_cache(maxsize=1)
+def issue128_generator_constants() -> DualGeneratorConstants:
+    try:
+        payload = json.loads(REFERENCE_CERTIFICATE.read_bytes())
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError("cannot read the reference certificate") from exc
+    if not isinstance(payload, dict):
+        raise ValueError("reference certificate must contain a JSON object")
+    return generator_constants_from_certificate(
+        payload,
+        source_certificate=REFERENCE_CERTIFICATE,
+    )
+
+
 def _validate_tail_inputs(
     steps: int,
     first_omitted_degree: int,
@@ -88,7 +246,7 @@ def _validate_tail_inputs(
 
 
 def average_stage_tail(
-    stages: Sequence[IntervalStage],
+    stages: Sequence[DualIntervalStage],
     steps: int,
     first_omitted_degree: int,
 ) -> Fraction:
@@ -108,7 +266,7 @@ def average_stage_tail(
 
 
 def pointwise_stage_tail(
-    stages: Sequence[IntervalStage],
+    stages: Sequence[DualIntervalStage],
     steps: int,
     first_omitted_degree: int,
 ) -> Fraction:
@@ -208,7 +366,7 @@ def _verify_fixed_geometry(geometry: DualTailGeometry) -> None:
 
 
 def build_dual_tail_envelope(
-    constants: RefinedFourthOrderConstants,
+    constants: DualGeneratorConstants,
     geometry: DualTailGeometry,
 ) -> DualTailEnvelope:
     """Build the fixed-instance right-generator-to-log envelope."""
@@ -276,17 +434,12 @@ def build_dual_tail_envelope(
 
 
 def certify_issue128_dual_log_tail(
-    constants: RefinedFourthOrderConstants | None = None,
+    constants: DualGeneratorConstants | None = None,
 ) -> DualLogTailBound:
     """Certify the compatible E11-and-higher dual local-log tail."""
 
     if constants is None:
-        from .refined_error import build_refined_fourth_order_constants
-
-        constants = build_refined_fourth_order_constants(
-            decimal_digits=30,
-            quantization_digits=24,
-        )
+        constants = issue128_generator_constants()
     geometry = issue128_dual_tail_geometry()
     _verify_fixed_geometry(geometry)
     envelope = build_dual_tail_envelope(constants, geometry)

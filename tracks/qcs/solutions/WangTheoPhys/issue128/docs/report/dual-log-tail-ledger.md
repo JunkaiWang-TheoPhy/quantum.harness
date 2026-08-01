@@ -19,7 +19,7 @@ The canonical mathematical record is
 `docs/experiments/processor-obstruction/dual-log-tail.json`, whose SHA-256 is
 
 ```text
-11b2b1595b39d3a4421124adc1e67136c7cb777376406ca368cedfb8abc8ad39
+5d43135f3b1c3bf66499535868a6a4c20e02ad35d68e31b36792a8d3c5accec0
 ```
 
 ## Identity connecting the two proof objects
@@ -82,6 +82,24 @@ and the exact E7 dual-pairing input has SHA-256
 9d68771af90096d0ad96bdf6a0861c10d8ec39a864b417d772e51e0c6a9d5d7b
 ```
 
+The D4--D7 density caps are recovered exactly from the already verified
+schema-v3 D5-integrated main certificate, whose SHA-256 is
+
+```text
+ec60a7458f90fa2206cf1f58e05da3ea5c9b99062087c2e5bdd4ee06cff9811f
+```
+
+For each degree `j=4,...,7`, the verifier inverts the recorded contribution
+at its certified 95-step point by
+
+```text
+d_j_site = contribution_j * (j+1) * 95^j / 144.
+```
+
+It independently rebuilds the 31 interval stages at the certificate's frozen
+12-digit coefficient precision.  This avoids depending on unrelated dirty
+working-tree cache or scan additions in the older generator modules.
+
 ## Right-generator and logarithm envelope
 
 Every exact value below is stored as a canonical integer pair at the matching
@@ -91,15 +109,15 @@ quick audit of the outward rational computation.
 
 | JSON field | outward decimal summary | denominator digits |
 |---|---:|---:|
-| `average_generator_defect` | `2.1469354409384142e-6` | 1,196 |
-| `one_step_unitary_defect` | `2.2133355061220766e-8` | 1,198 |
-| `pointwise_generator_defect` | `1.1875617201006646e-5` | 2,136 |
-| `relative_log_defect` | `2.2133355551106182e-8` | 1,198 |
+| `average_generator_defect` | `8.8895058475996365e-7` | 504 |
+| `one_step_unitary_defect` | `9.1644390181439548e-9` | 506 |
+| `pointwise_generator_defect` | `5.4787498224102065e-6` | 899 |
+| `relative_log_defect` | `9.1644391021308979e-9` | 506 |
 | `centered_exact_phase_radius` | `1.4845360824742269` | 2 |
-| `centered_log_radius_bound` | `1.4845361046075825` | 1,200 |
-| `log_defect` | `3.5413368881769893e-8` | 1,199 |
-| `log_derivative_defect_hs` | `1.9532188054837184e-5` | 3,333 |
-| `log_commutator_defect_hs` | `5.8523677790783468e-5` | 4,531 |
+| `centered_log_radius_bound` | `1.4845360916386658` | 508 |
+| `log_defect` | `1.4663102563409437e-8` | 507 |
+| `log_derivative_defect_hs` | `8.9859462543074722e-6` | 1,404 |
+| `log_commutator_defect_hs` | `2.6899869701361978e-5` | 1,911 |
 
 The centered-log value is strictly below `3/2`; hence the artifact proves the
 principal-log stability gate used by the `dexp` conversion.
@@ -128,13 +146,13 @@ separate `dexp` correction.
 
 | JSON field | outward decimal summary | denominator digits |
 |---|---:|---:|
-| `direct_even_generator_tail` | `6.4489120752848012e-12` | 1,263 |
-| `dexp_correction_tail` | `2.4265048229124384e-13` | 5,730 |
-| `total_log_tail` | `6.6915625575760451e-12` | 5,796 |
+| `direct_even_generator_tail` | `6.4489120754528513e-12` | 535 |
+| `dexp_correction_tail` | `4.6180470539587816e-14` | 2,417 |
+| `total_log_tail` | `6.4950925459924386e-12` | 2,447 |
 
 The exact total is the sum of the two exact rational pairs.  The current
 E5+E7 signed magnitude at `r=97` is approximately
-`6.923687090362501e-11`, so the tail pre-audit consumes about `9.7%` of that
+`6.923687090362501e-11`, so the tail pre-audit consumes about `9.4%` of that
 pre-E9 margin.  This comparison is only a feasibility diagnostic.  The exact
 E9 contribution can change the final signed margin and must be verified before
 promotion.
@@ -145,16 +163,12 @@ The artifact binds these implementation SHA-256 values:
 
 | source | SHA-256 |
 |---|---|
-| `scripts/certify_dual_log_tail.py` | `9a5122ecab7e69cc675943f08f38b73ec364cd30f4dfd9c5844a996db5aa1eb0` |
-| `src/trottercert/dual_log_tail.py` | `413f8d71a3f7b1b03721e43b3ea3e8da85002138395ed14ca0acc02dc2afa0cf` |
-| `src/trottercert/refined_error.py` | `6fd62e1d045de4adfcc407463882fedf5fef30c34b6e793c052ddad62e8f4ebf` |
-| `src/trottercert/rigorous_fourth.py` | `e1b626c4464fd9d8a3d4aa1ef88844974abc80f04f14bc01feaf860b1582310b` |
+| `scripts/certify_dual_log_tail.py` | `cc6dd59789589107b5f77b4d61e4257260094a4c6dd10726a6aff286a4fbec2b` |
+| `src/trottercert/dual_log_tail.py` | `ac404b6676b20f74b859681ab301beae7b17e3e4b8f54529b8ee6db693d3a61e` |
+| `src/trottercert/intervals.py` | `7b81e9123f9643860962047fec9ffa0b38ec5773fb0b9c56a9a436bc370eeee8` |
 
-Python's default 4,300-digit integer-to-text safety limit is smaller than the
-largest exact denominators in this artifact.  The dedicated generator and
-verifier explicitly enable unbounded integer conversion only inside their
-bounded, source-regenerated certificate process.  The JSON is 59 KiB; this is
-not an unbounded-input parsing path.
+The largest exact denominator has 2,447 digits, below Python's default
+integer-to-text safety limit.  The canonical JSON is 26,793 bytes.
 
 ## Claim boundary
 

@@ -298,18 +298,31 @@ summaries:
 
 | quantity | bound |
 |---|---:|
-| average global `K-H` defect | `2.146935440938414e-6` |
-| one-step unitary defect | `2.213335506122077e-8` |
-| pointwise global `K-H` defect | `1.187561720100665e-5` |
-| `||R||` | `3.541336888176989e-8` |
-| `||R'||_2` | `1.953218805483718e-5` |
-| `C_comm` | `5.852367779078347e-5` |
-| `B_dexp` | `2.426504822912439e-13` |
-| `B_direct + B_dexp` | `6.691562557576045e-12` |
+| average global `K-H` defect | `8.889505847599637e-7` |
+| one-step unitary defect | `9.164439018143955e-9` |
+| pointwise global `K-H` defect | `5.478749822410207e-6` |
+| `||R||` | `1.466310256340944e-8` |
+| `||R'||_2` | `8.985946254307472e-6` |
+| `C_comm` | `2.689986970136198e-5` |
+| `B_dexp` | `4.618047053958782e-14` |
+| `B_direct + B_dexp` | `6.495092545992439e-12` |
 
-The combined pre-audit is about `9.7%` of the current E5+E7 signed magnitude
+The combined pre-audit is about `9.4%` of the current E5+E7 signed magnitude
 at `r=97`.  This is a feasibility result, not the final gate: exact E9 can
 change the signed margin and must be incorporated before promotion.
+
+### Implementation provenance refinement
+
+The initial feasibility audit regenerated generic 30-digit/24-digit
+right-generator constants from the live source tree.  Final artifact work
+found that two of those older source files carried unrelated uncommitted cache
+and scan additions.  The production certificate therefore does not bind or
+consume that dirty worktree state.  It binds the committed schema-v3
+D5-integrated main certificate and exactly recovers its accepted D4--D7
+density caps from the recorded contributions.  The new module independently
+rebuilds the formula's 31 interval stages at the main certificate's frozen
+12-digit precision.  This both restores clean-checkout reproducibility and
+tightens the conversion term to the values above.
 
 ## Certificate architecture
 
@@ -327,7 +340,8 @@ Add one CLI that emits canonical JSON containing:
 - formula and fixed-instance identifiers;
 - source SHA-256 values;
 - exact moment identities and rational square-root caps;
-- exact D4--D7 constants regenerated from source;
+- exact D4--D7 constants recovered from the hash-bound schema-v3 main
+  certificate and independently rebuilt interval stages;
 - every intermediate rational bound;
 - the direct, conversion, and total tail values;
 - the frozen E5/E7 artifact hashes;

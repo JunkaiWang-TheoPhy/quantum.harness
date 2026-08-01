@@ -10,10 +10,10 @@ from trottercert.dual_log_tail import (
     build_dual_tail_envelope,
     certify_issue128_dual_log_tail,
     issue128_dual_tail_geometry,
+    issue128_generator_constants,
     pointwise_stage_tail,
     verify_analytic_caps,
 )
-from trottercert.refined_error import build_refined_fourth_order_constants
 from trottercert.rigorous_fourth import (
     fourth_order_suzuki_interval_stages,
 )
@@ -115,21 +115,18 @@ def test_issue128_geometry_has_exact_moment_caps() -> None:
 
 
 def test_fixed_envelope_regression_and_branch_gate() -> None:
-    constants = build_refined_fourth_order_constants(
-        decimal_digits=30,
-        quantization_digits=24,
-    )
+    constants = issue128_generator_constants()
     result = build_dual_tail_envelope(
         constants, issue128_dual_tail_geometry()
     )
     assert result.centered_exact_phase_radius < Fraction(3, 2)
     assert result.centered_log_radius_bound < Fraction(3, 2)
-    assert Fraction(2146, 10**9) < result.average_generator_defect
-    assert result.average_generator_defect < Fraction(2148, 10**9)
-    assert Fraction(1187, 10**8) < result.pointwise_generator_defect
-    assert result.pointwise_generator_defect < Fraction(1188, 10**8)
-    assert Fraction(354, 10**10) < result.log_defect
-    assert result.log_defect < Fraction(355, 10**10)
+    assert Fraction(8889, 10**10) < result.average_generator_defect
+    assert result.average_generator_defect < Fraction(8891, 10**10)
+    assert Fraction(5478, 10**9) < result.pointwise_generator_defect
+    assert result.pointwise_generator_defect < Fraction(5480, 10**9)
+    assert Fraction(1466, 10**11) < result.log_defect
+    assert result.log_defect < Fraction(1467, 10**11)
 
 
 @pytest.mark.parametrize(
@@ -152,10 +149,7 @@ def test_geometry_mutations_fail_closed(
     value: object,
     message: str,
 ) -> None:
-    constants = build_refined_fourth_order_constants(
-        decimal_digits=30,
-        quantization_digits=24,
-    )
+    constants = issue128_generator_constants()
     forged = replace(issue128_dual_tail_geometry(), **{field: value})
     with pytest.raises(ValueError, match=message):
         build_dual_tail_envelope(constants, forged)
@@ -165,23 +159,20 @@ def test_complete_e11_tail_is_compatible_and_below_preaudit_gate() -> None:
     result = certify_issue128_dual_log_tail()
     assert Fraction(6448, 10**15) < result.direct_even_generator_tail
     assert result.direct_even_generator_tail < Fraction(6450, 10**15)
-    assert Fraction(242, 10**15) < result.dexp_correction_tail
-    assert result.dexp_correction_tail < Fraction(244, 10**15)
+    assert Fraction(46, 10**15) < result.dexp_correction_tail
+    assert result.dexp_correction_tail < Fraction(47, 10**15)
     assert result.total_log_tail == (
         result.direct_even_generator_tail + result.dexp_correction_tail
     )
-    assert Fraction(669, 10**14) < result.total_log_tail
-    assert result.total_log_tail < Fraction(670, 10**14)
+    assert Fraction(6495, 10**15) < result.total_log_tail
+    assert result.total_log_tail < Fraction(6496, 10**15)
     assert result.first_omitted_log_degree == 11
     assert result.claim_scope == "fixed_12x12_r97_dual_local_log"
 
 
 def test_direct_tail_has_the_exact_dual_normalization() -> None:
     result = certify_issue128_dual_log_tail()
-    constants = build_refined_fourth_order_constants(
-        decimal_digits=30,
-        quantization_digits=24,
-    )
+    constants = issue128_generator_constants()
     raw_cell = Fraction(3, 2) * average_stage_tail(
         constants.stages,
         97,
@@ -191,10 +182,7 @@ def test_direct_tail_has_the_exact_dual_normalization() -> None:
 
 
 def test_envelope_decreases_at_larger_step_counts() -> None:
-    constants = build_refined_fourth_order_constants(
-        decimal_digits=30,
-        quantization_digits=24,
-    )
+    constants = issue128_generator_constants()
     base = issue128_dual_tail_geometry()
     at_97 = build_dual_tail_envelope(constants, base)
     at_98 = build_dual_tail_envelope(
