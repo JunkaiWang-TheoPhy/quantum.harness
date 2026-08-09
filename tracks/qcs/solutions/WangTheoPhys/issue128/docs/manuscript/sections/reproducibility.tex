@@ -14,19 +14,20 @@ standard sequence is:
 python -m pip install -e '.[test]'
 pytest -q
 PYTHONPATH=src python scripts/verify.py \
-  certificates/issue128-certificate.json
-PYTHONPATH=src python scripts/build_d5_certificate.py --verify-only
-PYTHONPATH=src python scripts/package_delivery.py --check
-shasum -a 256 -c artifacts/SHA256SUMS
+  certificates/issue128-d5-integrated-certificate.json
+python scripts/reference_verify.py \
+  certificates/issue128-d5-integrated-certificate.json
+shasum -a 256 -c artifacts/d5-integrated/SHA256SUMS
 \end{verbatim}
 The expensive algebraic replay is requested explicitly:
 \begin{verbatim}
 PYTHONPATH=src python scripts/verify.py \
-  certificates/issue128-certificate.json --deep
+  certificates/issue128-d5-integrated-certificate.json --deep
 \end{verbatim}
-The main certificate can be regenerated with
+The current certificate can be regenerated deterministically from the frozen
+predecessor and D5 sidecar with
 \begin{verbatim}
-PYTHONPATH=src python scripts/build_v3_certificate.py
+PYTHONPATH=src python scripts/build_d5_integrated_certificate.py
 \end{verbatim}
 Long research-reproduction tests are marked \code{slow} and excluded by the
 default Pytest configuration.  This separation keeps ordinary continuous
@@ -45,25 +46,29 @@ Claim & Primary evidence & Independent check \\
 Claim & Primary evidence & Independent check \\
 \midrule
 \endhead
-393-step pinned control & Baseline rational and center in
-\code{issue128-certificate.json} & Deep regeneration of all 31 centers \\
-97 accepted, 96 rejected & Exact global and previous-step rational pairs in
-the main certificate & Exact comparison against $1/10^6$ \\
+393-step pinned control & Baseline rational and center in the D5-integrated
+certificate JSON & Deep regeneration of all 31 centers \\
+95 accepted, 94 rejected & Exact global and previous-step rational pairs in
+the D5-integrated certificate & Independent regeneration of every contribution and
+comparison against $1/10^6$ \\
 75,324 D4 terms and 7,576 groups & Hashed
 \code{issue128-d4-groups.json} & Coverage, symplectic pair checks, and rational
 square-root replay \\
 D4 bound 6.472926505087888 & Group membership and coefficient endpoints &
 Verifier squares each upper root and resums \\
-11,791 and 2,911 groups & Step counts plus $G(r)=30r+1$ & Direct integer
+D5 bound 11.23706750025697 & 605,832-term hashed sidecar with 123,106 groups &
+Deep coefficient regeneration plus independent downstream partition replay \\
+11,791 and 2,851 groups & Step counts plus $G(r)=30r+1$ & Direct integer
 identity checks \\
 Bond and CNOT totals & Cost-model fields and claimed-resource block &
 $72G(r)$ and $216G(r)$ recomputation \\
-4.050498$\times$ improvement & Exact pair $(11791,2911)$ & Fraction comparison,
+4.135742$\times$ improvement & Exact pair $(11791,2851)$ & Fraction comparison,
 not rounded decimal \\
-Small-system consistency & Dense $2\times2$ artifact & Independent matrix
-exponential and operator norm \\
-D5 follow-up only & Hashed compressed D5 sidecar and summary status &
-\code{--verify-only}; explicit \code{not\_certified} fivefold status \\
+Small-system consistency & Nondegenerate open $2\times3$ diagnostic &
+Independent matrix exponential and operator norm; explicitly not a
+large-system proof \\
+Verifier falsifiability & Synchronized-ledger and field-mutation tests &
+Corrupt D6, D7, tail, adjacent step, type, resource, or ratio must fail \\
 \bottomrule
 \end{longtable}
 
@@ -71,27 +76,33 @@ D5 follow-up only & Hashed compressed D5 sidecar and summary status &
 
 At the frozen delivery point the primary digests are
 \begin{align*}
-\mathrm{SHA256}(\text{main certificate})
- &=\code{0a09623ce3b292a3637065c870fb3153b}\ldots,\\
+\mathrm{SHA256}(\text{D5-integrated certificate})
+ &=\code{ec60a7458f90fa2206cf1f58e05da3ea}\ldots,\\
 \mathrm{SHA256}(\text{D4 sidecar})
  &=\code{a397414bb0229fb1ebdb38798aa781fb8}\ldots,\\
 \mathrm{SHA256}(\text{D5 sidecar})
  &=\code{c5e8968a93b4497b41fe42c0e364324}\ldots.
 \end{align*}
 The complete 64-hex-character values are stored in the package manifest and
-summary.  A printed prefix is for human orientation only; verification uses
-the complete digest.
+certificate fields.  A printed prefix is for human orientation only;
+verification uses the complete digest.
 
-The manuscript is a derived view and is not part of the frozen proof bundle.
+The original 97-step certificate has digest
+\code{0a09623ce3b292a3637065c870fb3153b}\ldots{} and remains bound by its
+original manifest.  It is a historical predecessor, not the numerical source
+for the present headline.
+
+The manuscript is a derived view and is not part of either frozen proof bundle.
 If the manuscript, figures, or wording changes, the mathematical claim remains
-bound to the same JSON and sidecars.  Conversely, any change to a certificate
-requires regeneration of its digest and all summaries that cite it.
+bound to the D5-integrated JSON and sidecars.  Conversely, any change to a
+certificate requires regeneration of its digest and all summaries that cite
+it.
 
 \subsection{Machine-readable and human-readable outputs}
 
-The delivery contains a main certificate JSON, large exact sidecars, a compact
-JSON summary, a plain-text summary, verification transcript, checksums, source
-code, tests, a short technical report, and this long-form manuscript.  The
+The delivery contains current and predecessor certificate JSON files, large
+exact sidecars, a verification transcript, checksums, source code, tests, a
+short technical report, and this long-form manuscript.  The
 machine-readable objects are authoritative for exact numerators and
 denominators.  Human documents explain the method and use outward decimal
 summaries; they should never be parsed as the proof source.

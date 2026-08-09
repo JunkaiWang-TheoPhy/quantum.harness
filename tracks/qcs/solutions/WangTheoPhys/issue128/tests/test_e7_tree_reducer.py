@@ -127,7 +127,9 @@ def test_reduce_word_range_rejects_corrupt_source_digest(tmp_path: Path) -> None
         )
 
 
-def test_finalize_partials_emits_existing_exact_d6_shape(tmp_path: Path) -> None:
+def test_finalize_partials_emits_exact_d6_shape_from_fixture(
+    tmp_path: Path,
+) -> None:
     source = tmp_path / "words"
     partials = tmp_path / "partials"
     _sources(source)
@@ -152,6 +154,7 @@ def test_finalize_partials_emits_existing_exact_d6_shape(tmp_path: Path) -> None
         output=output,
         parent=parent,
         summary=summary_path,
+        e5_override={((0, 0, "Z"),): Cubic.one()},
     )
 
     payload = read_shard_gzip(output)
@@ -189,4 +192,3 @@ def test_finalize_partials_rejects_gap_before_output(tmp_path: Path) -> None:
             summary=tmp_path / "summary.json",
         )
     assert not output.exists()
-

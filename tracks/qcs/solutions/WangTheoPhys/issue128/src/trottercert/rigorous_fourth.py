@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from fractions import Fraction
+from functools import lru_cache
 from math import factorial, lcm
 from typing import Sequence
 
@@ -349,6 +350,7 @@ def fourth_order_rational_pair_certificate(
     )
 
 
+@lru_cache(maxsize=64)
 def fourth_order_published_triangle_certificate(
     *,
     center: int = 20,
@@ -421,4 +423,23 @@ def fourth_order_published_triangle_certificate(
         site_density_upper=cell / 4,
         theorem_terms=theorem_terms,
         expanded_commutator_keys=len(weights),
+    )
+
+
+def fourth_order_published_triangle_center_scan(
+    *,
+    decimal_digits: int = 18,
+) -> tuple[FourthOrderPublishedTriangleCertificate, ...]:
+    """Rebuild every admissible theorem center in one auditable ordering."""
+
+    stages, _ = fourth_order_suzuki_interval_stages(
+        4,
+        decimal_digits=decimal_digits,
+    )
+    return tuple(
+        fourth_order_published_triangle_certificate(
+            center=center,
+            decimal_digits=decimal_digits,
+        )
+        for center in range(1, len(stages) + 1)
     )

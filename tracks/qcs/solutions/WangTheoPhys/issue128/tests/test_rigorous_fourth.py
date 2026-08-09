@@ -33,3 +33,21 @@ def test_published_triangle_certificate_reproduces_baseline() -> None:
     certificate = fourth_order_published_triangle_certificate(decimal_digits=12)
     assert certificate.center == 20
     assert Fraction(164) < certificate.site_density_upper < Fraction(166)
+
+
+@pytest.mark.slow
+def test_published_triangle_center_scan_selects_center_twenty() -> None:
+    from trottercert.rigorous_fourth import (
+        fourth_order_published_triangle_center_scan,
+    )
+
+    certificates = fourth_order_published_triangle_center_scan(
+        decimal_digits=12,
+    )
+    assert tuple(certificate.center for certificate in certificates) == tuple(
+        range(1, 32)
+    )
+    assert min(
+        certificates,
+        key=lambda certificate: certificate.site_density_upper,
+    ).center == 20

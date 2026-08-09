@@ -1,9 +1,10 @@
 # Long-form Issue 128 manuscript
 
 This directory contains the full English research-paper treatment of the
-machine-certified Issue 128 result. The authoritative exact numbers remain in
-`../../certificates/issue128-certificate.json` and its hashed sidecars; the PDF
-is a human-readable derived artifact.
+machine-certified Issue 128 result. The authoritative current numbers remain
+in `../../certificates/issue128-d5-integrated-certificate.json` and its hashed
+D4/D5 sidecars; the PDF is a human-readable derived artifact. The original
+97-step certificate remains frozen as a separately auditable predecessor.
 
 ## Build
 
@@ -40,14 +41,16 @@ From the Issue 128 root:
 ```bash
 pytest -q
 PYTHONPATH=src python3 scripts/verify.py \
-  certificates/issue128-certificate.json
+  certificates/issue128-d5-integrated-certificate.json
+python3 scripts/reference_verify.py \
+  certificates/issue128-d5-integrated-certificate.json
 ```
 
 The expensive independent replay is optional:
 
 ```bash
 PYTHONPATH=src python3 scripts/verify.py \
-  certificates/issue128-certificate.json --deep
+  certificates/issue128-d5-integrated-certificate.json --deep
 ```
 
 See `CITATION_AUDIT.md` for the reference-validation result. Generated LaTeX

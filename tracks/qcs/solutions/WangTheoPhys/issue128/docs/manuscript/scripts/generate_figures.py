@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from fractions import Fraction
 import json
 from pathlib import Path
 
@@ -9,8 +10,8 @@ ROOT = Path(__file__).resolve().parents[3]
 OUT = Path(__file__).resolve().parents[1] / "figures"
 OUT.mkdir(parents=True, exist_ok=True)
 
-with (ROOT / "artifacts/issue128-summary.json").open() as handle:
-    summary = json.load(handle)
+with (ROOT / "certificates/issue128-d5-integrated-certificate.json").open() as handle:
+    certificate = json.load(handle)
 
 plt.rcParams.update({
     "font.size": 9,
@@ -23,8 +24,19 @@ plt.rcParams.update({
 blue, green, orange, red = "#2455A4", "#2A7F62", "#D97706", "#B42318"
 
 labels = ["Steps", "Merged groups", "Bond propagators", "CNOT upper"]
-baseline = np.array([393, 11791, 848952, 2546856], dtype=float)
-candidate = np.array([97, 2911, 209592, 628776], dtype=float)
+resources = certificate["claimed_resources"]
+baseline = np.array([
+    resources["published_steps"],
+    resources["published_group_exponentials"],
+    resources["published_bond_propagators"],
+    resources["published_cnot_upper"],
+], dtype=float)
+candidate = np.array([
+    resources["candidate_steps"],
+    resources["candidate_group_exponentials"],
+    resources["candidate_bond_propagators"],
+    resources["candidate_cnot_upper"],
+], dtype=float)
 x = np.arange(len(labels))
 fig, ax = plt.subplots(figsize=(6.6, 3.1))
 ax.bar(x - 0.19, np.ones(4), 0.38, label="Pinned baseline", color=blue)
@@ -40,14 +52,17 @@ fig.tight_layout()
 fig.savefig(OUT / "resources.pdf", bbox_inches="tight")
 plt.close(fig)
 
-ledger = summary["error_ledger"]
+ledger = certificate["candidate"]["contributions"]
 names = ["D4", "D5", "D6", "D7", "D8+"]
-values = [float(ledger[k]["decimal_outward"].replace("e", "E")) for k in ["degree4", "degree5", "degree6", "degree7", "tail"]]
+values = [
+    float(Fraction(*ledger[k]))
+    for k in ["degree4", "degree5", "degree6", "degree7", "tail"]
+]
 fig, ax = plt.subplots(figsize=(6.6, 3.15))
 bars = ax.bar(names, np.array(values) * 1e7, color=[blue, green, orange, "#7A5195", red])
 ax.axhline(10.0, color="black", linestyle="--", linewidth=1, label=r"total tolerance $10^{-6}$")
 ax.set_ylabel(r"Contribution ($10^{-7}$)")
-ax.set_title(r"Certified right-generator ledger at $r=97$")
+ax.set_title(r"Certified right-generator ledger at $r=95$")
 for bar, value in zip(bars, values):
     ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.12, f"{value:.2e}", ha="center", fontsize=8)
 ax.legend(frameon=False)

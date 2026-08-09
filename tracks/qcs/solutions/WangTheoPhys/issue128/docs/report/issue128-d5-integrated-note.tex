@@ -118,7 +118,10 @@ Total & $\mathbf{9.9044914028324506\times10^{-7}}$ \\
 All acceptance decisions use exact rational arithmetic, not the displayed
 decimals.  At the adjacent step $r=94$, the same function evaluates to
 $1.0468061165603706\times10^{-6}$, above the tolerance.  Hence 95 is the
-smallest integer accepted by this certificate.
+smallest integer accepted by this certificate.  Fast verification now
+regenerates each displayed contribution and the adjacent-step value.  In
+particular, setting D6, D7, or the tail to zero and synchronously recomputing
+the submitted total is rejected.
 
 \section{Verification and reproducibility}
 
@@ -130,13 +133,35 @@ PYTHONPATH=src python3 scripts/verify.py \
 It returns \code{valid=true}, \code{candidate\_steps=95},
 \code{candidate\_group\_exponentials=2851},
 \code{d5\_term\_count=605832}, and the exact ratio
-\code{11791/2851}.  Deep verification is invoked with \code{--deep}.  It
-regenerates all D4 and D5 coefficients from the Suzuki formula and requires
-exact interval equality with the two sidecars.  The observed deep run took
-167.62 seconds, used at most 1,533,149,184 bytes of resident memory, and
-returned \code{deep\_proof\_regenerated=true}.  The normal suite reports 100
-passed tests and 11 explicitly deselected slow tests; focused minimality and
-corruption-rejection checks report three passes.
+\code{11791/2851}.  It also returns
+\code{finite\_step\_bound\_recomputed=true}.  Deep verification is invoked
+with \code{--deep}.  It scans all 31 published-theorem centers, selects center
+20, regenerates all D4 and D5 coefficients from the Suzuki formula, and
+requires exact interval equality with the two sidecars.  The current-source
+deep run took 408.88 seconds, used at most 1,538,768,896 bytes of resident
+memory, and returned \code{deep\_proof\_regenerated=true} and
+\code{baseline\_centers\_scanned=31}.
+
+A second verifier uses only the Python standard library:
+\begin{verbatim}
+python3 scripts/reference_verify.py \
+  certificates/issue128-d5-integrated-certificate.json
+\end{verbatim}
+It independently checks sidecar coverage, symplectic anticommutation,
+square-root domination, and equality of three D4/D5 metadata values: term
+count, group count, and maximum group size.  It also checks every finite-step
+contribution, the Suzuki tail, the 95/94 comparison, and resource arithmetic
+in 3.63 seconds.  It does not regenerate the coefficient maps; that separate
+obligation belongs to deep mode.  The normal suite reports 146 passed tests
+and 12 explicitly deselected slow tests; ten focused certificate mutations
+and eight independent-checker tests pass.
+
+On a nondegenerate open $2\times3$ diagnostic with seven unique bonds, dense
+evaluation at 95 steps gives operator-norm error
+$1.8313133889571672\times10^{-10}$, below the outward scaled periodic
+comparison $4.129166666666667\times10^{-8}$.  This checks normalization and
+stage ordering; it is not a proof that the periodic certificate applies to
+open boundaries.
 
 The original ten-file delivery manifest remains frozen at 97 steps and
 $11791/2911$.  It has not been silently rewritten.  The new artifact
@@ -152,5 +177,22 @@ larger than the entire tolerance.  Nonnegative D5--tail contributions can only
 increase the ledger.  Exact-D8 HPC work therefore remains diagnostic: it may
 guide a future proof, but it cannot establish fivefold without a new D4
 tightening.  This report makes no fivefold claim.
+
+\section{Claim boundary and release gates}
+
+This certificate is scoped to the stated Hamiltonian, normalization, periodic
+boundary, formula, tolerance, and cost model.  It does not prove that 94
+physical steps fail, that the grouping heuristic is optimal, or that the
+method is state-of-the-art over unrestricted quantum simulation algorithms.
+
+A release is accepted only when:
+\begin{itemize}
+  \item the 95-step primary and standard-library reference verifiers pass;
+  \item deep mode reports 31 scanned centers and coefficient regeneration;
+  \item all ordinary and adversarial mutation tests pass;
+  \item the D5-integrated SHA-256 manifest is clean; and
+  \item this PDF is rebuilt from the committed \LaTeX{} source and visually
+        inspected page by page.
+\end{itemize}
 
 \end{document}

@@ -60,6 +60,7 @@ def finalize_partials(
     output: Path,
     parent: Path,
     summary: Path,
+    e5_override: CoordinateCubicTerms | None = None,
 ) -> dict[str, object]:
     if partial_count <= 0 or source_shard_count <= 0:
         raise ValueError("partial and source shard counts must be positive")
@@ -122,10 +123,15 @@ def finalize_partials(
 
     registry = CoordinateRegistry()
     e7 = _symplectic(registry, forward)
-    e5_registry, e5_raw = exact_log_e5_density(fourth_order_suzuki_cubic_stages())
-    e5_coordinates = coordinate_decode_terms(
-        coordinate_encode_terms(e5_registry, e5_raw)
-    )
+    if e5_override is None:
+        e5_registry, e5_raw = exact_log_e5_density(
+            fourth_order_suzuki_cubic_stages()
+        )
+        e5_coordinates = coordinate_decode_terms(
+            coordinate_encode_terms(e5_registry, e5_raw)
+        )
+    else:
+        e5_coordinates = e5_override
     e5 = _symplectic(registry, e5_coordinates)
     d6 = exact_d6_density(registry, e5, e7)
     root = cube_root_four_interval(30)

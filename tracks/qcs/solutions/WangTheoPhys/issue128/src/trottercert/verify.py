@@ -31,6 +31,19 @@ from .support_groups import decode_d5_gzip, verify_d5_payload
 EXPECTED_NORMALIZATION = "(XX+YY+ZZ)/4"
 
 
+def _integer(
+    value: object,
+    label: str,
+    *,
+    minimum: int | None = None,
+) -> int:
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError(f"{label} must be an integer")
+    if minimum is not None and value < minimum:
+        raise ValueError(f"{label} must be at least {minimum}")
+    return value
+
+
 @dataclass(frozen=True)
 class D4SidecarVerification:
     site_bound: Fraction
@@ -57,10 +70,20 @@ class D6SidecarVerification:
     max_group_size: int = 1
 
 
-def _fraction(pair: list[int]) -> Fraction:
-    if len(pair) != 2:
+def _fraction(pair: object) -> Fraction:
+    if not isinstance(pair, list) or len(pair) != 2:
         raise ValueError("fraction must be [numerator, denominator]")
-    return Fraction(pair[0], pair[1])
+    numerator, denominator = pair
+    if (
+        isinstance(numerator, bool)
+        or not isinstance(numerator, int)
+        or isinstance(denominator, bool)
+        or not isinstance(denominator, int)
+    ):
+        raise ValueError("fraction numerator and denominator must be integers")
+    if denominator <= 0:
+        raise ValueError("fraction denominator must be positive")
+    return Fraction(numerator, denominator)
 
 
 def _verify_d4_sidecar(
@@ -77,53 +100,110 @@ def _verify_d4_sidecar(
         raise ValueError("D4 sidecar digest mismatch")
 
     payload = json.loads(raw)
-    if int(payload["schema_version"]) != 1:
+    if not isinstance(payload, dict):
+        raise ValueError("D4 sidecar root must be an object")
+    canonical_payload = (
+        json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n"
+    ).encode()
+    if raw != canonical_payload:
+        raise ValueError("D4 sidecar is not canonical JSON")
+    if _integer(payload["schema_version"], "D4 sidecar schema") != 1:
         raise ValueError("unsupported D4 sidecar schema")
-    coefficient_denominator = int(payload["coefficient_denominator"])
-    sqrt_denominator = int(payload["sqrt_denominator"])
-    if coefficient_denominator < 1 or sqrt_denominator < 1:
-        raise ValueError("D4 sidecar denominators must be positive")
+    coefficient_denominator = _integer(
+        payload["coefficient_denominator"],
+        "D4 coefficient denominator",
+        minimum=1,
+    )
+    sqrt_denominator = _integer(
+        payload["sqrt_denominator"],
+        "D4 square-root denominator",
+        minimum=1,
+    )
 
     rows = payload["terms"]
-    paulis = tuple(
-        (int(row[0]), int(row[1]))
-        for row in rows
-    )
+    if not isinstance(rows, list):
+        raise ValueError("D4 terms must be a list")
+    pauli_rows: list[tuple[SymplecticPauli, RationalInterval]] = []
+    for position, row in enumerate(rows):
+        if not isinstance(row, list) or len(row) != 4:
+            raise ValueError(f"D4 term {position} is malformed")
+        pauli = (
+            _integer(row[0], "D4 x mask", minimum=0),
+            _integer(row[1], "D4 z mask", minimum=0),
+        )
+        coefficient = RationalInterval(
+            Fraction(
+                _integer(row[2], "D4 coefficient lower endpoint"),
+                coefficient_denominator,
+            ),
+            Fraction(
+                _integer(row[3], "D4 coefficient upper endpoint"),
+                coefficient_denominator,
+            ),
+        )
+        pauli_rows.append((pauli, coefficient))
+    paulis = tuple(pauli for pauli, _ in pauli_rows)
     if len(paulis) != len(set(paulis)):
         raise ValueError("D4 sidecar coefficient terms are duplicated")
     if paulis != tuple(sorted(paulis)):
         raise ValueError("D4 sidecar coefficient terms are not canonical")
-    coefficients = {
-        pauli: RationalInterval(
-            Fraction(int(row[2]), coefficient_denominator),
-            Fraction(int(row[3]), coefficient_denominator),
-        )
-        for pauli, row in zip(paulis, rows)
-    }
+    coefficients = dict(pauli_rows)
 
     submitted_groups = payload["groups"]
+    if not isinstance(submitted_groups, list):
+        raise ValueError("D4 groups must be a list")
     groups: list[tuple[SymplecticPauli, ...]] = []
-    for row in submitted_groups:
-        indices = tuple(int(index) for index in row[0])
-        if any(index < 0 or index >= len(paulis) for index in indices):
+    submitted_bounds: list[Fraction] = []
+    for position, row in enumerate(submitted_groups):
+        if not isinstance(row, list) or len(row) != 2:
+            raise ValueError(f"D4 group {position} is malformed")
+        if not isinstance(row[0], list) or not row[0]:
+            raise ValueError("D4 group indices must be a nonempty list")
+        indices = tuple(
+            _integer(index, "D4 group index", minimum=0)
+            for index in row[0]
+        )
+        if any(index >= len(paulis) for index in indices):
             raise ValueError("D4 partition coverage index is out of range")
         groups.append(tuple(paulis[index] for index in indices))
+        submitted_bounds.append(
+            Fraction(
+                _integer(
+                    row[1],
+                    "D4 group bound numerator",
+                    minimum=0,
+                ),
+                sqrt_denominator,
+            )
+        )
     regenerated = certify_anticommuting_partition(
         coefficients,
         tuple(groups),
     )
-    submitted_bounds = tuple(
-        Fraction(int(row[1]), sqrt_denominator)
-        for row in submitted_groups
-    )
     regenerated_bounds = tuple(
         group.bound for group in regenerated.groups
     )
-    if submitted_bounds != regenerated_bounds:
+    if tuple(submitted_bounds) != regenerated_bounds:
         raise ValueError("D4 group bound mismatch")
 
     max_group_size = max((len(group) for group in groups), default=0)
-    if max_group_size > int(metadata["max_group_size"]):
+    if len(paulis) != _integer(
+        metadata["term_count"],
+        "D4 term count",
+        minimum=0,
+    ):
+        raise ValueError("D4 term count mismatch")
+    if len(groups) != _integer(
+        metadata["group_count"],
+        "D4 group count",
+        minimum=0,
+    ):
+        raise ValueError("D4 group count mismatch")
+    if max_group_size != _integer(
+        metadata["max_group_size"],
+        "D4 maximum group size",
+        minimum=0,
+    ):
         raise ValueError("D4 maximum group size mismatch")
     cell_bound = _fraction(payload["cell_bound"])
     if cell_bound != regenerated.bound:
@@ -157,11 +237,23 @@ def _verify_d5_sidecar(
         (len(group.term_indices) for group in regenerated.groups),
         default=0,
     )
-    if len(regenerated.paulis) != int(metadata["term_count"]):
+    if len(regenerated.paulis) != _integer(
+        metadata["term_count"],
+        "D5 term count",
+        minimum=0,
+    ):
         raise ValueError("D5 term count mismatch")
-    if len(regenerated.groups) != int(metadata["group_count"]):
+    if len(regenerated.groups) != _integer(
+        metadata["group_count"],
+        "D5 group count",
+        minimum=0,
+    ):
         raise ValueError("D5 group count mismatch")
-    if max_group_size != int(metadata["max_group_size"]):
+    if max_group_size != _integer(
+        metadata["max_group_size"],
+        "D5 maximum group size",
+        minimum=0,
+    ):
         raise ValueError("D5 maximum group size mismatch")
     site_bound = regenerated.bound / 4
     if site_bound != _fraction(metadata["site_norm_upper"]):
@@ -193,10 +285,20 @@ def _verify_d6_sidecar(
         expected_degree=6,
         expected_source_commit=str(metadata["source_commit"]),
     )
-    if verified.term_count != int(metadata["term_count"]):
+    if verified.term_count != _integer(
+        metadata["term_count"],
+        "D6 term count",
+        minimum=0,
+    ):
         raise ValueError("D6 term count mismatch")
-    if int(payload["coefficient_interval_decimal_digits"]) != int(
-        metadata["coefficient_interval_decimal_digits"]
+    if _integer(
+        payload["coefficient_interval_decimal_digits"],
+        "D6 payload coefficient precision",
+        minimum=1,
+    ) != _integer(
+        metadata["coefficient_interval_decimal_digits"],
+        "D6 metadata coefficient precision",
+        minimum=1,
     ):
         raise ValueError("D6 coefficient interval precision mismatch")
     if verified.parent_sha256 != str(metadata["parent_sha256"]):
@@ -293,7 +395,11 @@ def _verify_d6_sidecar(
         raise ValueError("grouped D6 source commit mismatch")
     if groups_payload.get("degree") != 6:
         raise ValueError("grouped D6 degree mismatch")
-    digits = int(payload["coefficient_interval_decimal_digits"])
+    digits = _integer(
+        payload["coefficient_interval_decimal_digits"],
+        "D6 coefficient precision",
+        minimum=1,
+    )
     if groups_payload.get("coefficient_interval_decimal_digits") != digits:
         raise ValueError("grouped D6 coefficient precision mismatch")
     candidate_cap = groups_payload.get("candidate_cap")
@@ -351,9 +457,17 @@ def _verify_d6_sidecar(
         raise ValueError("D6 grouped main-certificate cell bound mismatch")
     if _fraction(metadata["site_norm_upper"]) != regenerated.grouped_site_bound:
         raise ValueError("D6 grouped main-certificate site bound mismatch")
-    if int(metadata["group_count"]) != len(regenerated.groups):
+    if _integer(
+        metadata["group_count"],
+        "D6 group count",
+        minimum=0,
+    ) != len(regenerated.groups):
         raise ValueError("D6 main-certificate group count mismatch")
-    if int(metadata["max_group_size"]) != regenerated.max_group_size:
+    if _integer(
+        metadata["max_group_size"],
+        "D6 maximum group size",
+        minimum=0,
+    ) != regenerated.max_group_size:
         raise ValueError("D6 main-certificate maximum group size mismatch")
     return D6SidecarVerification(
         site_bound=regenerated.grouped_site_bound,
@@ -367,7 +481,7 @@ def _verify_v1(data: dict[str, object]) -> dict[str, object]:
     benchmark = data["benchmark"]
     if benchmark["normalization"] != EXPECTED_NORMALIZATION:
         raise ValueError("Hamiltonian normalization mismatch")
-    length = int(benchmark["length"])
+    length = _integer(benchmark["length"], "benchmark length", minimum=1)
     if length % 6:
         raise ValueError("benchmark length must be divisible by six")
     tolerance = _fraction(benchmark["tolerance"])
@@ -436,7 +550,7 @@ def _verify_v2(
     benchmark = data["benchmark"]
     if benchmark["normalization"] != EXPECTED_NORMALIZATION:
         raise ValueError("Hamiltonian normalization mismatch")
-    length = int(benchmark["length"])
+    length = _integer(benchmark["length"], "benchmark length", minimum=1)
     if length % 2:
         raise ValueError("four-matching benchmark requires even length")
     n_sites = length * length
@@ -581,7 +695,7 @@ def _verify_v3(
     benchmark = data["benchmark"]
     if benchmark["normalization"] != EXPECTED_NORMALIZATION:
         raise ValueError("Hamiltonian normalization mismatch")
-    length = int(benchmark["length"])
+    length = _integer(benchmark["length"], "benchmark length", minimum=1)
     if length % 2:
         raise ValueError("four-matching benchmark requires even length")
     n_sites = length * length
@@ -592,9 +706,9 @@ def _verify_v3(
     published = data["published_baseline"]
     if (
         published["formula"] != "five_copy_suzuki_fourth_order"
-        or int(published["formula_order"]) != 4
-        or int(published["stage_count"]) != 31
-        or int(published["theorem_center"]) != 20
+        or _integer(published["formula_order"], "published formula order") != 4
+        or _integer(published["stage_count"], "published stage count") != 31
+        or _integer(published["theorem_center"], "published theorem center") != 20
     ):
         raise ValueError("published baseline structure mismatch")
     published_density = _fraction(published["site_density_upper"])
@@ -603,10 +717,18 @@ def _verify_v3(
         tolerance,
         4,
     )
-    if published_steps != int(published["steps"]):
+    if published_steps != _integer(
+        published["steps"],
+        "published step count",
+        minimum=1,
+    ):
         raise ValueError("published baseline step count mismatch")
     published_groups = 30 * published_steps + 1
-    if published_groups != int(published["group_exponentials"]):
+    if published_groups != _integer(
+        published["group_exponentials"],
+        "published group count",
+        minimum=1,
+    ):
         raise ValueError("published baseline group count mismatch")
 
     candidate = data["candidate"]
@@ -646,13 +768,25 @@ def _verify_v3(
         candidate,
     )
     d4_metadata = candidate["d4_certificate"]
-    if d4_verification.term_count != int(d4_metadata["term_count"]):
+    if d4_verification.term_count != _integer(
+        d4_metadata["term_count"],
+        "D4 term count",
+        minimum=0,
+    ):
         raise ValueError("D4 term count mismatch")
-    if d4_verification.group_count != int(d4_metadata["group_count"]):
+    if d4_verification.group_count != _integer(
+        d4_metadata["group_count"],
+        "D4 group count",
+        minimum=0,
+    ):
         raise ValueError("D4 group count mismatch")
     if (
         d4_verification.max_group_size
-        > int(d4_metadata["max_group_size"])
+        > _integer(
+            d4_metadata["max_group_size"],
+            "D4 maximum group size",
+            minimum=0,
+        )
     ):
         raise ValueError("D4 maximum group size mismatch")
     d5_verification = (
@@ -661,7 +795,39 @@ def _verify_v3(
     d6_verification = (
         _verify_d6_sidecar(certificate_path, candidate) if has_d6 else None
     )
-    candidate_steps = int(candidate["steps"])
+
+    # Fast verification must reconstruct the complete finite-step ledger rather
+    # than merely checking that submitted D4--D7 and tail entries add up.  The
+    # expensive coefficient-by-coefficient D4/D5/D6 replay remains a deep-mode
+    # responsibility, but every accepted mode independently derives the
+    # formula constants, degree contributions, tail, and adjacent-step value.
+    from .refined_error import (
+        build_refined_fourth_order_constants,
+        evaluate_refined_fourth_order_bound,
+    )
+
+    constants = build_refined_fourth_order_constants(
+        decimal_digits=_integer(
+            candidate["coefficient_interval_decimal_digits"],
+            "candidate coefficient precision",
+            minimum=1,
+        ),
+        quantization_digits=_integer(
+            candidate["e5_quantization_digits"],
+            "candidate E5 quantization precision",
+            minimum=1,
+        ),
+    )
+    if constants.e5_site_l1 != _fraction(candidate["e5_site_l1_upper"]):
+        raise ValueError("E5 site bound regeneration mismatch")
+    if constants.e7_site_majorant != _fraction(candidate["e7_site_majorant"]):
+        raise ValueError("E7 site majorant regeneration mismatch")
+
+    candidate_steps = _integer(
+        candidate["steps"],
+        "candidate step count",
+        minimum=2,
+    )
     candidate_error = _fraction(candidate["global_error_upper"])
     previous_error = _fraction(candidate["previous_step_error_upper"])
     if candidate_error > tolerance:
@@ -669,7 +835,11 @@ def _verify_v3(
     if previous_error <= tolerance:
         raise ValueError("candidate step count is not minimal for this certificate")
     candidate_groups = 30 * candidate_steps + 1
-    if candidate_groups != int(candidate["group_exponentials"]):
+    if candidate_groups != _integer(
+        candidate["group_exponentials"],
+        "candidate group count",
+        minimum=1,
+    ):
         raise ValueError("candidate group count mismatch")
     contributions = candidate["contributions"]
     contribution_sum = sum(
@@ -702,6 +872,53 @@ def _verify_v3(
         if _fraction(contributions["degree6"]) != expected_degree_six:
             raise ValueError("candidate exact D6 contribution mismatch")
 
+    rebuilt = evaluate_refined_fourth_order_bound(
+        constants,
+        n_sites,
+        candidate_steps,
+        d4_site_override=d4_verification.site_bound,
+        d5_site_override=(
+            d5_verification.site_bound
+            if d5_verification is not None
+            else None
+        ),
+        d6_site_override=(
+            d6_verification.site_bound
+            if d6_verification is not None
+            else None
+        ),
+    )
+    rebuilt_previous = evaluate_refined_fourth_order_bound(
+        constants,
+        n_sites,
+        candidate_steps - 1,
+        d4_site_override=d4_verification.site_bound,
+        d5_site_override=(
+            d5_verification.site_bound
+            if d5_verification is not None
+            else None
+        ),
+        d6_site_override=(
+            d6_verification.site_bound
+            if d6_verification is not None
+            else None
+        ),
+    )
+    regenerated_contributions = {
+        "degree4": rebuilt.degree_four_contribution,
+        "degree5": rebuilt.degree_five_contribution,
+        "degree6": rebuilt.degree_six_contribution,
+        "degree7": rebuilt.degree_seven_contribution,
+        "tail": rebuilt.tail_contribution,
+    }
+    for name, regenerated in regenerated_contributions.items():
+        if _fraction(contributions[name]) != regenerated:
+            raise ValueError(f"candidate {name} contribution regeneration mismatch")
+    if rebuilt.global_error_bound != candidate_error:
+        raise ValueError("candidate bound regeneration mismatch")
+    if rebuilt_previous.global_error_bound != previous_error:
+        raise ValueError("candidate adjacent-step regeneration mismatch")
+
     claimed = data["claimed_resources"]
     baseline_bonds = published_groups * n_sites // 2
     candidate_bonds = candidate_groups * n_sites // 2
@@ -719,73 +936,60 @@ def _verify_v3(
         raise ValueError("schema v3 resource summary mismatch")
 
     deep_verified = False
+    baseline_centers_scanned = 0
     if deep:
         from .refined_error import (
-            build_refined_fourth_order_constants,
             certified_d4_cell_coefficients,
-            evaluate_refined_fourth_order_bound,
         )
         from .rigorous_fourth import (
-            fourth_order_published_triangle_certificate,
+            fourth_order_published_triangle_center_scan,
         )
 
-        published_rebuilt = fourth_order_published_triangle_certificate(
-            center=20,
-            decimal_digits=int(published["coefficient_interval_decimal_digits"]),
+        published_scan = fourth_order_published_triangle_center_scan(
+            decimal_digits=_integer(
+                published["coefficient_interval_decimal_digits"],
+                "published coefficient precision",
+                minimum=1,
+            ),
         )
+        baseline_centers_scanned = len(published_scan)
+        published_rebuilt = min(
+            published_scan,
+            key=lambda certificate: certificate.site_density_upper,
+        )
+        if published_rebuilt.center != _integer(
+            published["theorem_center"],
+            "published theorem center",
+        ):
+            raise ValueError("deep published baseline center scan mismatch")
         if published_rebuilt.site_density_upper != published_density:
             raise ValueError("deep published baseline regeneration mismatch")
+        if (
+            published_rebuilt.theorem_terms
+            != _integer(
+                published["theorem_terms"],
+                "published theorem term count",
+                minimum=0,
+            )
+            or published_rebuilt.expanded_commutator_keys
+            != _integer(
+                published["expanded_commutator_keys"],
+                "published expanded commutator count",
+                minimum=0,
+            )
+        ):
+            raise ValueError("deep published baseline statistics mismatch")
 
-        constants = build_refined_fourth_order_constants(
-            decimal_digits=int(candidate["coefficient_interval_decimal_digits"]),
-            quantization_digits=int(candidate["e5_quantization_digits"]),
-        )
-        if constants.e5_site_l1 != _fraction(candidate["e5_site_l1_upper"]):
-            raise ValueError("deep E5 regeneration mismatch")
-        if constants.e7_site_majorant != _fraction(candidate["e7_site_majorant"]):
-            raise ValueError("deep E7 regeneration mismatch")
         regenerated_d4 = certified_d4_cell_coefficients(
             constants.stages,
-            quantization_digits=int(candidate["e5_quantization_digits"]),
+            quantization_digits=_integer(
+                candidate["e5_quantization_digits"],
+                "candidate E5 quantization precision",
+                minimum=1,
+            ),
         )
         if regenerated_d4 != d4_verification.coefficients:
             raise ValueError("deep D4 coefficient regeneration mismatch")
-        rebuilt = evaluate_refined_fourth_order_bound(
-            constants,
-            n_sites,
-            candidate_steps,
-            d4_site_override=d4_verification.site_bound,
-            d5_site_override=(
-                d5_verification.site_bound
-                if d5_verification is not None
-                else None
-            ),
-            d6_site_override=(
-                d6_verification.site_bound
-                if d6_verification is not None
-                else None
-            ),
-        )
-        rebuilt_previous = evaluate_refined_fourth_order_bound(
-            constants,
-            n_sites,
-            candidate_steps - 1,
-            d4_site_override=d4_verification.site_bound,
-            d5_site_override=(
-                d5_verification.site_bound
-                if d5_verification is not None
-                else None
-            ),
-            d6_site_override=(
-                d6_verification.site_bound
-                if d6_verification is not None
-                else None
-            ),
-        )
-        if rebuilt.global_error_bound != candidate_error:
-            raise ValueError("deep candidate bound regeneration mismatch")
-        if rebuilt_previous.global_error_bound != previous_error:
-            raise ValueError("deep candidate minimality regeneration mismatch")
         if d5_verification is not None:
             from .cubic_field import fourth_order_suzuki_cubic_stages
             from .cubic_local import exact_d5_density, exact_log_e5_density
@@ -794,7 +998,13 @@ def _verify_v3(
             registry, exact_e5 = exact_log_e5_density(exact_stages)
             exact_d5 = exact_d5_density(registry, exact_e5)
             d5_root = cube_root_four_interval(
-                int(candidate["d5_certificate"]["coefficient_interval_decimal_digits"])
+                _integer(
+                    candidate["d5_certificate"][
+                        "coefficient_interval_decimal_digits"
+                    ],
+                    "D5 coefficient precision",
+                    minimum=1,
+                )
             )
             regenerated_d5 = {
                 pauli: coefficient.enclose(d5_root)
@@ -834,6 +1044,8 @@ def _verify_v3(
         "valid": True,
         "verification_level": "deep" if deep_verified else "fast",
         "deep_proof_regenerated": deep_verified,
+        "finite_step_bound_recomputed": True,
+        "baseline_centers_scanned": baseline_centers_scanned,
         "published_steps": published_steps,
         "candidate_steps": candidate_steps,
         "published_group_exponentials": published_groups,
@@ -879,6 +1091,8 @@ def verify_certificate(
     certificate_path = Path(path)
     data = json.loads(certificate_path.read_text())
     schema = data.get("schema_version")
+    if isinstance(schema, bool) or not isinstance(schema, int):
+        raise ValueError("certificate schema version must be an integer")
     if schema == 1:
         if deep:
             raise ValueError("deep verification is available only for schema v2")

@@ -9,7 +9,6 @@ from trottercert.dual_log_pairing import (
     suffix_group_ordinals,
 )
 
-
 ROOT = Path(__file__).resolve().parents[1]
 EXTENSIVE = (
     ROOT

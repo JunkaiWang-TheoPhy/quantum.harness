@@ -95,18 +95,19 @@ contribution.
   \State recompute the rational squared-weight sum
   \State require declared upper root squared $\geq$ recomputed sum
 \EndFor
-\State sum all group roots and compare to the D4 cell enclosure
-\State verify D5--D7 and tail preconditions and contributions
-\State sum the accepted-step global rational; require result $\leq\eps$
-\State sum the previous-step rational; require result $>\eps$
+\State sum all group roots and compare to the declared D4 or D5 enclosure
+\State regenerate the formula constants, D5--D7 majorants, and exact tail
+\State recompute every accepted-step contribution; require exact ledger equality
+\State independently evaluate the previous step; require exact equality
+\State require accepted total $\leq\eps$ and previous total $>\eps$
 \State recompute $G(r)$, bond propagators, CNOT totals, and exact ratio
 \State return a structured success record; fail closed on any mismatch
 \end{algorithmic}
 \end{algorithm}
 
-Deep mode inserts regeneration of the baseline center scan, complete formula
-logarithm, DSW defects, Pauli coefficient map, and higher-degree majorants
-before the certificate comparisons.  Importantly, both modes fail closed:
+Deep mode inserts regeneration of all 31 baseline centers, the complete formula
+logarithm, DSW defects, and the Pauli coefficient maps before the certificate
+comparisons.  Importantly, both modes fail closed:
 unknown schema versions, absent files, extra group members, and invalid
 interval orientation are errors rather than warnings.
 
@@ -132,6 +133,8 @@ positive and deep regeneration is enclosed \\
 bundle; no path traversal \\
 \path{candidate.d4_certificate.sha256} & 64-hex digest & Equals the bytes of
 the resolved sidecar \\
+\path{candidate.d5_certificate} & object & Binds the exact D5 coefficient
+sidecar, coverage, same-support groups, and site-norm enclosure \\
 \path{candidate.contributions} & rational pairs & Each pair has positive
 denominator and agrees with recomputed bounds \\
 \path{candidate.global_error_upper} & rational pair & Equals or dominates
@@ -156,11 +159,11 @@ Several ratios appear in the analysis and should not be conflated:
   &=\frac{20.160968407335066}{6.472926505087888}
     =3.114660484942633\ldots,\\
 \text{step ratio}
-  &=\frac{393}{97}=4.051546391752577\ldots,\\
+  &=\frac{393}{95}=4.136842105263158\ldots,\\
 \text{compiled resource ratio}
-  &=\frac{30\cdot393+1}{30\cdot97+1}
-    =\frac{11791}{2911}
-    =4.050498110614909\ldots.
+  &=\frac{30\cdot393+1}{30\cdot95+1}
+    =\frac{11791}{2851}
+    =4.135741844966678\ldots.
 \end{align}
 The step and resource ratios differ because the first and last fragment groups
 merge to give the additive one in \cref{eq:merged-groups}.  The norm ratio is
@@ -170,7 +173,7 @@ contains D5--D7, a tail, and integer rounding.
 
 The improvement relative to the challenge's twofold target is
 \begin{equation}
- \frac{(11791/2911)}{2}=2.025249055307454\ldots.
+ \frac{(11791/2851)}{2}=2.067870922483339\ldots.
 \end{equation}
 This means the achieved multiplier is just over twice the requested
 multiplier; it does not mean an eightfold resource reduction.
@@ -184,12 +187,12 @@ A reviewer can audit the result in increasing order of cost:
 same Hamiltonian, formula, tolerance, and cost model.
 \item Run the manuscript headline validator and the package checksum check.
 \item Run the fast verifier and inspect its structured output.
-\item Confirm the exact integer map from 393/97 steps to all three resources.
+\item Confirm the exact integer map from 393/95 steps to all three resources.
 \item Run the default unit suite, including mutation and local-Pauli tests.
-\item Run D5 \code{--verify-only} to confirm the follow-up is separate and
-marked noncertified at 78 steps.
+\item Run the standard-library reference verifier to check D4/D5 partitions,
+the full finite-step ledger, the adjacent boundary, and resource arithmetic.
 \item If computational resources permit, run the deep verifier to regenerate
-the formula-specific algebra and baseline center scan.
+the formula-specific D4/D5 algebra and all 31 baseline centers.
 \item Rebuild this PDF and visually inspect figures, tables, citations, and
 page boundaries; PDF appearance is a communication check, not a proof check.
 \end{enumerate}

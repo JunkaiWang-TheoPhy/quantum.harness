@@ -1,0 +1,58 @@
+name: issue128-certificate
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "tracks/qcs/solutions/WangTheoPhys/issue128/**"
+      - ".github/workflows/issue128-certificate.yml"
+  pull_request:
+    paths:
+      - "tracks/qcs/solutions/WangTheoPhys/issue128/**"
+      - ".github/workflows/issue128-certificate.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: issue128-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: tracks/qcs/solutions/WangTheoPhys/issue128
+
+jobs:
+  tests-and-fast-verification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: tracks/qcs/solutions/WangTheoPhys/issue128/pyproject.toml
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e ".[test]"
+      - run: python -m pytest -q
+      - run: python scripts/verify.py certificates/issue128-certificate.json
+      - run: python scripts/verify.py certificates/issue128-d5-integrated-certificate.json
+      - run: python scripts/reference_verify.py certificates/issue128-d5-integrated-certificate.json
+      - run: sha256sum -c artifacts/SHA256SUMS
+      - run: sha256sum -c artifacts/d5-integrated/SHA256SUMS
+
+  deep-verification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: tracks/qcs/solutions/WangTheoPhys/issue128/pyproject.toml
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e ".[test]"
+      - run: python scripts/verify.py --deep certificates/issue128-d5-integrated-certificate.json

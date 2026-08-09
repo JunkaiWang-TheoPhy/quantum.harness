@@ -1,0 +1,142 @@
+{
+  "bbox_counts": {
+    "1x2": 9,
+    "1x3": 3,
+    "1x4": 3,
+    "1x5": 3,
+    "2x1": 12,
+    "2x2": 60,
+    "2x3": 111,
+    "2x4": 108,
+    "2x5": 99,
+    "2x6": 42,
+    "2x8": 24,
+    "3x1": 12,
+    "3x2": 618,
+    "3x3": 1662,
+    "3x4": 1206,
+    "3x5": 462,
+    "3x6": 165,
+    "3x7": 54,
+    "3x8": 24,
+    "4x1": 27,
+    "4x2": 903,
+    "4x3": 2835,
+    "4x4": 4665,
+    "4x5": 2496,
+    "4x6": 1590,
+    "4x7": 213,
+    "4x8": 420,
+    "5x1": 24,
+    "5x2": 1068,
+    "5x3": 3534,
+    "5x4": 5235,
+    "5x5": 2925,
+    "5x6": 2778,
+    "5x7": 825,
+    "5x8": 1116,
+    "5x9": 48,
+    "6x1": 60,
+    "6x2": 1410,
+    "6x3": 4620,
+    "6x4": 11790,
+    "6x5": 8454,
+    "6x6": 8535,
+    "6x7": 2772,
+    "6x8": 1824,
+    "6x9": 168,
+    "7x6": 120,
+    "7x7": 96,
+    "7x8": 48,
+    "8x6": 48
+  },
+  "current_cell_bound": [
+    6472926505087887788180917647763,
+    1000000000000000000000000000000
+  ],
+  "current_r78_d4_contribution": [
+    6472926505087887788180917647763,
+    5140980000000000000000000000000000000
+  ],
+  "current_site_bound": [
+    6472926505087887788180917647763,
+    4000000000000000000000000000000
+  ],
+  "d4_alone_r78_target_cell_bound": [
+    257049,
+    50000
+  ],
+  "fit_fraction": [
+    427,
+    12554
+  ],
+  "fit_l1_fraction": [
+    8385750416690051401,
+    107525164839120341188
+  ],
+  "fit_term_l1": [
+    25157251250070154203,
+    16000000000000000000
+  ],
+  "frozen_partition_outside_bound": [
+    616900501728395000028805993579,
+    100000000000000000000000000000
+  ],
+  "hybrid_cell_bound": [
+    6738933197391087159076030520219,
+    1000000000000000000000000000000
+  ],
+  "hybrid_r78_d4_contribution": [
+    6738933197391087159076030520219,
+    5140980000000000000000000000000000000
+  ],
+  "hybrid_relative_to_current": [
+    6738933197391087159076030520219,
+    6472926505087887788180917647763
+  ],
+  "non_d4_d6_r78_contribution_from_frozen_ledger": [
+    10813241,
+    10000000000000
+  ],
+  "non_d4_r78_contribution_from_frozen_ledger": [
+    16653881,
+    10000000000000
+  ],
+  "outside_terms": 72762,
+  "partition_group_classes": {
+    "all_fit": 0,
+    "all_outside": 5810,
+    "mixed": 1766
+  },
+  "patch_anticommuting_bound": [
+    569928180107137158787970584429,
+    1000000000000000000000000000000
+  ],
+  "patch_anticommuting_group_count": 445,
+  "patch_l1_bound": [
+    25157251250070154203,
+    16000000000000000000
+  ],
+  "patch_merged_term_count": 3963,
+  "phase_preserving_4x4_fit_terms": 2562,
+  "reason": "A phase-preserving open 4x4 patch covers only a small subset of the D4 density, and splitting that subset from the frozen partition worsens the rigorous upper bound. Independently, the frozen non-D4 r=78 ledger already exceeds the total tolerance.",
+  "rigor_notes": [
+    "All coefficient and bound arithmetic is Fraction-based.",
+    "Every reported patch group is rechecked for exact pairwise anticommutation.",
+    "The patch result is an upper bound, not a spectral-norm estimate.",
+    "Periodic 4x4 aliasing is excluded because it is not an open-cluster decomposition of the 12x12 operator.",
+    "This experiment is not a production certificate and does not alter the frozen result."
+  ],
+  "scope": "experimental_nonproduction_full_phase_4x4_D4_audit",
+  "sidecar": "certificates/issue128-d4-groups.json",
+  "status": "NO-GO",
+  "term_count": 75324,
+  "tolerance": [
+    1,
+    1000000
+  ],
+  "total_term_l1": [
+    80643873629340255891,
+    4000000000000000000
+  ]
+}

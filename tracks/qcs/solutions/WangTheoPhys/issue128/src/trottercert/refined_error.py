@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from fractions import Fraction
+from functools import lru_cache
 from math import factorial
 from typing import Sequence
 
@@ -333,6 +334,7 @@ class RefinedFourthOrderConstants:
     d7_site: Fraction
 
 
+@lru_cache(maxsize=8)
 def build_refined_fourth_order_constants(
     *,
     decimal_digits: int = 12,

@@ -1,13 +1,18 @@
 Issue 128 D5-integrated verification transcript
 Recorded: 2026-07-31 Asia/Shanghai
+Base commit: f734c4f (manifest below binds the completed worktree sources)
+Environment: CPython 3.12.11
+Pinned packages: requirements-reproducibility.txt
 
-FAST VERIFIER
+PRIMARY FAST VERIFIER
 Command:
-  PYTHONPATH=src python3 scripts/verify.py certificates/issue128-d5-integrated-certificate.json
+  /usr/bin/time -l env PYTHONPATH=src /Users/thomasjwang/miniforge3/bin/python3 scripts/verify.py certificates/issue128-d5-integrated-certificate.json
 Observed summary:
   valid=true
   verification_level=fast
   deep_proof_regenerated=false
+  finite_step_bound_recomputed=true
+  baseline_centers_scanned=0
   published_steps=393
   candidate_steps=95
   published_group_exponentials=11791
@@ -17,31 +22,74 @@ Observed summary:
   d5_term_count=605832
   d5_group_count=123106
   exact_improvement_ratio=11791/2851
+  real_seconds=24.63
+  maximum_resident_set_bytes=1063010304
 
-DEEP VERIFIER
+PRIMARY DEEP VERIFIER
 Command:
-  /usr/bin/time -l env PYTHONPATH=src python3 scripts/verify.py --deep certificates/issue128-d5-integrated-certificate.json
+  /usr/bin/time -l env PYTHONPATH=src /Users/thomasjwang/miniforge3/bin/python3 scripts/verify.py --deep certificates/issue128-d5-integrated-certificate.json
 Observed summary:
   valid=true
   verification_level=deep
   deep_proof_regenerated=true
+  finite_step_bound_recomputed=true
+  baseline_centers_scanned=31
+  published_steps=393
   candidate_steps=95
   candidate_group_exponentials=2851
   exact_improvement_ratio=11791/2851
-  real_seconds=167.62
-  maximum_resident_set_bytes=1533149184
+  real_seconds=408.88
+  maximum_resident_set_bytes=1538768896
+
+STANDALONE REFERENCE VERIFIER
+Command:
+  /usr/bin/time -p /Users/thomasjwang/miniforge3/bin/python3 scripts/reference_verify.py certificates/issue128-d5-integrated-certificate.json
+Observed summary:
+  valid=true
+  verification_scope=independent_sidecars_finite_step_ledger_and_resources
+  coefficient_generation_replayed=false
+  candidate_steps=95
+  d4_term_count=75324
+  d4_group_count=7576
+  d5_term_count=605832
+  d5_group_count=123106
+  exact_improvement_ratio=11791/2851
+  real_seconds=3.63
 
 NORMAL TEST SUITE
 Command:
   PYTHONPATH=src /Users/thomasjwang/miniforge3/bin/python3 -m pytest -q
 Observed:
-  112 passed, 11 deselected in 175.21s
+  146 passed, 12 deselected in 88.30s (final reference-metadata rerun)
 
-FOCUSED D5 CERTIFICATE SUITE
+FOCUSED ADVERSARIAL SUITES
 Command:
-  PYTHONPATH=src python3 -m pytest -q tests/test_d5_integrated_certificate.py
+  PYTHONPATH=src /Users/thomasjwang/miniforge3/bin/python3 -m pytest -q tests/test_certificate_mutations.py tests/test_reference_verify.py
 Observed:
-  3 passed in 8.17s
+  18 passed in 39.41s
+Covered attacks:
+  retotalled degree-6, degree-7, and tail reductions
+  forged adjacent-step value
+  altered E7 formula constant
+  D5-integrated retotalled tail reduction
+  boolean rational component
+  noninteger schema and step fields
+  coercible string metadata and coefficient-precision fields
+  D4/D5 term-count, group-count, and maximum-group-size type or value drift
+  resource and exact-ratio drift
+  the same tail attack through the standalone reference verifier
+
+NONDEGENERATE DENSE DIAGNOSTIC
+Command:
+  PYTHONPATH=src /Users/thomasjwang/miniforge3/bin/python3 scripts/crosscheck_small.py --width 2 --height 3
+Observed:
+  boundary=open
+  unique_bond_count=7
+  steps=95
+  empirical_operator_norm_error=1.8313133889571672e-10
+  scaled_periodic_certificate_bound=4.129166666666667e-8
+  scaled_bound_dominates_empirical_error=true
+  comparison_is_diagnostic_only=true
 
 BOUNDARY AND RESOURCE SUMMARY
   r=95 error upper = 9.90449140283245055504941836653e-7
@@ -49,13 +97,19 @@ BOUNDARY AND RESOURCE SUMMARY
   candidate bond propagators = 205272
   candidate CNOT upper = 615816
   control-to-candidate exact ratio = 11791/2851
+  adjacent rejection is relative to the emitted bound, not a physical lower bound
 
-PRESENTATION DELIVERY
+DOCUMENT DELIVERY
 Artifacts:
+  docs/report/output/pdf/issue128-d5-integrated-note.pdf
+  docs/manuscript/output/pdf/issue128-proof-carrying-trotter-paper.pdf
   docs/presentation/output/issue128-10-minute-talk.pptx
   docs/presentation/output/issue128-10-minute-talk.pdf
 Observed:
-  8 slides / 8 PDF pages
-  PPTX overflow test passed
-  every rendered PPTX slide and PDF page visually inspected
-  speaker notes include timed talk track and per-slide [Sources]
+  D5 note: 3 PDF pages, compiled without layout warnings
+  long manuscript: headline_claims=PASS, 31 PDF pages, current 95/94 headline
+  all 31 manuscript pages rendered and visually inspected in six contact sheets
+  enlarged checks passed for the three-path verifier diagram, resource/error
+  figures, cross-page claim table, and certificate-schema appendix
+  long manuscript log: no overfull boxes, undefined references, or undefined citations
+  presentation: 8 slides / 8 PDF pages; prior overflow and visual checks retained

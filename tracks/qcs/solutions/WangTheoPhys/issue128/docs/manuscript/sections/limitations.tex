@@ -55,12 +55,12 @@ does not discharge these obligations.
   \includegraphics[width=0.8\textwidth]{figures/fivefold_gap.pdf}
   \caption{Conditional error ledger at the fivefold resource threshold.  The
   stacked value exceeds the target; $r=78$ is therefore not certified.  The
-  97-step result remains the lowest accepted point of the current bound.}
+  95-step result remains the lowest accepted point of the current bound.}
   \label{fig:fivefold-gap}
 \end{figure}
 
 A disciplined optimization sequence is therefore: (1) profile the current
-97-step error ledger; (2) improve the dominant D4 norm while preserving a
+95-step error ledger; (2) improve the dominant D4 norm while preserving a
 verifiable partition; (3) emit D8 explicitly; (4) move the geometric tail to a
 higher starting degree; (5) regenerate exact contributions at 78; and (6)
 accept the point only if the rational sum is at most $10^{-6}$.  GPU or HPC
@@ -69,12 +69,12 @@ replace the last verifier step.
 
 \subsection{Optimality is relative to the bound}
 
-The rejection at 96 establishes adjacent minimality only under the emitted
+The rejection at 94 establishes adjacent minimality only under the emitted
 upper bound.  It is not a lower bound on the true operator error.  Direct
 large-system matrix simulation is infeasible, and lower-bound techniques have
 not been specialized here to close the gap.  Consequently the candidate may
 still be physically accurate with fewer steps.  The scientific claim concerns
-what can be guaranteed, not an assertion that 97 executions are necessary.
+what can be guaranteed, not an assertion that 95 executions are necessary.
 
 \subsection{Toward broader validation}
 

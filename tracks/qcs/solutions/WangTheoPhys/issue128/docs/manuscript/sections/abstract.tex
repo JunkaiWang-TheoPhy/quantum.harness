@@ -17,16 +17,17 @@ $T=1$ and global operator-norm tolerance $10^{-6}$, we compare the same four
 matching fragments, the same 31-stage five-copy fourth-order Suzuki formula,
 and the same compilation cost on both sides.  A pinned interval instantiation
 of the Childs--Su--Tran--Wiebe--Zhu high-order commutator theorem requires 393
-steps and 11,791 merged group exponentials.  Our certificate accepts 97 steps
-and rejects 96, requiring 2,911 groups.  The exact improvement is
-$11791/2911=4.050498110614909\ldots$, a 75.3117\% reduction.  The leading D4
-sidecar contains 75,324 canonical Pauli terms partitioned into 7,576 verified
-anticommuting groups.  The search procedure is outside the trusted computing
-base: a smaller verifier rechecks coverage, every anticommutation relation,
-outward square-root bounds, the finite-step ledger, the adjacent integer
-boundary, and all resource arithmetic.  An exact D5 side study and a
-quantitative fivefold feasibility audit are reported separately; no 78-step
-global certificate is claimed.
+steps and 11,791 merged group exponentials.  Our D5-integrated certificate
+accepts 95 steps and rejects 94, requiring 2,851 groups.  The exact improvement
+is $11791/2851=4.135741844966678\ldots$, a 75.8205\% reduction.  The D4 and D5
+sidecars contain respectively 75,324 and 605,832 canonical Pauli terms,
+partitioned into 7,576 and 123,106 verified anticommuting groups.  The search
+procedure is outside the trusted computing base: fast verification rebuilds
+the complete finite-step ledger; a standard-library reference implementation
+independently checks the downstream certificate; and deep mode regenerates
+all coefficient maps and scans all 31 baseline centers.  A quantitative
+fivefold feasibility audit is reported separately; no 78-step global
+certificate is claimed.
 \end{abstract}
 
 \noindent\textbf{Keywords:} Hamiltonian simulation; Trotter--Suzuki product

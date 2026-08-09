@@ -62,13 +62,14 @@ The main contributions are as follows.
   This reverses the conventional expand-and-bound order and preserves
   cancellations that are invisible at the level of abstract support counts.
 
-\item \textbf{Certified anticommuting norm compression.}  We construct a
+\item \textbf{Certified anticommuting norm compression at D4 and D5.}  We construct a
   graph whose vertices are leading-defect Pauli terms and whose edges encode
   anticommutation.  An untrusted search partitions terms into pairwise-
   anticommuting groups.  The certificate records the full partition and
   outward rational square-root bounds; the verifier rechecks exact coverage
   and every edge used.  For the principal instance, this lowers the D4
-  translation-cell bound from 20.160968407335066 to 6.472926505087888.
+  translation-cell bound from 20.160968407335066 to 6.472926505087888 and
+  replaces the generic D5 majorant by a 605,832-term exact grouped witness.
 
 \item \textbf{A nonasymptotic right-generator closure.}  We convert the
   degree-five and degree-seven logarithmic defects into the right logarithmic
@@ -78,11 +79,12 @@ The main contributions are as follows.
   extrapolation.
 
 \item \textbf{An independently reproducible finite-instance result.}  For a
-  $12\times12$ periodic Heisenberg lattice, the certificate accepts 97 steps
-  and rejects 96.  Relative to a pinned 393-step instantiation of the
+  $12\times12$ periodic Heisenberg lattice, the certificate accepts 95 steps
+  and rejects 94.  Relative to a pinned 393-step instantiation of the
   published high-order theorem, this reduces merged group exponentials from
-  11,791 to 2,911.  A fast verifier, deep regeneration mode, small-system
-  dense cross-check, mutation tests, and a SHA-256 manifest support the claim.
+  11,791 to 2,851.  A fast verifier, a standard-library reference verifier,
+  deep regeneration mode, a nondegenerate dense cross-check, mutation tests,
+  and a SHA-256 manifest support the claim.
 \end{enumerate}
 
 \subsection{Scope and nonclaims}
@@ -96,8 +98,9 @@ resource problems and may achieve stronger precision scaling under their own
 cost models.  We compare these directions in \cref{sec:related} but do not
 rank incomparable gate counts as a single global record.
 
-The exact D5 side study and the $r=78$ arithmetic indicate a possible
-fivefold threshold.  They do not establish it.  Throughout this manuscript,
+The $r=78$ arithmetic identifies a possible fivefold threshold, but the
+current D4 contribution already exceeds the complete error budget there.
+Thus the arithmetic does not establish fivefold performance.  Throughout this manuscript,
 ``certified'' refers only to statements accepted by the supplied rational
 certificate and verifier.  Numerical dense simulation is used solely as a
 cross-check, and conditional research estimates are labeled explicitly.

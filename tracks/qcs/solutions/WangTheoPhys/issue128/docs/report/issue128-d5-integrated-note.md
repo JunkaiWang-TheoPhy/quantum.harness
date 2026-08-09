@@ -60,6 +60,9 @@ At `r=95`, the outward global contributions are:
 
 The same exact-rational error function gives
 `1.0468061165603706e-6` at `r=94`, so the adjacent integer boundary is closed.
+Fast verification now regenerates every displayed contribution and the
+adjacent-step value. In particular, setting D6, D7, or the tail to zero and
+synchronously recomputing the submitted total is rejected.
 
 ## Verification evidence
 
@@ -77,13 +80,37 @@ PYTHONPATH=src python3 scripts/verify.py --deep \
   certificates/issue128-d5-integrated-certificate.json
 ```
 
+Run the standard-library-only downstream checker:
+
+```bash
+python3 scripts/reference_verify.py \
+  certificates/issue128-d5-integrated-certificate.json
+```
+
 Observed on 2026-07-31:
 
-- fast verifier: `valid=true`, `verification_level=fast`;
-- deep verifier: `valid=true`, `deep_proof_regenerated=true`, 167.62 s,
-  maximum RSS 1,533,149,184 bytes;
-- normal test suite: 100 passed, 11 explicitly deselected slow tests;
-- focused corruption/minimality suite: 3 passed.
+- fast verifier: `valid=true`, `verification_level=fast`,
+  `finite_step_bound_recomputed=true`;
+- deep verifier: `valid=true`, `deep_proof_regenerated=true`,
+  `baseline_centers_scanned=31`, 408.88 s, maximum RSS 1,538,768,896 bytes;
+- independent downstream checker: `valid=true`, 3.63 s, with no
+  `trottercert` imports;
+- normal test suite: 146 passed, 12 explicitly deselected slow tests;
+- focused certificate-mutation suite: 10 passed;
+- independent-checker suite: 8 passed.
+
+The independent checker reimplements D4/D5 partition coverage, symplectic
+anticommutation, square-root domination, the finite-step ledger, Suzuki tail,
+95/94 comparison, resource arithmetic, and strict equality of the declared
+D4/D5 term counts, group counts, and maximum group sizes using only the Python
+standard library. It does not regenerate the D4/D5 coefficient maps; that
+distinct obligation is discharged by deep mode.
+
+A nondegenerate open `2×3` dense diagnostic contains seven unique bonds. At 95
+steps its measured operator-norm error is
+`1.8313133889571672e-10`, below the outward scaled periodic comparison
+`4.129166666666667e-8`. This checks normalization and stage ordering but is not
+presented as a proof for open boundaries.
 
 The builder is deterministic from the frozen certificate and D5 sidecar:
 
@@ -104,3 +131,16 @@ the current D4 contribution alone evaluates to approximately `1.259084e-6` at
 78 steps, already above the total tolerance. Exact-D8 HPC work remains useful
 for diagnosis and future proof design, but cannot close fivefold without a
 new D4 tightening.
+
+The certificate is scoped to the stated Hamiltonian, normalization, periodic
+boundary, formula, tolerance, and cost model. It does not prove that 94
+physical steps fail, that the grouping heuristic is optimal, or that the
+method is state-of-the-art over unrestricted quantum simulation algorithms.
+
+Release acceptance requires all of the following:
+
+- the 95-step primary and reference verifiers pass;
+- deep mode reports 31 scanned centers and coefficient regeneration;
+- all ordinary and mutation tests pass;
+- the D5-integrated SHA-256 manifest is clean;
+- the PDF is rebuilt from this TeX source and visually inspected.

@@ -22,18 +22,21 @@ accepted only after a narrower verifier rechecks explicit evidence.
 \node[box,right=of gen,yshift=-8mm,fill=blue!5] (bundle) {hashed certificate bundle\\JSON, groups, summaries};
 \node[trusted,right=of bundle] (fast) {fast verifier\\schema + arithmetic};
 \node[trusted,below=of fast] (deep) {deep replay\\algebra + group membership};
-\node[trusted,right=of fast,yshift=-8mm] (claim) {accepted claim\\or explicit failure};
+\node[trusted,below=of deep] (ref) {reference verifier\\standard library only};
+\node[trusted,right=of deep] (claim) {accepted claim\\or explicit failure};
 \draw[arr] (gen)--(bundle);
 \draw[arr] (hpc)--(bundle);
-\draw[arr] (bundle)--(fast);
-\draw[arr] (bundle)--(deep);
-\draw[arr] (fast)--(claim);
-\draw[arr] (deep)--(claim);
+\draw[arr] (bundle.east)--(fast.west);
+\draw[arr] (bundle.east)--++(2mm,0)|-(deep.west);
+\draw[arr] (bundle.east)--++(2mm,0)|-(ref.west);
+\draw[arr] (fast.east)--++(5mm,0)|-(claim.north);
+\draw[arr] (deep.east)--(claim.west);
+\draw[arr] (ref.east)--++(5mm,0)|-(claim.south);
 \end{tikzpicture}
 }
 \caption{Trust boundary.  Parallel discovery and heuristic grouping are
 untrusted producers.  The accepted result depends on explicit evidence and
-two verification paths.}
+three verification paths with different trust surfaces.}
 \label{fig:trust-boundary}
 \end{figure}
 
@@ -51,8 +54,8 @@ The schema-v3 certificate records:
         and primary resource metric;
   \item the pinned theorem instantiation used for the baseline;
   \item coefficient precision policies and rational interval endpoints;
-  \item D4 group-certificate path, SHA-256 digest, term count, group count,
-        maximum size, and norm enclosure;
+  \item D4 and D5 group-certificate paths, SHA-256 digests, term counts, group
+        counts, maximum sizes, and norm enclosures;
   \item D4--D7 and tail contributions at the accepted integer;
   \item the accepted and previous-step global-error rationals;
   \item integer resource arithmetic and the exact improvement ratio; and
@@ -65,29 +68,44 @@ file with the same name.
 \subsection{Fast and deep modes}
 
 Fast verification checks the schema, paths, hashes, integer identities,
-rational comparisons, resource formulas, and headline invariants.  It is
-intended for continuous integration and reviewer orientation.  Deep
-verification additionally replays coefficient aggregation, checks every group
-for exact coverage and pairwise anticommutation, verifies all rational square
-roots, and reproduces the finite-step sum.
+rational comparisons, resource formulas, and headline invariants.  It also
+reconstructs the formula constants and the complete D4--D7 plus tail ledger at
+both the accepted and adjacent step, rather than trusting a self-consistent
+submitted sum.  It verifies sidecar coverage, pairwise anticommutation, and
+rational square-root enclosures.  Deep verification additionally regenerates
+all 31 baseline centers and every D4/D5 coefficient from the Suzuki formula,
+then requires exact interval equality with the sidecars.
 
 The two modes serve different purposes.  Fast verification answers whether a
-checked-in bundle is internally bound and arithmetically self-consistent.
-Deep verification answers whether the large algebraic witness supports its
-declared norm.  Neither mode treats a rounded decimal in a PDF as evidence.
+checked-in bundle contains valid sidecar norm witnesses and a fully reproduced
+finite-step ledger.  Deep verification answers whether the large coefficient
+maps themselves arise from the declared Suzuki formula.  Neither mode treats a
+rounded decimal in a PDF as evidence.
+
+A third, deliberately smaller program uses only the Python standard library
+and imports no \code{trottercert} module.  It independently implements
+canonical sidecar hashing, D4/D5 coverage, same-support and symplectic
+anticommutation checks, rational square-root domination, the Suzuki tail,
+finite-step integration, the 95/94 comparison, and resource identities.  It
+does not regenerate the large coefficient maps; that distinct upstream
+obligation remains with deep mode.  Agreement therefore cross-checks the
+downstream proof logic without falsely claiming fully independent symbolic
+generation.
 
 \subsection{Negative tests and failure localization}
 
 A certificate system is useful only if nearby corruptions fail.  The test
 suite mutates representative fields: a group member, a coefficient endpoint,
-the accepted step count, a resource total, and a sidecar digest.  Each mutation
-must cause a nonzero verifier result.  Further unit tests cover Pauli phase
+the accepted step count, D6, D7, the tail, the adjacent-step value, a resource
+total, and a sidecar digest.  Ledger attacks also recompute the submitted total
+to ensure that mere internal consistency is insufficient.  Each mutation must
+cause a nonzero verifier result.  Further unit tests cover Pauli phase
 multiplication, symplectic commutation, periodic canonicalization, rational
 square-root enclosure, and the local 16-Pauli lemma.
 
 Failures are reported by layer.  A hash mismatch is distinguished from a
-schema error; a duplicate group member from a non-anticommuting pair; a failed
-tail precondition from an error-bound comparison.  This makes independent
+schema error; a duplicate group member from a non-anticommuting pair; and a
+regenerated tail mismatch from an adjacent-step comparison.  This makes independent
 reproduction tractable: a reviewer need not rerun the entire discovery
 pipeline to diagnose a damaged artifact.
 
@@ -96,7 +114,7 @@ pipeline to diagnose a damaged artifact.
 We label statements by evidence class:
 \begin{description}
   \item[Certified.] Derived from a manifest-bound witness and accepted by the
-  verifier, such as the 97-step result and integer resource counts.
+  verifier, such as the 95-step result and integer resource counts.
   \item[Cross-checked.] Supported by a structurally independent small-system or
   exhaustive local calculation, but not the main large-system proof.
   \item[Conditional.] An arithmetic consequence under a stated future premise,
