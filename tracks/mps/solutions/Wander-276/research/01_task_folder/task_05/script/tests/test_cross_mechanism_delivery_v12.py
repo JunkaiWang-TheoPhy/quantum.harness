@@ -43,6 +43,14 @@ def test_delivery_audit_fails_closed_and_matches_hashes(tmp_path) -> None:
     assert on_disk == audit
 
 
+def test_repository_delivery_reverification_is_byte_stable() -> None:
+    audit_path = OUTPUT_ROOT / "cross_mechanism_delivery_audit_v12.json"
+    before = audit_path.read_bytes()
+    audit = verify_delivery()
+    assert audit["passed"] is True
+    assert audit_path.read_bytes() == before
+
+
 def test_delivery_audit_rejects_tampered_figure(tmp_path) -> None:
     manifest = make_assets(tmp_path)
     figure = tmp_path / manifest["figure_png"]
