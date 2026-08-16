@@ -287,6 +287,18 @@ def verify_delivery(
         "checks": checks,
         "passed": all(checks.values()),
     }
+    existing = _load(output_json)
+    if existing is not None:
+        existing_stable = {
+            key: value for key, value in existing.items() if key != "generated_utc"
+        }
+        payload_stable = {
+            key: value for key, value in payload.items() if key != "generated_utc"
+        }
+        if existing_stable == payload_stable and isinstance(
+            existing.get("generated_utc"), str
+        ):
+            payload["generated_utc"] = existing["generated_utc"]
     _atomic_json(output_json, payload)
     return payload
 

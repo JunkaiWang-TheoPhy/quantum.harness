@@ -43,6 +43,18 @@ $$\mathcal T_{abcd}=\frac1D\operatorname{Tr}(\widehat X_a^\dagger\widehat X_b\wi
 
 The collapsed null matches registered marginal covariance data without a branch label. The Hodge null samples exact and coexact branches independently and combines their orthogonal direct sum. Both are fixed by safe two-point information.
 
+## Mechanism-Dependent Extension
+
+The v12 extension adds three exact-degeneracy mechanisms under one projector-response and complete-covariance convention.
+
+| Model | Origin of exact degeneracy | Opened result |
+|---|---|---|
+| Continuum Moore–Read | Three-body clustering constraints | Exact ranks (42,120), open gaps, and positive complete three-pairing estimates at (N=4,6) |
+| Lattice SUSY on (C_6^{\sqcup m}) | Cohomology of a nilpotent local supercharge | Exact ranks (2,4,8) and nonzero response, but no registered positive transfer at (m=1,2,3) |
+| Periodic X-cube | Commuting stabilizer constraints | Exact controls (F=0) and scalar (F=-I/2), both with zero connected curvature variance |
+
+This selects the provisional branch `domain_limited_geometric_eth`. It demonstrates that exact degeneracy and even a moving projector do not force random-matrix-like geometry. The positive Moore–Read U-statistic is conditional on exchangeability of 24 local tangent panels at a fixed Hamiltonian; independent-Hamiltonian inference and thermodynamic closure remain open.
+
 ## Pilot Evidence
 
 The sequential (N=8,10,12) pilot contains central/adjacent sectors and sparse/isotropic tangent panels. All 12 size-sector-panel groups reject both registered separable covariance nulls. For the preregistered sparse panel, the physical-to-Hodge-null median ratio evolves as follows:
@@ -93,6 +105,9 @@ The delivery script is fail-closed: it will not activate the paper macros unless
 | [Supplement source](overleaf_sync/cohomological_geometric_eth/supplement.tex) | Derivation, controls, state machine, artifact contract, and limitations |
 | [Compiled Letter](01_task_folder/task_05/script/output/response_complex_memory_v7.pdf) | Four-page audited REVTeX paper; SHA-256 `9fe357a5bfce5e6efd60a3c8bf0a1b73a4eac4ee15f9bb8844f51d2f7e1252ee` |
 | [Compiled Supplemental Material](01_task_folder/task_05/script/output/response_complex_memory_supplement_v7.pdf) | Four-page audited methods and exact-statistics package; SHA-256 `e43a5a2f62494bb7595f790de5643d6244d782402478f36fdcc7c511176b79c5` |
+| [Mechanism-dependent article](01_task_folder/task_05/script/output/mechanism_dependent_geometric_eth_v12.pdf) | Three-page Moore–Read/lattice-SUSY/X-cube comparison |
+| [Mechanism-dependent supplement](01_task_folder/task_05/script/output/mechanism_dependent_geometric_eth_supplement_v12.pdf) | Three-page methods, mechanism table, resource boundary, and nonclaims |
+| [Cross-mechanism inference](01_task_folder/task_05/script/output/cross_mechanism_geometric_eth_v12.json) | Machine-readable selected branch, input hashes, cases, and tests |
 | [Result report](01_task_folder/task_05/script/output/susy_hodge_geometric_eth_report_v7.md) | Machine-generated verdict and numerical intervals |
 | [Figure manifest](01_task_folder/task_05/script/output/figure_susy_hodge_geometric_eth_v7.json) | Input/output hashes for the main evidence figure |
 | [Scientific ceiling memo](docs/2026-08-01-scientific-ceiling-strategy.md) | Novelty boundary, journal ceiling, and next-theorem roadmap |
@@ -100,7 +115,7 @@ The delivery script is fail-closed: it will not activate the paper macros unless
 
 ## Claim Boundary and Research Horizon
 
-The independent model/operator-class gate is now crossed: cohomological (\mathcal N=2) SYK is not a repackaged FQH parent Hamiltonian. The asymptotic gate remains open. The current release establishes only the tested finite-size sequence and only relative to the frozen separable covariance nulls.
+The independent model/operator-class gate is crossed more than once: cohomological (\mathcal N=2) SYK, local lattice supersymmetry, and X-cube stabilizer codes are not repackaged FQH parent Hamiltonians. Their outcomes are mechanism dependent. The asymptotic gate remains open, and no common limiting law is inferred from the finite-size calculations.
 
 The next high-ceiling steps are a controlled large-(N) response-tensor law and a spatially local nilpotent-supercharge model with a stable protected rank, open gap, and nontrivially moving harmonic projector.
 

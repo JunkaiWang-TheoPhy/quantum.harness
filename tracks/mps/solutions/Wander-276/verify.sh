@@ -14,3 +14,12 @@ fi
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. pytest -q ${V7_TESTS}
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python verify_susy_hodge_delivery_v7.py
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python verify_susy_hodge_manuscript_v7.py
+
+CROSS_TESTS="$(find tests -type f \( -name '*v9.py' -o -name '*v10.py' -o -name '*v11.py' -o -name '*v12.py' \) -print | sort)"
+if [[ -z "${CROSS_TESTS}" ]]; then
+  echo "No v9--v12 tests found" >&2
+  exit 1
+fi
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. pytest -q ${CROSS_TESTS}
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python verify_cross_mechanism_delivery_v12.py
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python verify_cross_mechanism_manuscript_v12.py

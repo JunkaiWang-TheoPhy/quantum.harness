@@ -34,14 +34,23 @@ The frozen branches are: both covariance nulls cover; only the Hodge null covers
 
 The result identifies structured four-point response memory beyond the frozen separable collapsed/Hodge null family. It does not establish intrinsic non-Gaussianity after complete nonseparable entrywise covariance matching.
 
+## v12 Mechanism Comparison
+
+The same task now includes continuum Moore–Read three-body zero modes, lattice supersymmetry on disjoint (C_6) cycles, and periodic X-cube controls. Moore–Read passes exact-rank, gap, response, and complete-covariance gates at (N=4,6), with fixed-direction estimates (0.1908758\pm0.0277690) and (0.1936048\pm0.0248286). Lattice supersymmetry has the expected cohomology ranks (2,4,8) and nonzero exact/coexact response but does not reproduce the registered positive direction. X-cube gives exact nonchaotic controls: fixed-projector (F=0) and scalar-curvature (F=-I/2) families.
+
+The selected label is `domain_limited_geometric_eth`. It records a finite-size, local-panel Moore–Read result plus failed transfer and exact counterexamples; it is not an asymptotic or universal claim.
+
 ## Minimal Verification
 
 ```bash
 cd script
 PYTHONPATH=. pytest -q $(rg --files tests | rg 'v7\.py$')
+PYTHONPATH=. pytest -q $(rg --files tests | rg 'v(9|10|11|12)\.py$')
 python generate_susy_hodge_controls_v7.py
 python verify_susy_hodge_delivery_v7.py
 python verify_susy_hodge_manuscript_v7.py
+python verify_cross_mechanism_delivery_v12.py
+python verify_cross_mechanism_manuscript_v12.py
 ```
 
 ## Build the Delivery
@@ -68,6 +77,12 @@ The script merges the pilot, generates the final result figure and report from f
 | `output/response_complex_memory_supplement_v7.pdf` | Final Supplemental Material |
 | `output/susy_hodge_delivery_audit_v7.json` | Scientific/provenance audit |
 | `output/susy_hodge_manuscript_audit_v7.json` | Paper/PDF audit |
+| `output/moore_read_v9/moore_read_pilot_v9.json` | Moore–Read exact ranks, gaps, panels, and local statistics |
+| `output/lattice_susy_v10/lattice_susy_pilot_v10.json` | Lattice-SUSY cohomology and response cases |
+| `output/xcube_v11/xcube_geometric_control_v11.json` | Exact stabilizer-code controls |
+| `output/cross_mechanism_geometric_eth_v12.json` | Cross-model inference and claim boundary |
+| `output/mechanism_dependent_geometric_eth_v12.pdf` | Three-page v12 main article |
+| `output/mechanism_dependent_geometric_eth_supplement_v12.pdf` | Three-page v12 Supplemental Material |
 
 ## Interpretation Boundary
 

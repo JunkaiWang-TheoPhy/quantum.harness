@@ -121,6 +121,37 @@ def laughlin_onebody_capacity(
     return 2 * flux * comb(flux - particles, particles - 2)
 
 
+def clustered_zero_mode_count(
+    n_particles: int,
+    n_flux: int,
+    k: int = 2,
+    r: int = 2,
+) -> int:
+    """Count cyclic ``(k,r)``-admissible clustered roots exactly.
+
+    The Moore--Read sequence uses ``(k,r)=(2,2)``.  Enumeration is retained
+    here instead of a model-specific closed form so the same certificate can
+    audit later Read--Rezayi values of ``k`` without changing conventions.
+    """
+
+    particles = int(n_particles)
+    flux = int(n_flux)
+    cluster = int(k)
+    window = int(r)
+    if particles <= 0:
+        raise ValueError("n_particles must be positive")
+    if flux <= 0 or window <= 0 or window > flux:
+        raise ValueError("n_flux is incompatible with the clustered window")
+    if cluster <= 0:
+        raise ValueError("k must be positive")
+    if flux * cluster < particles * window:
+        raise ValueError("n_flux is incompatible with the clustered filling")
+    return sum(
+        cyclic_kr_admissible(state, k=cluster, r=window)
+        for state in occupation_states(particles, flux)
+    )
+
+
 def _bounded_removals(
     state: Occupation,
     total: int,
