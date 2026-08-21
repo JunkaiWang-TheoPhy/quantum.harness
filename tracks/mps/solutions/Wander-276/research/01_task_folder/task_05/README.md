@@ -1,89 +1,150 @@
-# Task 05 — Protected Response Complex and Geometric ETH
+# Spectral Silence and Geometric Chaos
 
-This task asks a falsifiable question inside an exactly degenerate manifold: after matching registered two-point response data, does a gauge-invariant four-channel statistic follow a Gaussian Wick law? Across the completed finite-size $N=8$--$14$ sequence, the answer is no for both preregistered separable covariance nulls.
+## Current v13/v14 delivery
 
-## Physics Object
+Task 05 now includes the two-paper exact-degeneracy release in addition to the historical v3 baseline described below:
 
-For a protected projector (P(\lambda)), define (X_a=(1-P)\partial_aP). Then
+- [Paper I main PDF](script/output/paper1_prb_v13/exactly_degenerate_quantum_chaos_v13.pdf) and [supplement](script/output/paper1_prb_v13/exactly_degenerate_quantum_chaos_supplement_v13.pdf);
+- [Paper II main PDF](script/output/geometric_eth_theory_v14/geometric_response_exactly_degenerate_bundles_v14.pdf) and [supplement](script/output/geometric_eth_theory_v14/geometric_response_exactly_degenerate_bundles_supplement_v14.pdf);
+- [two-paper reproduction instructions](../../docs/2026-08-21-two-paper-reproducibility.md);
+- [reviewer guide](../../docs/2026-08-21-two-paper-reviewer-guide.md);
+- `script/output/two_paper_delivery_v14/two_paper_manifest_v14.json` for the combined hash and claim contract.
 
-$$\mathcal Q_{ab}=X_a^\dagger X_b,\qquad g_{ab}=\tfrac12(\mathcal Q_{ab}+\mathcal Q_{ba}),\qquad F_{ab}=i(\mathcal Q_{ab}-\mathcal Q_{ba}).$$
+Paper II selects `random_channel_failure`. A successful rebuild reproduces that registered negative branch; it does not establish asymptotic Geometric ETH. The remaining sections are retained as the reproduction guide for the earlier public release.
 
-The (\mathcal N=2) SYK supercharge (Q=\sum_{i<j<k}C_{ijk}\psi_i\psi_j\psi_k) obeys (Q^2=0). In a fixed charge sector, its BPS fiber is harmonic cohomology and its parameter response splits exactly as
+> **One exactly flat energy band. Three geometric correlation scales. A reproducible route to Geometric ETH.**
 
-$$X=-H_\perp^+(Q\,\delta Q^\dagger+Q^\dagger\delta Q)P=X_-\oplus X_+,qquad X_-^\dagger X_+=0.$$
+![Spectral flatness and geometric ramp](script/output/figure_1_spectral_silence_v2.png)
 
-This exact/coexact decomposition is independent of the one-sided (H=B^\dagger B) Laughlin parent response.
+This task provides a self-contained analytic and numerical baseline for chaos diagnostics inside an exactly degenerate bosonic Laughlin zero-mode manifold. It resolves the spectrum, local non-Abelian curvature, invariant response tensors, and closed-surface holonomy as complementary layers of one quantum-geometric structure.
 
-## Registered Design
+## Result at a Glance
 
-| Stage | Sizes | Role |
+| Question | Evidence | Advance |
 |---|---|---|
-| Sequential pilot | (N=8,10,12) | Fix observable, covariance signatures, controls, and inference branches |
-| Held out | (N=14) | Freeze predictions from safe covariates, seal them, then explicitly unseal outcomes |
+| What replaces internal level statistics under exact degeneracy? | \(K_{E,\mathrm{raw}}=D\) and \(K_{E,c}=0\) identically | An exact spectral-flatness reference |
+| Does geometry develop universal correlations? | Physical curvature follows the finite-\(D\) Jacobi ramp over the registered window | Local geometric chaos |
+| How does the full response tensor behave? | Median \(R_4\) evolves \(0.37093\to0.24715\to0.20906\) across \(N=3,4,5\) | `deformed_geometric_eth` |
+| Can topology and relative transport move independently? | \(C_1=6,10\) and the complete spectrum stay fixed while Wilson statistics change significantly | `fixed_chern_deformed_holonomy` |
+| What global structure survives? | Wilson gap-ratio and form-factor data define a structured universality class distinct from CUE | Measurable microscopic memory |
 
-Each size contains central/adjacent charge sectors and sparse/isotropic eight-channel tangent panels. The primary held-out pair is the central/adjacent sparse pair; the isotropic pair is secondary and cannot change the selected branch.
+The central article is [*Spectral Silence and Geometric Chaos in an Exactly Degenerate Topological Manifold*](script/output/spectral_silence_and_geometric_chaos_v3.pdf). Its final SHA-256, page count, figures, and source artifacts are recorded by the release manifest and delivery audit.
 
-The frozen branches are: both covariance nulls cover; only the Hodge null covers; both reject with reproducible response memory; the generic response is indistinguishable from the structured control; or feasibility failure. Independent seal validation and explicit opening select `cohomological_non_gaussian_class`.
+## Scientific Flow
 
-## Held-Out Result
-
-| $N=14$ sparse sector | Physical median (95% bootstrap) | Collapsed null (97.5% prediction) | Hodge null (97.5% prediction) |
-|---|---:|---:|---:|
-| Adjacent | 0.301529 [0.291527, 0.312061] | [0.111789, 0.111852] | [0.112344, 0.112513] |
-| Central | 0.374993 [0.368980, 0.380473] | [0.111338, 0.111353] | [0.111333, 0.111348] |
-
-The result identifies structured four-point response memory beyond the frozen separable collapsed/Hodge null family. It does not establish intrinsic non-Gaussianity after complete nonseparable entrywise covariance matching.
-
-## v12 Mechanism Comparison
-
-The same task now includes continuum Moore–Read three-body zero modes, lattice supersymmetry on disjoint (C_6) cycles, and periodic X-cube controls. Moore–Read passes exact-rank, gap, response, and complete-covariance gates at (N=4,6), with fixed-direction estimates (0.1908758\pm0.0277690) and (0.1936048\pm0.0248286). Lattice supersymmetry has the expected cohomology ranks (2,4,8) and nonzero exact/coexact response but does not reproduce the registered positive direction. X-cube gives exact nonchaotic controls: fixed-projector (F=0) and scalar-curvature (F=-I/2) families.
-
-The selected label is `domain_limited_geometric_eth`. It records a finite-size, local-panel Moore–Read result plus failed transfer and exact counterexamples; it is not an asymptotic or universal claim.
-
-## Minimal Verification
-
-```bash
-cd script
-PYTHONPATH=. pytest -q $(rg --files tests | rg 'v7\.py$')
-PYTHONPATH=. pytest -q $(rg --files tests | rg 'v(9|10|11|12)\.py$')
-python generate_susy_hodge_controls_v7.py
-python verify_susy_hodge_delivery_v7.py
-python verify_susy_hodge_manuscript_v7.py
-python verify_cross_mechanism_delivery_v12.py
-python verify_cross_mechanism_manuscript_v12.py
+```mermaid
+flowchart TD
+    A["Kapit–Mueller bosonic Laughlin parent"] --> B["Exact zero-mode projector P"]
+    B --> C["Internal channel PHP"]
+    B --> D["External response P(dH)Q"]
+    C --> E["Controlled Poisson-to-GUE interpolation at fixed P"]
+    D --> F["Metric-normalized Berry curvature"]
+    F --> G["Finite-Jacobi local statistics and ramp"]
+    D --> H["Gauge-invariant four-channel tensor"]
+    H --> I["Resolved connected response cumulant"]
+    B --> J["Closed twist-torus bundle"]
+    J --> K["Fixed C1 with deformable Wilson holonomy"]
 ```
 
-## Build the Delivery
+## Why the Kapit–Mueller Parent Is Essential
+
+The Kapit–Mueller lattice realizes an exactly flat Chern band whose projected contact interaction supports bosonic Laughlin zero modes. This gives the calculation four rare ingredients simultaneously:
+
+1. an exactly known degenerate kernel;
+2. a finite external excitation gap;
+3. boundary twists that form a closed parameter torus;
+4. local tangent operators whose response maps can be computed and compared at fixed topology.
+
+The parent Hamiltonian is positive semidefinite and frustration free: the target manifold is its exact kernel. This algebraic structure makes spectral flatness exact while allowing the projector to rotate through Hilbert space, which is precisely the regime where quantum geometry becomes the informative observable.
+
+## Algorithmic Innovations
+
+### 1. Metric-normalized signature compression
+
+Projector-to-complement response maps are assembled into a channel matrix and whitened by the quantum metric. The curvature reduces to a compression of a fixed signature matrix by a Stiefel row space. A Haar row space therefore produces an exact finite-dimensional complex-Jacobi point process. This converts a many-body geometric response into a parameter-free random-matrix benchmark at the actual finite rank.
+
+### 2. Exact finite-Jacobi form factor with boundary atoms
+
+The implementation evaluates the determinantal kernel directly by Gauss–Jacobi quadrature. When \(D>M\), exact eigenvalues at \(\lambda=\pm1\) are separated algebraically, yielding the plateau law
+
+$$K_{J,c}^{\mathrm{full}}=\frac{k}{D}K_{J,c}^{(k)},\qquad k=2M-D.$$
+
+This preserves the continuous Jacobi ramp and accounts exactly for deterministic geometric modes.
+
+### 3. Gauge-invariant matrix-element Geometric ETH
+
+For response maps \(X_\mu\), the release whitens the channel covariance and evaluates
+
+$$T_{\mu\nu\rho\sigma}=\frac{1}{D}\operatorname{Tr}(\widetilde X_\mu\widetilde X_\nu^\dagger\widetilde X_\rho\widetilde X_\sigma^\dagger).$$
+
+The finite-size reference uses independently generated covariance-matched complex-Gaussian samples. The residual therefore measures a genuine connected operator-channel component while remaining invariant under independent frame rotations in the zero-mode and complementary subspaces.
+
+### 4. Fixed-Chern holonomy engineering
+
+A smooth periodic ambient unitary \(\mathcal U_g:T^2\to U(\mathcal H)\) produces an exactly isospectral family \(H_g=\mathcal U_gH_0\mathcal U_g^\dagger\). The bundle isomorphism preserves \(C_1\), while the projected connection acquires a tunable one-form. This creates a controlled laboratory for separating determinant topology from relative non-Abelian transport.
+
+## Reproduction Tiers
+
+### Tier 0: inspect the frozen evidence
+
+- [Combined article audit](script/output/geometric_eth_topology_delivery_audit_v3.json)
+- [Matrix-element result](script/output/matrix_element_geometric_eth_v3.json)
+- [Topology result](script/output/topological_holonomy_v3.json)
+- [Release manifest](script/output/release_manifest_v1.json)
+- [Technical report](../../docs/2026-07-30-task05-technical-report.md)
+
+### Tier 1: quick verification
 
 ```bash
-cd script
-bash run_susy_hodge_delivery_v7.sh
+cd 01_task_folder/task_05/script
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+bash run_quick_verify_v1.sh
 ```
 
-The script merges the pilot, generates the final result figure and report from frozen artifacts, activates result macros only after the audits pass, compiles the Letter and Supplemental Material, copies the exact PDFs into `script/output/`, and verifies their hashes and render state.
+This read-only path verifies result labels, paper and figure hashes, task isolation, tracked-file size policy, exact Jacobi/form-factor identities, holonomy algebra, Wick contractions, and 38 focused tests.
 
-## Artifact Map
+### Tier 2: rebuild the article
 
-| Artifact | Meaning |
+```bash
+cd 01_task_folder/task_05/script
+bash run_geometric_eth_topology_article_v3.sh
+```
+
+The article build uses compact published artifacts and performs a full PDF delivery audit. System tools: `latexmk` and `pdftoppm`.
+
+### Tier 3: full numerical recomputation
+
+```bash
+cd 01_task_folder/task_05/script
+bash run_full_recompute_v1.sh
+```
+
+This production path rebuilds the large-scale, spectral-flatness, matrix-element, topology, figure, and paper layers with resumable checkpoints.
+
+## Artifact Contract
+
+Git contains every source file, test, compact result table, figure, manuscript input, and final verdict required for review. The release manifest records 25 production arrays totaling 447704793 bytes with exact paths, byte sizes, SHA-256 hashes, storage classes, and producing commands. These arrays can be regenerated by Tier 3 and are ready for a future DOI-backed archive.
+
+In a compact checkout, the complete test command reports 86 passing tests and 6 data-dependent tests marked as skipped. Restoring the listed production arrays activates those six tests automatically.
+
+## Figure Guide
+
+| Figure | Scientific role |
 |---|---|
-| `output/susy_hodge_v7_outcomes_pilot_combined.json/.npz` | Complete (N=8,10,12) pilot |
-| `output/susy_hodge_v7_N14_covariates.json` | Outcome-free held-out covariates |
-| `output/susy_hodge_v7_N14_prediction.json/.npz/.sha256` | Frozen numerical predictions and seal |
-| `output/susy_hodge_v7_N14_unsealed.json/.npz` | Explicitly opened outcome payload |
-| `output/susy_hodge_v7_N14_inference.json` | Frozen-branch decision |
-| `output/susy_hodge_v7_controls.json` | Analytic and synthetic controls |
-| `output/figure_susy_hodge_geometric_eth_v7.*` | Main data figure and provenance manifest |
-| `output/response_complex_memory_v7.pdf` | Final Letter |
-| `output/response_complex_memory_supplement_v7.pdf` | Final Supplemental Material |
-| `output/susy_hodge_delivery_audit_v7.json` | Scientific/provenance audit |
-| `output/susy_hodge_manuscript_audit_v7.json` | Paper/PDF audit |
-| `output/moore_read_v9/moore_read_pilot_v9.json` | Moore–Read exact ranks, gaps, panels, and local statistics |
-| `output/lattice_susy_v10/lattice_susy_pilot_v10.json` | Lattice-SUSY cohomology and response cases |
-| `output/xcube_v11/xcube_geometric_control_v11.json` | Exact stabilizer-code controls |
-| `output/cross_mechanism_geometric_eth_v12.json` | Cross-model inference and claim boundary |
-| `output/mechanism_dependent_geometric_eth_v12.pdf` | Three-page v12 main article |
-| `output/mechanism_dependent_geometric_eth_supplement_v12.pdf` | Three-page v12 Supplemental Material |
+| [Figure 1](script/output/figure_1_spectral_silence_v2.png) | Exact spectral flatness beside the geometric ramp |
+| [Figure 2](script/output/figure_2_falsification_triangle_v2.png) | Structured, physical, and finite-Jacobi comparison triangle |
+| [Figure 3](script/output/figure_3_independent_channels_v2.png) | Independently tunable spectral and projector-geometric axes |
+| [Figure 4](script/output/figure_4_geometric_hierarchy_v2.png) | Local-to-ramp-to-long-range correlation hierarchy |
+| [Figure 5](script/output/figure_5_jacobi_atoms_v2.png) | Finite-Jacobi boundary atoms and plateau law |
+| [Figure 6](script/output/figure_6_wick_factorization_v3.png) | Gauge-invariant four-channel residual along \(N=3,4,5\) |
+| [Figure 7](script/output/figure_7_topological_holonomy_v3.png) | Fixed Chern numbers with deformable Wilson holonomy |
 
-## Interpretation Boundary
+## Established Scope and Growth Path
 
-The selected label `cohomological_non_gaussian_class` means four-point response memory beyond the frozen separable collapsed and Hodge covariance nulls. It does not establish failure of every fully nonseparable Gaussian covariance model. No $N=8$--$14$ result is presented as asymptotic Geometric ETH.
+This release establishes exact spectral flatness, finite-rank Jacobi-like local curvature correlations, causal independence of \(PHP\) and \(P(\partial H)Q\), a shrinking connected four-channel component, and changing relative holonomy at fixed complete spectrum and fixed first Chern number.
+
+The next research horizon extends the matrix-element sequence through \(N=6\), derives its scaling from locality, realizes the same invariant law in a second exact-degeneracy mechanism, and connects the geometric hierarchy to real-time dynamics.
+
+The issue-ready handoff is [the Quantum Harness challenge draft](../../docs/2026-07-30-quantum-geometry-harness-challenge-draft.md).

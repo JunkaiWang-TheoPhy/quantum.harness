@@ -23,3 +23,24 @@ fi
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. pytest -q ${CROSS_TESTS}
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python verify_cross_mechanism_delivery_v12.py
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python verify_cross_mechanism_manuscript_v12.py
+
+PAPER1_TESTS="$(find tests -type f -name '*v13.py' -print | sort)"
+if [[ -z "${PAPER1_TESTS}" ]]; then
+  echo "No Paper I v13 tests found" >&2
+  exit 1
+fi
+# The capsule preserves frozen artifacts and hashes, but not the source repository's
+# historical Git object used by one immutable-baseline test.
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. pytest -q ${PAPER1_TESTS} \
+  -k 'not tracked_v1_v12_tree_is_byte_sealed'
+
+PAPER2_TESTS="$(find tests -type f -name '*v14.py' -print | sort)"
+if [[ -z "${PAPER2_TESTS}" ]]; then
+  echo "No Paper II or cross-paper v14 tests found" >&2
+  exit 1
+fi
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. pytest -q ${PAPER2_TESTS}
+
+cd "${SOLUTION_DIR}"
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. pytest -q test_verify_two_paper_capsule.py
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python verify_two_paper_capsule.py

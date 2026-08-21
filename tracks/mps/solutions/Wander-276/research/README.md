@@ -1,122 +1,80 @@
 # Chaos of Quantum Geometry
 
-> **Exact degeneracy removes spectral diagnostics, not state-space complexity.**
+## Current back-to-back papers (v13/v14)
 
-![Hodge-resolved Geometric ETH evidence](01_task_folder/task_05/script/output/figure_susy_hodge_geometric_eth_v7.png)
+The current research delivery consists of two independently audited manuscripts:
 
-This project studies quantum chaos as a property of how an exactly degenerate protected manifold moves over coupling space. The response amplitudes
+| Paper | Scientific status | Canonical package |
+|---|---|---|
+| *Exactly Degenerate Quantum Chaos: Non-Abelian Quantum Geometry as a Probe* | Finite-size, mechanism-resolved evidence; no asymptotic or universal claim | [Paper I source and guide](overleaf_sync/exactly_degenerate_quantum_chaos_prb/README.md) |
+| *Geometric Response of Exactly Degenerate Quantum State Bundles* | Exact conditional channel theorem; sealed chiral (N_{\mathrm{eff}}) closure failed | [Paper II source and guide](overleaf_sync/geometric_eth_theory/README.md) |
 
-$$X_a=(1-P)\partial_aP$$
+The memorable positive title *The Geometric ETH* was prospectively gated and is not authorized by the present result. The combined [reproducibility guide](docs/2026-08-21-two-paper-reproducibility.md), [reviewer guide](docs/2026-08-21-two-paper-reviewer-guide.md), [v14 citation record](docs/CITATION-two-paper-v14.cff), and machine-readable manifest at `01_task_folder/task_05/script/output/two_paper_delivery_v14/two_paper_manifest_v14.json` bind the four final PDFs to their audits. The root `CITATION.cff` and the material below document the earlier v3 public baseline retained for provenance.
 
-generate the non-Abelian quantum geometric tensor (\mathcal Q_{ab}=X_a^\dagger X_b), hence both the quantum metric and Berry curvature. They also retain higher correlations invisible to curvature eigenvalues alone.
+> **Exact degeneracy turns quantum geometry into the signal.**
 
-The starting point is Chen, Colin-Ellerin, Mamroud, and Papadodimas, [“Chaos of Berry curvature for BPS microstates”](https://arxiv.org/abs/2604.23287). The present release adds an independently protected many-body mechanism and an outcome-blind higher-moment test.
+![Exact spectral flatness and an emergent geometric ramp](01_task_folder/task_05/script/output/figure_1_spectral_silence_v2.png)
 
-## Scientific Architecture
+An exactly degenerate quantum manifold carries a flat internal energy spectrum. This project shows that its state-space geometry remains richly informative: non-Abelian Berry curvature, the quantum metric, response-channel cumulants, Chern numbers, and Wilson holonomy resolve a hierarchy of correlations hidden from energy spacings.
+
+The project begins with Chen, Colin-Ellerin, Mamroud, and Papadodimas, [“Chaos of Berry curvature for BPS microstates”](https://arxiv.org/abs/2604.23287), and builds a complementary condensed-matter realization in an exactly degenerate bosonic Laughlin manifold.
+
+## Featured Advance
+
+The task-05 release, [*Spectral Silence and Geometric Chaos in an Exactly Degenerate Topological Manifold*](01_task_folder/task_05/script/output/spectral_silence_and_geometric_chaos_v3.pdf), establishes three geometric scales inside one protected manifold:
+
+| Scale | New capability | Result |
+|---|---|---|
+| Exact spectrum | Separate degeneracy from state-space complexity | \(K_{E,\mathrm{raw}}=D\), \(K_{E,c}=0\) exactly |
+| Local geometry | Compare curvature directly with a finite-rank analytic law | Jacobi-like level repulsion and a registered curvature ramp |
+| Higher/global geometry | Resolve operator memory and topological transport | A persistent four-channel cumulant and fixed-Chern, deformable Wilson holonomy |
 
 ```mermaid
 flowchart LR
-    A["Exactly degenerate protected fiber P(lambda)"] --> B["Response X=(1-P)dP"]
-    B --> C["QGT: metric and Berry curvature"]
-    B --> D["Whitened four-channel tensor"]
-    E["Laughlin parent B-dagger B"] --> F["One-sided response"]
-    G["N=2 SYK {Q,Q-dagger}"] --> H["Exact plus coexact response"]
-    F --> D
-    H --> D
-    D --> I["Frozen covariance predictions"]
-    I --> J["SHA-256-sealed held-out N=14 test"]
+    A["Exactly degenerate Laughlin manifold"] --> B["Exact energy identity"]
+    A --> C["Projector response P(dH)Q"]
+    C --> D["Finite-rank Jacobi curvature law"]
+    C --> E["Gauge-invariant four-channel Geometric ETH"]
+    C --> F["Fixed C1 with tunable Wilson holonomy"]
 ```
 
 ## What Is New
 
-| Question | Delivered result |
+| Foundation | Advance delivered here |
 |---|---|
-| Is the phenomenon tied to the Kapit–Mueller/Laughlin parent? | No. Generic cubic (\mathcal N=2) SYK supplies a charge-resolved cohomological BPS manifold with a different protection mechanism. |
-| What replaces a one-sided parent response? | The exact identity (X=X_-\oplus X_+), with (X_-^\dagger X_+=0), resolves the response into exact and coexact Hodge branches. |
-| How is “Geometric ETH” made falsifiable? | Two covariance-only Gaussian predictions are frozen before the held-out four-channel outcome is opened. |
-| What is the statistical unit? | The complete disorder realization; no tangent entry or tensor component is treated as an independent sample. |
-| What prevents post-outcome tuning? | Safe covariates, numerical predictions, source identities, and the held-out state machine are hash sealed. |
+| Berry curvature as a BPS chaos probe | A local, frustration-free fractional-topological parent with an exact, gapped zero-mode manifold |
+| Random-matrix comparison | A parameter-free finite-\(D\) complex-Jacobi kernel, connected form factor, and exact boundary-atom plateau theorem |
+| Curvature eigenvalue statistics | A covariance-whitened, gauge-invariant four-channel matrix-element test on the genuine \(N=3,4,5\) sequence |
+| Integrated Chern data | A closed-torus construction that preserves the complete spectrum and \(C_1\) while continuously tuning relative Wilson holonomy |
+| Numerical evidence | A hash-complete release contract connecting source, figures, compact artifacts, external production arrays, and the final PDF |
 
-For an eight-channel tangent panel, the gauge-invariant diagnostic is
+These advances become possible by combining exact parent-Hamiltonian kernels with metric-normalized signature compression. The resulting algorithm turns a large projector-response problem into a finite-rank Jacobi process, while gauge-invariant trace tensors and discrete Wilson transport capture structure beyond eigenvalue statistics.
 
-$$\mathcal T_{abcd}=\frac1D\operatorname{Tr}(\widehat X_a^\dagger\widehat X_b\widehat X_c^\dagger\widehat X_d).$$
+## Reproduce
 
-The collapsed null matches registered marginal covariance data without a branch label. The Hodge null samples exact and coexact branches independently and combines their orthogonal direct sum. Both are fixed by safe two-point information.
-
-## Mechanism-Dependent Extension
-
-The v12 extension adds three exact-degeneracy mechanisms under one projector-response and complete-covariance convention.
-
-| Model | Origin of exact degeneracy | Opened result |
-|---|---|---|
-| Continuum Moore–Read | Three-body clustering constraints | Exact ranks (42,120), open gaps, and positive complete three-pairing estimates at (N=4,6) |
-| Lattice SUSY on (C_6^{\sqcup m}) | Cohomology of a nilpotent local supercharge | Exact ranks (2,4,8) and nonzero response, but no registered positive transfer at (m=1,2,3) |
-| Periodic X-cube | Commuting stabilizer constraints | Exact controls (F=0) and scalar (F=-I/2), both with zero connected curvature variance |
-
-This selects the provisional branch `domain_limited_geometric_eth`. It demonstrates that exact degeneracy and even a moving projector do not force random-matrix-like geometry. The positive Moore–Read U-statistic is conditional on exchangeability of 24 local tangent panels at a fixed Hamiltonian; independent-Hamiltonian inference and thermodynamic closure remain open.
-
-## Pilot Evidence
-
-The sequential (N=8,10,12) pilot contains central/adjacent sectors and sparse/isotropic tangent panels. All 12 size-sector-panel groups reject both registered separable covariance nulls. For the preregistered sparse panel, the physical-to-Hodge-null median ratio evolves as follows:
-
-| Sector | (N=8) | (N=10) | (N=12) |
-|---|---:|---:|---:|
-| Central | 1.467 | 2.790 | 3.328 |
-| Adjacent | 1.261 | 2.081 | 2.613 |
-
-These are strong finite-size deviations. They are not an asymptotic scaling theorem.
-
-## Sealed Held-Out Result
-
-The independent prediction seal passed before explicit outcome opening. The primary $N=14$ sparse pair gives:
-
-| Sector | Physical median (95% bootstrap) | Collapsed null (97.5% prediction) | Hodge null (97.5% prediction) |
-|---|---:|---:|---:|
-| Adjacent | 0.301529 [0.291527, 0.312061] | [0.111789, 0.111852] | [0.112344, 0.112513] |
-| Central | 0.374993 [0.368980, 0.380473] | [0.111338, 0.111353] | [0.111333, 0.111348] |
-
-Both registered nulls miss both primary sectors. The frozen selector returns `cohomological_non_gaussian_class`: two-point Hodge data do not close the observed four-channel response within the registered separable covariance family. The prediction SHA-256 is `fc300dc7e4bdc1be157919e458ac868d3468533cce31108f23c9fba4f7e9f102`; the inference SHA-256 is `177643e07fc6cf210362fc1077070bd1f0ba316b6805042a626de3f96c55a627`.
-
-## Exact Controls
-
-- A decomposable three-form reproduces the analytic curvature atoms (0,\pm\alpha^{-2}) with their predicted multiplicities.
-- A one-sided synthetic response reproduces the accepted Laughlin Gaussian null.
-- The Hodge formula agrees with a direct Hamiltonian resolvent derivative and a centered finite difference of the protected projector.
-- Exact scalable covariance diagonalization agrees with the dense reference within (2\times10^{-12}) in the regression regime.
-
-## Reproduce and Audit
-
-From `01_task_folder/task_05/script`:
+The review path checks analytic identities, task isolation, release hashes, registered result branches, and 38 focused tests:
 
 ```bash
-PYTHONPATH=. pytest -q $(rg --files tests | rg 'v7\.py$')
-bash run_susy_hodge_delivery_v7.sh
-python verify_susy_hodge_delivery_v7.py
-python verify_susy_hodge_manuscript_v7.py
+cd 01_task_folder/task_05/script
+python -m pip install -r requirements.txt
+bash run_quick_verify_v1.sh
 ```
 
-The delivery script is fail-closed: it will not activate the paper macros unless the pilot, sealed (N=14) prediction, explicit unseal, frozen inference, controls, figures, and manuscript audits all pass.
+The task-level [release guide](01_task_folder/task_05/README.md) documents the article build, full numerical recomputation, artifact classes, exact commands, and growth roadmap. Machine-readable provenance lives in the [release manifest](01_task_folder/task_05/script/output/release_manifest_v1.json).
 
 ## Start Here
 
 | Deliverable | Purpose |
 |---|---|
-| [Letter source](overleaf_sync/cohomological_geometric_eth/main.tex) | Compact scientific argument and primary result |
-| [Supplement source](overleaf_sync/cohomological_geometric_eth/supplement.tex) | Derivation, controls, state machine, artifact contract, and limitations |
-| [Compiled Letter](01_task_folder/task_05/script/output/response_complex_memory_v7.pdf) | Four-page audited REVTeX paper; SHA-256 `9fe357a5bfce5e6efd60a3c8bf0a1b73a4eac4ee15f9bb8844f51d2f7e1252ee` |
-| [Compiled Supplemental Material](01_task_folder/task_05/script/output/response_complex_memory_supplement_v7.pdf) | Four-page audited methods and exact-statistics package; SHA-256 `e43a5a2f62494bb7595f790de5643d6244d782402478f36fdcc7c511176b79c5` |
-| [Mechanism-dependent article](01_task_folder/task_05/script/output/mechanism_dependent_geometric_eth_v12.pdf) | Three-page Moore–Read/lattice-SUSY/X-cube comparison |
-| [Mechanism-dependent supplement](01_task_folder/task_05/script/output/mechanism_dependent_geometric_eth_supplement_v12.pdf) | Three-page methods, mechanism table, resource boundary, and nonclaims |
-| [Cross-mechanism inference](01_task_folder/task_05/script/output/cross_mechanism_geometric_eth_v12.json) | Machine-readable selected branch, input hashes, cases, and tests |
-| [Result report](01_task_folder/task_05/script/output/susy_hodge_geometric_eth_report_v7.md) | Machine-generated verdict and numerical intervals |
-| [Figure manifest](01_task_folder/task_05/script/output/figure_susy_hodge_geometric_eth_v7.json) | Input/output hashes for the main evidence figure |
-| [Scientific ceiling memo](docs/2026-08-01-scientific-ceiling-strategy.md) | Novelty boundary, journal ceiling, and next-theorem roadmap |
-| [Legacy Laughlin article](01_task_folder/task_05/script/output/spectral_silence_and_geometric_chaos_v3.pdf) | One-sided topological benchmark and fixed-Chern holonomy results |
+| [Technical report](docs/2026-07-30-task05-technical-report.md) | Innovation, algorithm, equations, evidence, and research outlook |
+| [17-page PDF](01_task_folder/task_05/script/output/spectral_silence_and_geometric_chaos_v3.pdf) | Complete analytic and numerical article |
+| [Task release guide](01_task_folder/task_05/README.md) | Reproduction tiers and figure-by-figure map |
+| [Release notes](docs/2026-07-30-task05-release-notes.md) | Reviewer-facing summary |
+| [Quantum Harness challenge](docs/2026-07-30-quantum-geometry-harness-challenge-draft.md) | Public next-stage benchmark |
+| [Main dashboard](00_main/main_dashboard.md) | Global task ledger and provenance log |
 
-## Claim Boundary and Research Horizon
+## Research Horizon
 
-The independent model/operator-class gate is crossed more than once: cohomological (\mathcal N=2) SYK, local lattice supersymmetry, and X-cube stabilizer codes are not repackaged FQH parent Hamiltonians. Their outcomes are mechanism dependent. The asymptotic gate remains open, and no common limiting law is inferred from the finite-size calculations.
-
-The next high-ceiling steps are a controlled large-(N) response-tensor law and a spatially local nilpotent-supercharge model with a stable protected rank, open gap, and nontrivially moving harmonic projector.
+The current release establishes a finite-size geometric-chaos baseline with exact algebraic identities, high-statistics curvature results, a genuine many-body response sequence, and closed-surface topology. The next phase extends the sequence to \(N=6\), transfers the invariant test to a second exact-degeneracy mechanism, and derives the observed four-channel scaling from locality.
 
 The code is released under the [GNU General Public License v3.0](LICENSE). Citation metadata are provided in [CITATION.cff](CITATION.cff).

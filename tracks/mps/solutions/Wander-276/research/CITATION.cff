@@ -5,7 +5,7 @@ type: software
 authors:
   - family-names: Wang
     given-names: Thomas J.
-  - family-names: OKongOYangO
+  - family-names: OkongOyangO
 repository-code: "https://github.com/JunkaiWang-TheoPhy/Chaos-of-Quantum-Geometry"
 url: "https://github.com/JunkaiWang-TheoPhy/Chaos-of-Quantum-Geometry"
 version: 1.0.0
@@ -24,6 +24,6 @@ preferred-citation:
   authors:
     - family-names: Wang
       given-names: Thomas J.
-    - family-names: OKongOYangO
+    - family-names: OkongOyangO
   title: "Spectral Silence and Geometric Chaos in an Exactly Degenerate Topological Manifold"
   year: 2026
