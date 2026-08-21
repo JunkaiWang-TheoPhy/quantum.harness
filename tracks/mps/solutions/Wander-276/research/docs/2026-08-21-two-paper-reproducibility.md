@@ -61,7 +61,7 @@ The verifier checks:
 |---|---:|---|
 | Paper I main | 23 | `257b1c10e75f7104d4a70afbd3b9c9056e197036a5f4c216f3789af8c513746a` |
 | Paper I supplement | 11 | `63d20a5149fd3f7f85c9f0a2e3b7c3be2025d1699508be7c14760a234af909a1` |
-| Paper II main | 18 | `c44d172be8707ee95b8a318e1579d3271293867a20b09fd6805112c2ac5a40de` |
+| Paper II main | 18 | `45984eed2daa8df1c741a5924287664a3c0b9508389be8681232a91ed54c0d20` |
 | Paper II supplement | 8 | `ab98b5a39117c7f412df4e62c0b76eb7e31e85ac6911af7c7ff0039fd83d18c9` |
 
 ## Expected scientific branch

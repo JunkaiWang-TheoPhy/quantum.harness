@@ -25,7 +25,7 @@ Paper II was prospectively result-gated. It proves an exact weighted-channel fou
 | Paper I main / supplement | 23 / 11 pages; seven vector figures; delivery audit passed |
 | Paper II main / supplement | 18 / 8 pages; six vector figures; delivery audit passed |
 | Paper I archived PDF SHA-256 | `257b1c10e75f7104d4a70afbd3b9c9056e197036a5f4c216f3789af8c513746a` |
-| Paper II archived PDF SHA-256 | `c44d172be8707ee95b8a318e1579d3271293867a20b09fd6805112c2ac5a40de` |
+| Paper II archived PDF SHA-256 | `45984eed2daa8df1c741a5924287664a3c0b9508389be8681232a91ed54c0d20` |
 | Cross-paper manifest | `01_task_folder/task_05/script/output/two_paper_delivery_v14/two_paper_manifest_v14.json` |
 | Claim boundary | finite-size Paper I; conditional theorem and failed prospective closure in Paper II |
 
@@ -64,4 +64,4 @@ Each paper has an independent source tree, evidence or literature registry, gene
 - [x] Deterministic archived PDFs and page-level visual checks
 - [x] A failed positive-title gate reported without refitting or renaming it as success
 - [x] Bind the package to live Issue #276
-- [ ] Push the final package and update open PR #283 against `QuantumBFS/quantum.harness:main`
+- [x] Push the final package and update open PR #283 against `QuantumBFS/quantum.harness:main`

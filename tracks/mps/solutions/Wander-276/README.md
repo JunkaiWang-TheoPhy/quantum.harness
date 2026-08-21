@@ -71,7 +71,7 @@ The selected branch is `random_channel_failure`. This rejects the combined finit
 The archived main-PDF SHA-256 values are:
 
 - Paper I: `257b1c10e75f7104d4a70afbd3b9c9056e197036a5f4c216f3789af8c513746a`
-- Paper II: `c44d172be8707ee95b8a318e1579d3271293867a20b09fd6805112c2ac5a40de`
+- Paper II: `45984eed2daa8df1c741a5924287664a3c0b9508389be8681232a91ed54c0d20`
 
 ## Verification
 

@@ -35,16 +35,16 @@
     },
     "paper_ii": {
       "audit_path": "01_task_folder/task_05/script/output/geometric_eth_theory_v14/delivery_audit_v14.json",
-      "audit_sha256": "37a4b2281b2054d771b629aad310d4205f05d20c0cdbb16938d5cf52f4de9f8f",
+      "audit_sha256": "a68e1ee1949046e74822845bb241c1d048e0949150e5042127ddbc33c1722bac",
       "claim": "An exact finite-channel cumulant theorem is proved under stated independence assumptions; the sealed chiral-index specialization fails, so N_eff alone is insufficient for the registered ensemble.",
       "delivery_branch": "random_channel_failure",
       "documents": {
         "main": {
-          "audit_sha256": "c44d172be8707ee95b8a318e1579d3271293867a20b09fd6805112c2ac5a40de",
+          "audit_sha256": "45984eed2daa8df1c741a5924287664a3c0b9508389be8681232a91ed54c0d20",
           "exists": true,
           "hash_matches_audit": true,
           "path": "01_task_folder/task_05/script/output/geometric_eth_theory_v14/geometric_response_exactly_degenerate_bundles_v14.pdf",
-          "sha256": "c44d172be8707ee95b8a318e1579d3271293867a20b09fd6805112c2ac5a40de"
+          "sha256": "45984eed2daa8df1c741a5924287664a3c0b9508389be8681232a91ed54c0d20"
         },
         "supplement": {
           "audit_sha256": "ab98b5a39117c7f412df4e62c0b76eb7e31e85ac6911af7c7ff0039fd83d18c9",

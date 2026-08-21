@@ -235,6 +235,16 @@ def test_literature_count_and_taxonomy_scope_match_the_audit() -> None:
     assert r"\cite{wang2026exactdegenerate}" in protection
 
 
+def test_subsystem_eth_record_uses_the_official_article_title() -> None:
+    audit = AUDIT.read_text(encoding="utf-8")
+    bibliography = BIB.read_text(encoding="utf-8")
+
+    official_title = "Subsystem eigenstate thermalization hypothesis"
+    assert official_title in audit
+    assert f"title = {{{official_title}}}" in bibliography
+    assert "title = {Subsystem ETH}" not in bibliography
+
+
 def test_empirical_values_are_consumed_only_through_generated_macros() -> None:
     main = (MANUSCRIPT / "main.tex").read_text(encoding="utf-8")
     theorem = (MANUSCRIPT / "sections/04_channel_theorem.tex").read_text(

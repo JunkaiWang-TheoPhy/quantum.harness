@@ -3,7 +3,7 @@
     "main": {
       "byte_reproducible": true,
       "delivery_path": "01_task_folder/task_05/script/output/geometric_eth_theory_v14/geometric_response_exactly_degenerate_bundles_v14.pdf",
-      "delivery_sha256": "c44d172be8707ee95b8a318e1579d3271293867a20b09fd6805112c2ac5a40de",
+      "delivery_sha256": "45984eed2daa8df1c741a5924287664a3c0b9508389be8681232a91ed54c0d20",
       "fonts": {
         "font_records": 49,
         "passed": true,
@@ -96,7 +96,7 @@
           },
           {
             "page": 18,
-            "sha256": "141d867be35418ca251d921e2588fa8056700fef6112cfd1919980896a94bf48"
+            "sha256": "65d7eecb03a09da8660e881bc98bb22c21b625b97bb727e0c4069c7be4b25850"
           }
         ],
         "passed": true,
@@ -176,13 +176,13 @@
           },
           {
             "page": 18,
-            "sha256": "75f925a0c5a497907c6ef415ce02a17a437213ff50873c80cc719ae46c6f311b"
+            "sha256": "9f34dd6bb650cab612ee68406791c60b3601a1255f7e3770da1e653fa5119cf9"
           }
         ],
         "passed": true,
         "rendered_pages": 18
       },
-      "sha256": "c44d172be8707ee95b8a318e1579d3271293867a20b09fd6805112c2ac5a40de",
+      "sha256": "45984eed2daa8df1c741a5924287664a3c0b9508389be8681232a91ed54c0d20",
       "visual_audit": {
         "passed": true,
         "reviewed_dpi": [
@@ -307,8 +307,8 @@
   },
   "gates": {
     "citations": {
-      "audit_sha256": "d5a6b962ea85204297857a820123fa2fd81a23228a3e9b3196d0d3c05e6459a7",
-      "bibliography_sha256": "b5cdcd51a3fabee05a7e07854bf376fbc39ceec2866470ce0ab7bf55a18de788",
+      "audit_sha256": "c346e1335984fd7526b14df36d0334df5eef35bb4a414dc0506a673993a7f778",
+      "bibliography_sha256": "b20c374a67487ab79f6844f1a559fea5ba458074fbcf8c8395ca6af783475ae0",
       "citation_count": 43,
       "missing_from_audit": [],
       "missing_from_bibliography": [],
@@ -330,14 +330,14 @@
       "documents": {
         "main": {
           "exists": true,
-          "expected_sha256": "7627ac8dbba1193614869138e3c9064a437bf4b07a9f912806791283522ac2e8",
-          "observed_sha256": "7627ac8dbba1193614869138e3c9064a437bf4b07a9f912806791283522ac2e8",
+          "expected_sha256": "45984eed2daa8df1c741a5924287664a3c0b9508389be8681232a91ed54c0d20",
+          "observed_sha256": "45984eed2daa8df1c741a5924287664a3c0b9508389be8681232a91ed54c0d20",
           "passed": true
         },
         "supplement": {
           "exists": true,
-          "expected_sha256": "e5684515554a8efa86b0b5352d73bbdec15bb2d3cd41c91f12badbe8f1048b15",
-          "observed_sha256": "e5684515554a8efa86b0b5352d73bbdec15bb2d3cd41c91f12badbe8f1048b15",
+          "expected_sha256": "ab98b5a39117c7f412df4e62c0b76eb7e31e85ac6911af7c7ff0039fd83d18c9",
+          "observed_sha256": "ab98b5a39117c7f412df4e62c0b76eb7e31e85ac6911af7c7ff0039fd83d18c9",
           "passed": true
         }
       },
@@ -351,7 +351,7 @@
       "missing": [],
       "modes_0644": true,
       "passed": true,
-      "sha256": "08da01043bc2a6ad5d2efdc11200a6c429d80143d7fd206ecd02b57ee29ee325",
+      "sha256": "f3883cc8057fdc5663c94bf66e8881a3e471ff05074152aea7f56b4c7adb34e9",
       "source_conflicts": [],
       "source_hashes": {
         "checked_count": 6,
@@ -394,10 +394,10 @@
     "01_task_folder/task_05/script/output/geometric_eth_theory_v14/chiral_inference_v14.json": "f32663bf36f3180cc68bb57a19dbe4248c95c6042f06f8f2f7b363b68b926c86",
     "01_task_folder/task_05/script/output/geometric_eth_theory_v14/chiral_outcomes_v14.json": "3e193018582377cd47fa3db0a3b6c84d1e8d43c1ed719ab7122479a3ff02a8bf",
     "01_task_folder/task_05/script/output/geometric_eth_theory_v14/chiral_prediction_v14.json": "529b7a68af0b3d357c66556616d8f668ca0b2d7291ac96b1e9a0dc8bc62a187e",
-    "01_task_folder/task_05/script/output/geometric_eth_theory_v14/figure_manifest_v14.json": "08da01043bc2a6ad5d2efdc11200a6c429d80143d7fd206ecd02b57ee29ee325",
+    "01_task_folder/task_05/script/output/geometric_eth_theory_v14/figure_manifest_v14.json": "f3883cc8057fdc5663c94bf66e8881a3e471ff05074152aea7f56b4c7adb34e9",
     "01_task_folder/task_05/script/output/geometric_eth_theory_v14/theory_gate_v14.json": "1fe0da5b45c414179ce1f466f6eef01ac1260304ce7a414e3608177ca19e4255",
     "01_task_folder/task_05/script/verify_geometric_eth_theory_v14.py": "04090f8f17234891f37a87a9cab857c417458bd3ae7f063e7354607d2edfb10d",
-    "docs/literature/2026-08-17-geometric-eth-bps-black-hole-audit.md": "d5a6b962ea85204297857a820123fa2fd81a23228a3e9b3196d0d3c05e6459a7",
+    "docs/literature/2026-08-17-geometric-eth-bps-black-hole-audit.md": "c346e1335984fd7526b14df36d0334df5eef35bb4a414dc0506a673993a7f778",
     "overleaf_sync/geometric_eth_theory/figures/figure_1_eth_to_bundle_v14.pdf": "57b025a421a09deb615abb3fb92c1187ee50edc03e5d9ec16a4c2b77f148788f",
     "overleaf_sync/geometric_eth_theory/figures/figure_2_response_algebra_v14.pdf": "8e2c68eb2cf69af1cc92a831611f3cb242320151fd6a045c5b4c49429fb7ea59",
     "overleaf_sync/geometric_eth_theory/figures/figure_3_covariance_closure_v14.pdf": "817868a1615e259b1839e3ac7a9d5cbb4b9731bcf96ca6d4faf810d63277299e",
@@ -405,7 +405,7 @@
     "overleaf_sync/geometric_eth_theory/figures/figure_5_bps_comparison_v14.pdf": "7d3c89ecce66003dae34378fb5e2fdc14e0c604c194b0fc6de4941dbd67a072f",
     "overleaf_sync/geometric_eth_theory/figures/figure_6_effective_channel_test_v14.pdf": "a251b49d1936b998a0a7ff0e654fc5fff2f40ffece1cc0c9941b8f0fb96774aa",
     "overleaf_sync/geometric_eth_theory/main.tex": "3a85b84438fc452d27bf11a029c1437f13a685f1b870b060a62922388050ab18",
-    "overleaf_sync/geometric_eth_theory/references.bib": "b5cdcd51a3fabee05a7e07854bf376fbc39ceec2866470ce0ab7bf55a18de788",
+    "overleaf_sync/geometric_eth_theory/references.bib": "b20c374a67487ab79f6844f1a559fea5ba458074fbcf8c8395ca6af783475ae0",
     "overleaf_sync/geometric_eth_theory/sections/01_eth_failure.tex": "adc4cd288cfb4e8c25c6cc29d0383c72496df01392ef5b9846e286c8682f3826",
     "overleaf_sync/geometric_eth_theory/sections/02_bundle_geometry.tex": "6c8407937b50857d16d6791e439f6e7dda7c5323ba854ae5a0230d5232ef796d",
     "overleaf_sync/geometric_eth_theory/sections/03_geometric_eth_ansatz.tex": "6c5e55b3f7c86660ed2065e17df89f83e3858b1a658eaa0b2bc58a7473031a47",

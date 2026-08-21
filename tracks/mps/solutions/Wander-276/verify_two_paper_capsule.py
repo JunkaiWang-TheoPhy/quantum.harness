@@ -34,13 +34,13 @@ REQUIRED_DOCUMENTATION = (
 )
 
 DOCUMENT_HASHES = {
-    "README.md": "e1611d3c42966425ba8a3f85256340d75252212b10ea87306cde8ee5fd51ab1d",
-    "PR_BODY.md": "a01c3ebd95ad49fe3f2cb13c58b1984e3139df799684c18801bf5a6a8a107772",
+    "README.md": "9be6461a39a4815d78fd7c84415e18be90792a5a68c246d432c9ce08eb18fc82",
+    "PR_BODY.md": "9597021ef27acc8d38c32899e513af5e495af9ef3167e653e40633e53c50ecb3",
     "research/docs/2026-08-21-two-paper-reviewer-guide.md": (
         "4d63df682c4ed4325f5361cc6dd2f560733965d73dcd0d0dce2d898d4aabba10"
     ),
     "research/docs/2026-08-21-two-paper-reproducibility.md": (
-        "2edc7895a461ecef4d69fac5ff4e962f2cdefed470441bdafc982d97a50de1d3"
+        "2e0c1f06ced66bf15e5d9be5471152d41d38208bdd6d7a320fcd32947c564679"
     ),
     "research/docs/2026-08-21-two-paper-submission-checklist.md": (
         "9010ff9ecf86d5c6884fcbe64d00cda69941a69d13f03dd82563a089dec1e945"
@@ -57,7 +57,7 @@ PUBLIC_DOCUMENT_TOKENS = {
         "Geometric Response of Exactly Degenerate Quantum State Bundles",
         "random_channel_failure",
         "257b1c10e75f7104d4a70afbd3b9c9056e197036a5f4c216f3789af8c513746a",
-        "c44d172be8707ee95b8a318e1579d3271293867a20b09fd6805112c2ac5a40de",
+        "45984eed2daa8df1c741a5924287664a3c0b9508389be8681232a91ed54c0d20",
         "Chenxi Wan, Yedi Shen, Junkai Wang",
         "WangTheoPhys@outlook.com",
         "Not established here: asymptotic or universal Geometric ETH",
@@ -68,7 +68,7 @@ PUBLIC_DOCUMENT_TOKENS = {
         "Geometric Response of Exactly Degenerate Quantum State Bundles",
         "random_channel_failure",
         "257b1c10e75f7104d4a70afbd3b9c9056e197036a5f4c216f3789af8c513746a",
-        "c44d172be8707ee95b8a318e1579d3271293867a20b09fd6805112c2ac5a40de",
+        "45984eed2daa8df1c741a5924287664a3c0b9508389be8681232a91ed54c0d20",
         "Chenxi Wan, Yedi Shen, Junkai Wang",
         "WangTheoPhys@outlook.com",
         "does not claim an established asymptotic or universal Geometric ETH",

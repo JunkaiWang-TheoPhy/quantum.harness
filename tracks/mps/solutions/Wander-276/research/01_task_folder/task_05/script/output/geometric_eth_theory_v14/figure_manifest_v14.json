@@ -116,7 +116,7 @@
       ],
       "preview_dpi": 300,
       "source_hashes": {
-        "docs/literature/2026-08-17-geometric-eth-bps-black-hole-audit.md": "d5a6b962ea85204297857a820123fa2fd81a23228a3e9b3196d0d3c05e6459a7",
+        "docs/literature/2026-08-17-geometric-eth-bps-black-hole-audit.md": "c346e1335984fd7526b14df36d0334df5eef35bb4a414dc0506a673993a7f778",
         "docs/plans/2026-08-17-geometric-eth-theorem-specification.md": "71557052818a3f2c92ee32fc7fc2ff202b7f93b02ec68fe606badc86c206f724"
       },
       "visual_audit": {
@@ -145,7 +145,7 @@
       "preview_dpi": 300,
       "source_hashes": {
         "01_task_folder/task_05/script/output/geometric_eth_theory_v14/theory_gate_v14.json": "1fe0da5b45c414179ce1f466f6eef01ac1260304ce7a414e3608177ca19e4255",
-        "docs/literature/2026-08-17-geometric-eth-bps-black-hole-audit.md": "d5a6b962ea85204297857a820123fa2fd81a23228a3e9b3196d0d3c05e6459a7"
+        "docs/literature/2026-08-17-geometric-eth-bps-black-hole-audit.md": "c346e1335984fd7526b14df36d0334df5eef35bb4a414dc0506a673993a7f778"
       },
       "visual_audit": {
         "passed": true,
