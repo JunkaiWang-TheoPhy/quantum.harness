@@ -30,10 +30,12 @@ terms are not interpreted before a hydrodynamic-UV audit.
 The zero-field Heisenberg commutator algebra supplies the exact long-wave Mori
 moments through `mu20`, equivalently ten positive Lanczos recurrents.  A matched
 kernel must preserve these moments while retaining the low-frequency
-infinite-mode GHD contribution.  We test a declared finite local/contact basis
-over several Laplace frequencies and Fourier cutoffs.  A match at a single
-frequency is insufficient.  If no common basis stabilizes the band, the
-artifact records that the finite-time correction `F1_perp` remains
+infinite-mode GHD contribution.  We therefore peel the ten exact continued-
+fraction levels and reconstruct the unresolved terminator as a nonnegative
+continuum quadrature of `z/(z^2+omega^2)`.  Reinserting this spectrum preserves
+the exact recurrent prefix algebraically without selecting a physical pole
+count.  Positivity and regulator stability are tested over the whole declared
+Laplace band.  If they fail, the artifact records that `F1_perp` remains
 underdetermined.
 
 ## Outputs and gates

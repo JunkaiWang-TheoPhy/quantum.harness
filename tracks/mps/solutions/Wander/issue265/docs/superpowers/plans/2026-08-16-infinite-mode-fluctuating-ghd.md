@@ -4,7 +4,7 @@
 
 **Goal:** Produce a target-free finite-window spin structure factor from the complete non-diagonal fluctuating-GHD operator, or a machine-readable proof that the available UV and limit controls do not yet determine it uniquely.
 
-**Architecture:** The finite-field GHD occupation space remains intact.  Linear non-spin modes are eliminated only by an exact Schur/Krylov resolvent; nonlinear velocity, diffusion, conservative-noise, cross, and observable diagrams are evaluated by Wick/Duhamel contractions.  Exact Heisenberg Mori moments through `mu20` constrain local/contact UV pieces across a frequency band before any wall or Burgers projection is allowed.
+**Architecture:** The finite-field GHD occupation space remains intact.  Linear non-spin modes are eliminated only by an exact Schur/Krylov resolvent; nonlinear velocity, diffusion, conservative-noise, cross, and observable diagrams are evaluated by Wick/Duhamel contractions.  Exact Heisenberg Mori moments through `mu20` are imposed by peeling and reinserting ten continued-fraction levels around a positive continuum terminator before any wall or Burgers projection is allowed.
 
 **Tech Stack:** Python 3, NumPy, SciPy, pytest, JSON certificates.
 
@@ -69,21 +69,18 @@ Expected: PASS.
 
 **Interfaces:**
 - Consumes: exact `xxx_mori_long_wave_lanczos()` data, a low-frequency colored kernel sampled on a common time grid, its contact term, and declared matching/probe frequencies.
-- Produces: `match_colored_kernel_to_lanczos(...) -> dict` containing raw and subtracted transforms, moment interval checks, regulator variation, and `matching_complete`.
+- Produces: `match_kernels_to_exact_lanczos(...) -> dict` containing exact moment intervals, positive continuum-terminator reconstructions, regulator variation, and `matching_complete`.
 
 - [ ] **Step 1: Write failing moment-preservation tests**
 
 ```python
-def test_matching_rejects_a_single_frequency_accident():
-    result = match_colored_kernel_to_lanczos(
-        times, cutoff_memories, lanczos, matching_frequency=0.5,
-        probe_frequencies=(0.05, 0.1, 0.2), maximum_local_order=4,
-    )
+def test_matching_rejects_cutoff_drift():
+    result = match_kernels_to_exact_lanczos(z, cutoff_kernels, spectral_frequencies=omega)
     assert not result["matching_complete"]
 
-def test_exact_continued_fraction_is_inside_all_moment_bounds():
-    result = match_colored_kernel_to_lanczos(...)
-    assert result["exact_reference_inside_bounds"]
+def test_continuum_terminator_preserves_exact_prefix():
+    result = match_kernels_to_exact_lanczos(z, exact_candidates, spectral_frequencies=omega)
+    assert result["exact_moment_order_preserved"] == 20
 ```
 
 - [ ] **Step 2: Run the focused test and verify failure**
@@ -94,7 +91,7 @@ Expected: FAIL because the matching module does not exist.
 
 - [ ] **Step 3: Implement fail-closed band matching**
 
-Use compensated Laplace quadrature.  For each common local order `M=0..4`, subtract the Taylor/contact basis at `z0` from every cutoff, test all probe frequencies, and verify compatibility with the ten-recurrent Stieltjes interval.  Set `matching_complete=true` only if one common order passes every frequency and the last regulator pair.
+Use compensated Laplace quadrature, peel the ten exact recurrents, and fit the residual terminator to a nonnegative normalized continuum measure.  Reinsert the fitted terminator through the exact prefix.  Set `matching_complete=true` only if every candidate lies inside the moment interval, every spectrum is nonnegative, the continuum reconstruction passes over the whole band, and the last regulator pair is stable.
 
 - [ ] **Step 4: Run matching and regression tests**
 
